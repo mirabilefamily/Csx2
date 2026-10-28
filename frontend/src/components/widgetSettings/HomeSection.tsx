@@ -19,7 +19,7 @@ export function starterError(st: WidgetStarter): string | null {
   return null
 }
 
-const SEL = 'h-9 w-full max-w-[280px] rounded-lg border border-border-strong bg-surface px-2 text-sm text-ink'
+const SEL = 'h-9 w-full rounded-lg border border-border-strong bg-surface px-2 text-sm text-ink'
 
 function StarterRow({ st, i, n, onChange, onRemove, onMove, drag }: { st: WidgetStarter; i: number; n: number; onChange: (s: WidgetStarter) => void; onRemove: () => void; onMove: (to: number) => void; drag: { from: number | null; set: (v: number | null) => void } }) {
   const err = starterError(st)
@@ -83,7 +83,10 @@ function TopButton({ k, label, draft, update }: { k: 'cart' | 'track'; label: st
 export function HomeSection({ draft, update }: { draft: WidgetSettings; update: Update }) {
   return (
     <>
-      <div className="max-w-[480px]"><TextField id="greeting" label="Greeting" value={draft.messaging.greeting} onChange={(v) => update((d) => { d.messaging.greeting = v })} multiline /></div>
+      <div>
+        <TextField id="greeting" label="Greeting" value={draft.messaging.greeting} onChange={(v) => update((d) => { d.messaging.greeting = v })} multiline />
+        <p className="mt-1.5 text-xs text-ink-muted" data-testid="ws-greeting-hint">Optional. Shown above the suggested questions.</p>
+      </div>
       <div className="space-y-2"><p className="text-sm font-medium text-ink">Top buttons</p><TopButton k="cart" label="Cart" draft={draft} update={update} /><TopButton k="track" label="Track orders" draft={draft} update={update} /></div>
       <StartersEditor draft={draft} update={update} />
     </>
@@ -97,10 +100,10 @@ export function ConversationSection({ draft, update }: { draft: WidgetSettings; 
   )
   return (
     <>
-      <div className="max-w-[480px]"><TextField id="bot-name" label="Chatbot name" value={c.botName} onChange={(v) => update((d) => { d.conversation.botName = v })} /></div>
+      <div><TextField id="bot-name" label="Chatbot name" value={c.botName} onChange={(v) => update((d) => { d.conversation.botName = v })} /></div>
       {row('Thumbs up / down on AI replies', c.thumbs, (v) => update((d) => { d.conversation.thumbs = v }), 'ws-thumbs')}
       {row('Ask for email before chat', c.askEmailFirst, (v) => update((d) => { d.conversation.askEmailFirst = v }), 'ws-ask-email', 'Off: shoppers start typing right away. Workflows and handoff ask for the email when they need it.')}
-      <div className="max-w-[480px] space-y-4">
+      <div className="space-y-4">
         <TextField id="handoff-message" label="Handoff message" value={draft.messaging.handoffMessage} onChange={(v) => update((d) => { d.messaging.handoffMessage = v })} />
         <TextField id="offline-message" label="Offline message" value={draft.messaging.offlineMessage} onChange={(v) => update((d) => { d.messaging.offlineMessage = v })} multiline />
       </div>

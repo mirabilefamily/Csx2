@@ -8,7 +8,7 @@ import type { SettingSource } from '@/types'
 
 export function Section({ id, title, description, summary, Icon, open, onToggle, children }: { id: string; title: string; description: string; summary: string; Icon: LucideIcon; open: boolean; onToggle: () => void; children: ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-24 rounded-2xl bg-surface shadow-card ring-1 ring-black/[0.04]" data-testid={`ws-section-${id}`}>
+    <section id={id} className="cq scroll-mt-24 rounded-2xl bg-surface shadow-card ring-1 ring-black/[0.04]" data-testid={`ws-section-${id}`}>
       <h3>
         <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={`${id}-body`} className="flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left transition-colors hover:bg-surface-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`ws-section-toggle-${id}`}>
           <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors', open ? 'bg-tobacco-50 text-tobacco-700' : 'bg-surface-muted text-ink-muted')} aria-hidden><Icon className="h-[18px] w-[18px]" /></span>
@@ -89,7 +89,7 @@ export function ColorField({ id, label, value, onChange, contrast }: ColorProps)
             </div>
           </PopoverContent>
         </Popover>
-        <input id={`ws-${id}`} value={value} onChange={(e) => onChange(e.target.value.trim())} aria-invalid={!!err} aria-describedby={err ? `ws-${id}-error` : undefined} spellCheck={false} className={cn('h-9 w-[120px] rounded-lg border bg-surface px-2.5 font-mono text-sm uppercase text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', err ? 'border-red-600' : 'border-border-strong')} data-testid={`ws-${id}-hex`} />
+        <input id={`ws-${id}`} value={value} onChange={(e) => onChange(e.target.value.trim())} aria-invalid={!!err} aria-describedby={err ? `ws-${id}-error` : undefined} spellCheck={false} className={cn('h-9 w-full min-w-0 flex-1 rounded-lg border bg-surface px-2.5 font-mono text-sm uppercase text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', err ? 'border-red-600' : 'border-border-strong')} data-testid={`ws-${id}-hex`} />
       </div>
       <FieldError id={`ws-${id}-error`}>{err}</FieldError>
       {!err && warn && <p className="mt-1.5 text-xs text-amber-700" data-testid={`ws-${id}-contrast`}>{contrast!.label}: {warn}</p>}

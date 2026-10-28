@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { CircleDot, Filter, Home, MessageSquareText, Palette, Star, type LucideIcon } from 'lucide-react'
 import { ConversationSection, HomeSection } from './HomeSection'
 import { PreviewPane } from '@/components/PreviewPane'
+import { ChannelStatus } from '@/components/channels/StatusStrip'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { toast } from 'sonner'
 import { csatApi, widgetApi } from '@/api'
@@ -95,8 +96,10 @@ function Loaded({ saved: initial, theme, view, group }: { saved: WidgetSettings;
     )
 
   return (
-    <div className="grid gap-8 pb-24 lg:grid-cols-[minmax(0,640px)_minmax(0,440px)] lg:justify-between" data-testid="widget-settings">
-      <div className="min-w-0 space-y-3 [&_input:not([type=checkbox]):not([type=number]):not([type=color])]:max-w-[480px] [&_select]:max-w-[280px] [&_textarea]:max-w-[480px]" data-testid="widget-settings-form">
+    <div className="grid gap-7 pb-24 lg:grid-cols-[minmax(0,1fr)_clamp(400px,30vw,560px)]" data-testid="widget-settings">
+      <div className="min-w-0 space-y-3" data-testid="widget-settings-form">
+        {/* Chat's status strip sits over the settings column so the preview can start higher and fit the viewport. */}
+        <div className="pb-3"><ChannelStatus tab="chat" /></div>
         {SECTIONS.filter(([id]) => !group || (GROUPS[group] as readonly string[]).includes(id)).map(([id, title, desc, Icon]) => (
           <Section key={id} id={id} title={title} description={desc} Icon={Icon} summary={sectionSummary(id, draft, theme)} open={open.has(id)} onToggle={() => toggle(id)}>
             {id === 'branding' && <BrandingSection draft={draft} update={update} uploadErrors={uploadErrors} setUploadError={setUploadError} />}
@@ -108,7 +111,7 @@ function Loaded({ saved: initial, theme, view, group }: { saved: WidgetSettings;
           </Section>
         ))}
       </div>
-      <PreviewPane label="Live preview" testId="channels-preview" toggleTestId="widget-preview-open" className="lg:h-[calc(100vh-48px)]">
+      <PreviewPane label="Live preview" testId="channels-preview" toggleTestId="widget-preview-open" className="lg:static lg:self-stretch">
         <WidgetPreview settings={preview} opts={isPhone ? { ...opts, device: 'mobile' } : opts} onChange={setOpts} title="Preview" />
       </PreviewPane>
       {saveBar}

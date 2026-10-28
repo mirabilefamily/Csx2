@@ -46,7 +46,7 @@ export function LauncherSection({ draft, update, errors, setUploadError }: Props
         )}
       </div>
       <Segmented label="Button colour" testId="ws-button-colour" value={l.buttonColor ?? 'white'} onChange={(v) => update((d) => { d.launcher.buttonColor = v; if (v === 'white') d.launcher.backgroundColor = '#FFFFFF' })} options={[{ id: 'white', label: 'White' }, { id: 'panel', label: 'Panel colour' }]} />
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="cq-pair">
         <ColorField id="iconColor" label="Icon color" value={l.iconColor} onChange={(v) => update((d) => { d.launcher.iconColor = v })} />
         {l.buttonColor !== 'panel' && <ColorField id="launcherBg" label="Background color" value={l.backgroundColor} onChange={(v) => update((d) => { d.launcher.backgroundColor = v })} contrast={{ against: l.iconColor, label: 'Icon on launcher', fgIsThis: false }} />}
         <ColorField id="badgeColor" label="Unread badge color" value={l.badgeColor} onChange={(v) => update((d) => { d.launcher.badgeColor = v })} />
@@ -56,7 +56,7 @@ export function LauncherSection({ draft, update, errors, setUploadError }: Props
         <Segmented label="Size" testId="ws-size" value={l.size} onChange={(v) => update((d) => { d.launcher.size = v })} options={[{ id: 's', label: 'S' }, { id: 'm', label: 'M' }, { id: 'l', label: 'L' }]} />
       </div>
       {l.style === 'pill' && (
-        <div className="max-w-sm">
+        <div>
           <TextField id="launcher-label" label="Pill label" value={l.label} onChange={(v) => update((d) => { d.launcher.label = v })} error={errors['launcher-label']} />
         </div>
       )}

@@ -30,6 +30,7 @@ interface Props {
   extra?: React.ReactNode
   to: string
   onDraftChange: (draftId: string | null) => void
+  inline?: boolean
 }
 
 function ToolButton({ label, active, onClick, children }: { label: string; active?: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -62,7 +63,7 @@ function LinkButton({ editor }: { editor: Editor }) {
   )
 }
 
-export const Composer = forwardRef<ComposerHandle, Props>(({ onSend, onResolve, onHandBack, extra, onDraftChange, to }, ref) => {
+export const Composer = forwardRef<ComposerHandle, Props>(({ onSend, onResolve, onHandBack, extra, onDraftChange, to, inline }, ref) => {
   const [mode, setMode] = useState<ComposerMode>('reply')
   const [saved, setSaved] = useState<'idle' | 'saving' | 'saved'>('idle')
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -140,7 +141,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ onSend, onResolve, 
   const note = mode === 'note'
 
   return (
-    <div className={cn('border-t border-border bg-white px-4 pt-3 md:px-6', demoToolsEnabled ? 'pb-16' : 'pb-3')}>
+    <div className={inline ? 'pt-1' : cn('border-t border-border bg-white px-4 pt-3 md:px-6', demoToolsEnabled ? 'pb-16 max-sm:pb-[calc(12px+env(safe-area-inset-bottom))]' : 'pb-3')}>
       <div className={cn('relative rounded-lg border transition-colors', note ? 'border-amber-300 bg-amber-50/60' : 'border-border bg-white')} data-testid="composer" data-mode={mode}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-2 py-1.5">
           <div role="tablist" aria-label="Composer mode" className="inline-flex rounded-md border border-border p-0.5">

@@ -37,8 +37,8 @@ export function CsatTab() {
     setSaving(false)
   }
   return (
-    <div className="grid gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_380px] 2xl:grid-cols-[minmax(0,1fr)_420px]" data-testid="csat-settings-tab">
-      <div className="min-w-0 space-y-8 rounded-2xl bg-surface p-6 shadow-card ring-1 ring-black/[0.04] max-sm:px-4">
+    <div className="grid gap-7 pb-24 lg:grid-cols-[minmax(0,1fr)_clamp(400px,30vw,560px)]" data-testid="csat-settings-tab">
+      <div className="cq min-w-0 space-y-8 rounded-2xl bg-surface p-6 shadow-card ring-1 ring-black/[0.04] max-sm:px-4">
         <QuestionList questions={draft.questions} errors={errors} onChange={(questions) => update({ ...draft, questions })} />
         <Delivery draft={draft} set={update} />
       </div>

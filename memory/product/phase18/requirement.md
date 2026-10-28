@@ -63,6 +63,32 @@ The user asked to "refine channels and all pages" and "refine settings pages". C
 - REQ-954 [state] While the screen is narrower than 1024px, Channels and Settings previews shall move below the settings with a "Show preview" toggle. (interpreted)
 - REQ-955 [state] While on a phone (under 640px), the settings-row layout shall stack title, description and controls, and integration tiles shall be one column.
 
+### Fill the page (user follow-up: "settings and form should fill out page more, too much space")
+- REQ-956 [state] While the screen is 1024px wide or more, settings-plus-preview screens (Chat, Contact form, Email, CSAT, Brand voice) shall let the settings column take all width left over by the preview, leaving one gap of 24–32px and no empty middle band.
+- REQ-957 [always] On those screens the preview column shall be 400–560px wide, sticky, and its right edge shall line up with the status strip's right edge.
+- REQ-958 [always] Fields shall fill the width of their card or grid cell. Per-field caps (480px, 280px, 75ch) shall be removed so a card's inputs and textareas share one right edge.
+- REQ-959 [state] While a settings card is 720px wide or more, short fields shall sit two per row: Heading + Button label, From name + Reply-to, New password + Confirm new password. Textareas, lists and long fields span the full row. (interpreted)
+- REQ-960 [always] Settings rows (Account, integration detail) shall give the controls column all width right of the title column, so notifications, sessions and field groups reach the card's right padding.
+
+### Chat widget look (user follow-up: "the chat should be taller" + reference screenshot)
+- REQ-961 [always] The widget panel shall be `min(720px, 100vh - 112px)` tall on desktop, and the Channels preview shall show it at 1:1 when the viewport allows (never below 0.85 scale).
+- REQ-962 [always] The widget's Home view shall use the frosted panel colour (default #E8E3D8, Frosted), while the Conversation and Order tracking views use a near-white (#FFFFFF) surface. Both views have a ~36px corner radius and a soft large shadow, and Panel colour and style stay editable. (interpreted from two reference screenshots)
+- REQ-968 [always] The Home view shall show no header bar and, by default, no greeting text. It is a calm empty frosted area with the starters stacked left-aligned at the bottom, just above the "Ask anything" input. The Greeting setting becomes optional: when filled in, it shows above the starters. (interpreted)
+- REQ-969 [always] Home starters shall be translucent light pills (white at ~45% over the panel, 16px text, ~44px tall, fully rounded, faint shadow), sized to their text.
+- REQ-970 [state] While the customer has an earlier conversation, Home shall show a last starter "See last conversation" that opens that thread. The preview shows it.
+
+### Inbox reply placement (user follow-up: "in inbox make chat reply at bottom vs fixed")
+- REQ-971 [state] While the screen is 640px wide or more, the AI draft card and the reply composer shall sit at the end of the conversation thread, scrolling with the messages and matching the message column width. They are no longer a fixed dock under the thread. (interpreted)
+- REQ-972 [event] When a ticket opens, the thread shall be scrolled to the bottom so the last message and the draft/composer are in view.
+- REQ-973 [state] While the draft/composer is scrolled out of view, a small floating "Reply" pill shall show at the bottom of the thread. Clicking it, or pressing the reply shortcut, scrolls to the composer and focuses it. (interpreted)
+- REQ-974 [state] While on a phone (under 640px), the composer shall stay docked at the bottom above the keyboard, as now. (interpreted)
+- REQ-975 [always] The "AI is handling this conversation · Take over" bar shall also sit at the end of the thread on screens 640px wide or more.
+- REQ-963 [always] Top controls (Back, Cart, "Track orders" pill, Close) shall float as white pills/circles with soft shadows over the message list, which scrolls under them with a soft top fade.
+- REQ-964 [always] AI messages shall be plain text at 16px / 1.55 line height, with no bubble. Customer messages shall be right-aligned light-grey (#F2F3F5) pills with a ~22px radius.
+- REQ-965 [event] When the customer taps thumbs up or down under an AI message, that thumb shall become a filled dark circle with a white icon. The other stays outlined.
+- REQ-966 [state] While the customer has scrolled up from the newest message, a round frosted "scroll to latest" arrow button shall float above the input.
+- REQ-967 [always] The reply input shall be a floating white pill with a soft shadow, placeholder "Reply" (or "Ask anything" on Home), an attach-image icon on the right, and a send arrow that appears only once text is typed. A soft bottom fade sits behind it, and "AI notice • Privacy" is centred and underlined below.
+
 ## Quality requirements
 ```
 Q-863  Tag: App.Layout

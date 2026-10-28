@@ -46,7 +46,7 @@ export function FormSection({ title, description, children, testId }: { title: s
         <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
         {description && <p className="mt-1 max-w-[60ch] text-sm leading-relaxed text-ink-muted">{description}</p>}
       </div>
-      <div className="min-w-0 max-w-[880px] space-y-4">{children}</div>
+      <div className="min-w-0 space-y-4">{children}</div>
     </section>
   )
 }

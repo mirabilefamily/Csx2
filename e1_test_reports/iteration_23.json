@@ -1,0 +1,15 @@
+{
+ "iteration": 23, "phase": "18-inbox-reply", "passed": 4, "failed": 0, "retest_needed": false,
+ "bugs": [],
+ "action_items": [
+  {"type":"note","severity":"low","detail":"Jump-to-reply pill and 'r' shortcut focus the draft card's '...' (draft-more) button — the first focusable control in the reply area — rather than 'Approve & send'. Inside the reply area, so it meets REQ-973; builder may prefer focusing the primary action."},
+  {"type":"note","severity":"low","detail":"Channels → Chat: the window does scroll (236px @1920x1080, 494px @1440x900) because the settings column is longer than the viewport. The preview is sticky, though: at 1920 the whole widget (313–1016) and the close launcher stay in view, and at 1440 preview-surface (24–555) scrolls internally (724/531) and stays in view. I counted this as meeting the intent; it does not meet a literal 'no page-level scroll'."},
+  {"type":"environment","severity":"low","detail":"The preview ingress returned HTTP 429 when checks ran in parallel, so the phone/chat check runs on localhost:3000. The desktop JRN-218 check ran through the preview URL."}
+ ],
+ "checks": [
+  {"criterion":"JRN-218a Reply at end of thread (desktop)","name":"p18-jrn218-reply-end-thread","lane":"browser","status":"passed","evidence":"@1440 GB-1076: reply-area is inside thread-scroll after message-thread, position static, gap to bottom 0; draft 720px wide @x618 = message column 720px @x618. Draft by AI 58% confidence; Approve & send/Edit/Write my own."},
+  {"criterion":"JRN-218b Reply pill + shortcut","name":"p18-jrn218-reply-end-thread","lane":"browser","status":"passed","evidence":"No pill at bottom; scrollTop=0 shows jump-to-reply 'Reply'; clicking it scrolls back to bottom (<40px), moves focus into reply-area (draft-more), and the pill hides. 'r' does the same."},
+  {"criterion":"JRN-218c Compose and send in place","name":"p18-jrn218-reply-end-thread","lane":"browser","status":"passed","evidence":"Write my own: editor grows 88->136px while typing, gap to bottom 0. Send: 'Reply sent' toast, the tscheck-218 message appears above reply-area, view stays at bottom. GB-1080: ai-handling-banner inside thread-scroll after messages, 'AI is handling this conversation. Replying Take over'."},
+  {"criterion":"JRN-218d Phone docked + no regressions","name":"p18-jrn218-phone-chat-fit","lane":"browser","status":"passed","evidence":"390x844: draft dock bottom 844 = viewport and stays there after the thread scrolls to top; scrollWidth 390. Chat preview 1920x1080: widget 313–1016 fully in view, sticky when the page scrolls, no horizontal scroll. 1440x900: canvas 120–820 fits, preview-surface scrolls internally 724/531, sticky in view, no horizontal scroll."}
+ ]
+}

@@ -643,9 +643,9 @@ export interface BrandVoice {
 export const BRAND_VOICE_LIMITS = { brandName: 100, tone: 2000, howToRespond: 2000, phrasesToUse: 2000, phrasesToAvoid: 2000, examples: 4000, signOff: 200 } as const
 export interface VoiceSample { id: 'sizing' | 'late' | 'damaged'; label: string; customer: string; draft: string }
 export interface ReplyImpact { resolvedPct: number; handedPct: number; autoSent: number; autoRefunds: number; autoRefundTotal: number }
-export interface TestCustomer { id: string; name: string; email: string; orderNumber: string | null }
+export interface TestCustomer { id: string; name: string; email: string; orderNumber: string | null; ordersCount: number; orderStatus: string | null }
 
-export interface TestTurn { role: 'customer' | 'ai'; text: string; result?: SandboxResult }
+export interface TestTurn { role: 'customer' | 'ai'; text: string; result?: SandboxResult & { workflow?: { id: string; name: string } | null } }
 export interface ConversationTestInput { history: TestTurn[]; message: string; channel: 'email' | 'chat'; orderNumber?: string; voice?: BrandVoice }
 
 export type ContactFieldType = 'name' | 'email' | 'order' | 'topic' | 'message' | 'attachments'

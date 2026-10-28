@@ -79,6 +79,8 @@ A fully clickable, front-end-only prototype of an AI-first customer service desk
 | F-64 | Channels refinement: status strip per tab, Email settings + live email preview, numbered Installation steps with collapsed script fallback, offline wording | Admin | 18 |
 | F-65 | Settings refinement: per-tab descriptions, Account rows + password eye + sessions list, Users summary + resend invite + roles card, grouped Integrations with one status each and shared detail header, CSAT tidy | Admin | 18 |
 | F-66 | App-wide consistency sweep: shared header/tabs/save bar/status chips, labels above fields, no overlines/slivers/nested cards, leftover-term clean-up | Admin, Agent | 18 |
+| F-67 | Conversation testing workspace: setup rail, Inbox-style test chat, inspector (confidence vs threshold, decision, sources, order, workflow it would start), scenario cards, run-all scorecard | Admin | 19 |
+| F-68 | CSAT preview: Chat view in the modern widget (conversational survey) + Email view (modern template + survey page), editable Messages template with variables, rating style owned by CSAT for both channels | Admin | 20 |
 
 ## Phases
 - **Phase 1: Foundation + Dashboard.** Gets the Vite/TS project, tokens, shell, login, mock data + API layer, Dashboard and CSAT drawer, and styleguide foundations working. Delivers F-1 to F-18. [requirement](phase1/requirement.md) · [journeys](phase1/journeys.md)
@@ -99,6 +101,8 @@ A fully clickable, front-end-only prototype of an AI-first customer service desk
 - **Phase 16: Workflows build-out.** Templates removed; 8 real workflows (Order tracking, Return, Address change, Cancel, Damaged claim, Wholesale, Hat size, Restock alerts); 14 new step types; draft/publish with versions; run history with funnel and run detail. Delivers F-60 to F-62. [requirement](phase16/requirement.md) · [journeys](phase16/journeys.md)
 - **Phase 17: Guidance refinement.** One organized article library with categories, counts, AI usage, calmer editor and stepped import. Delivers F-63. [requirement](phase17/requirement.md) · [journeys](phase17/journeys.md)
 - **Phase 18: Channels + Settings refinement, app-wide consistency.** Delivers F-64 to F-66. Runs before Phase 16. [requirement](phase18/requirement.md) · [journeys](phase18/journeys.md)
+- **Phase 19: Conversation testing UI.** Delivers F-67. [requirement](phase19/requirement.md) · [journeys](phase19/journeys.md)
+- **Phase 20: CSAT preview — Chat + Email templates.** Delivers F-68. [requirement](phase20/requirement.md) · [journeys](phase20/journeys.md)
 
 ## UI/UX Rules
 - Light mode only. Heritage-craft warmth with modern SaaS usability, not corporate blue.

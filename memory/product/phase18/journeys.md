@@ -45,3 +45,16 @@ Seed: Ava Martinez (Admin). Integrations: Office 365 needs attention (mailbox sy
 ### JRN-215 Tablet and phone
 - steps: View Channels (all tabs) and Settings (all tabs + Office 365 detail) at 1024, 768 and 390.
 - expected: Under 1024 previews move below the settings with a "Show preview" toggle. At 390 settings rows stack, integration tiles are one column, and nothing scrolls sideways. Phone navigation reaches Channels and Settings through More.
+
+### JRN-216 Settings and forms fill the page
+- steps: At 1440 and 1920 open Channels → Chat, Contact form and Email, Settings → Account and CSAT, AI & Workflows → Brand voice, and the Office 365 detail.
+- expected: Settings column plus preview span the full content width, with one 24–32px gap and no empty middle band. The preview's right edge lines up with the status strip. Inputs and textareas in a card share one right edge (Contact form Heading and Intro are the same width, or Heading sits beside Button label). Account's password, notifications and sessions reach the card's right padding. No sideways scroll at 1024, 768 or 390.
+
+### JRN-217 Chat widget matches the reference look
+- superseded: the Home greeting block and conversation styling in [JRN-171] / phase-14 widget journeys
+- steps: Open Channels → Chat preview at 1920×1080 and 1440×900. Go to Conversation, send "test", then "can you help me cancel my order". Thumb-up the AI reply. Scroll up in the thread. Type in the input.
+- expected: Home is a tall frosted warm panel (~720px at 1920×1080, 1:1) with no header bar and no greeting. Cart, Track orders and Close float top-right. Starters are translucent light pills stacked at the bottom-left, ending with "See last conversation", above a light "Ask anything" pill with an attach-image icon and "AI notice • Privacy" below. Conversation switches to a near-white surface with a large radius and soft shadow. Back, Cart, Track orders and Close float as white pills over the list, with a soft top fade. AI text is plain 16px with no bubble, and customer messages are right-aligned light-grey pills. The chosen thumb turns into a filled dark circle. Scrolling up shows a round "scroll to latest" arrow. The input is a floating white pill: "Reply", attach-image icon, and a send arrow once typing. "AI notice • Privacy" sits centred below. The real storefront widget looks the same.
+
+### JRN-218 Inbox reply sits at the end of the thread
+- steps: At 1440 open GB-1076 (Needs you, with an AI draft). Scroll up to the first message. Click the floating "Reply" pill. Click "Write my own", type, then send. Open an AI-handling ticket. Repeat on a phone at 390.
+- expected: On open, the thread is at the bottom with the draft card right after the last message, the same width as the messages, and not a fixed dock. Scrolling up hides it and shows a floating "Reply" pill, which scrolls back to the composer and focuses it. The composer grows in place, and after sending, the new message appears above it. The AI-handling Take over bar also sits at the end of the thread. At 390 the composer stays docked at the bottom.

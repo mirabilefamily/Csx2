@@ -137,8 +137,8 @@ export const getRun = (runId: string) =>
 
 const live = (w: Workflow): Workflow => ({ ...w, ...structuredClone(w.published!) })
 // Active chat workflow whose live trigger matches the message (widget runtime, REQ-757, REQ-841). Drafts never run live.
-export function activeWorkflowFor(text: string): Workflow | null {
-  const w = db.workflows.find((x) => x.status === 'active' && x.published && x.published.trigger.channels.includes('chat') && matchesTrigger(x.published.trigger, text))
+export function activeWorkflowFor(text: string, channel: 'chat' | 'email' = 'chat'): Workflow | null {
+  const w = db.workflows.find((x) => x.status === 'active' && x.published && x.published.trigger.channels.includes(channel) && matchesTrigger(x.published.trigger, text))
   return w ? live(w) : null
 }
 export const activeWorkflowById = (id: string) => { const w = db.workflows.find((x) => x.id === id && x.status === 'active' && x.published); return w ? live(w) : null }

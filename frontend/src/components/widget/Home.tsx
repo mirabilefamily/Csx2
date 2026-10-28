@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, ArrowUp, ImagePlus, ShoppingBag, ThumbsDown, ThumbsUp, Truck, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowUp, ImagePlus, ShoppingBag, ThumbsDown, ThumbsUp, Truck, X } from 'lucide-react'
 import type { WidgetSettings } from '@/types'
 
 // Mock feedback log for thumbs (REQ-787); nothing is sent.
@@ -24,10 +24,10 @@ export function PillInput({ placeholder, disabled, onSend, autoFocus }: { placeh
   const send = () => { if (!text.trim() || disabled) return; onSend(text.trim()); setText('') }
   return (
     <div className="gw-pill-input">
-      <button type="button" className="gw-attach" aria-label="Attach an image" data-testid="widget-attach"><ImagePlus size={18} aria-hidden /></button>
       <label className="gw-sr" htmlFor="gw-composer-input">{placeholder}</label>
       <input id="gw-composer-input" value={text} placeholder={placeholder} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); send() } }} {...(autoFocus ? { 'data-autofocus': '' } : {})} data-testid="widget-composer-input" />
-      <button type="button" className="gw-send" disabled={!text.trim() || disabled} onClick={send} aria-label="Send message" data-testid="widget-send"><ArrowUp size={18} aria-hidden /></button>
+      <button type="button" className="gw-attach" aria-label="Attach an image" data-testid="widget-attach"><ImagePlus size={20} aria-hidden /></button>
+      {text.trim() && <button type="button" className="gw-send" disabled={disabled} onClick={send} aria-label="Send message" data-testid="widget-send"><ArrowUp size={18} aria-hidden /></button>}
     </div>
   )
 }
@@ -35,13 +35,17 @@ export function PillInput({ placeholder, disabled, onSend, autoFocus }: { placeh
 export function HomeView({ s, greeting, hasLast, onStarter, onLast }: { s: WidgetSettings; greeting: string; hasLast: boolean; onStarter: (id: string) => void; onLast: () => void }) {
   return (
     <div className="gw-home" data-testid="widget-home">
-      <p className="gw-home-greeting" data-testid="widget-home-greeting">{greeting}</p>
+      {greeting && <p className="gw-home-greeting" data-testid="widget-home-greeting">{greeting}</p>}
       <div className="gw-starters" role="group" aria-label="Conversation starters" data-testid="widget-starters">
         {s.home.starters.map((st) => <button key={st.id} type="button" className="gw-starter" onClick={() => onStarter(st.id)} data-testid={`widget-starter-${st.id}`}>{st.label}</button>)}
         {hasLast && s.home.showLastConversation && <button type="button" className="gw-starter" onClick={onLast} data-testid="widget-starter-last">See last conversation</button>}
       </div>
     </div>
   )
+}
+
+export function ScrollLatest({ onClick }: { onClick: () => void }) {
+  return <button type="button" className="gw-latest" onClick={onClick} aria-label="Scroll to latest message" data-testid="widget-scroll-latest"><ArrowDown size={18} aria-hidden /></button>
 }
 
 export function Thumbs({ label }: { label: string }) {

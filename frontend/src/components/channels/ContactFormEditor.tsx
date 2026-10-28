@@ -88,14 +88,15 @@ function Loaded({ initial }: { initial: ContactFormSettings }) {
     setSaving(false)
   }
   return (
-    <div className="grid gap-8 pb-24 lg:grid-cols-[minmax(0,640px)_minmax(0,440px)] lg:justify-between" data-testid="contact-form-editor">
+    <div className="grid gap-7 pb-24 lg:grid-cols-[minmax(0,1fr)_clamp(400px,30vw,560px)]" data-testid="contact-form-editor">
       <div className="min-w-0 space-y-4">
         {(
-          <section className={cn(CARD, 'space-y-5')} data-testid="cf-appearance">
-            <div className="max-w-[480px]"><Label htmlFor="cf-heading">Heading</Label><Input id="cf-heading" className="mt-1.5" value={draft.heading} onChange={(e) => setDraft({ ...draft, heading: e.target.value })} data-testid="cf-heading" /></div>
-            <div className="max-w-[75ch]"><Label htmlFor="cf-intro">Intro</Label><Textarea id="cf-intro" className="mt-1.5" value={draft.intro} onChange={(e) => setDraft({ ...draft, intro: e.target.value })} data-testid="cf-intro" /></div>
-            <div className="max-w-[480px]"><Label htmlFor="cf-button">Button label</Label><Input id="cf-button" className="mt-1.5" value={draft.buttonLabel} onChange={(e) => setDraft({ ...draft, buttonLabel: e.target.value })} aria-invalid={!draft.buttonLabel.trim()} data-testid="cf-button-label" />{!draft.buttonLabel.trim() && <p role="alert" className="mt-1.5 text-xs font-medium text-red-700">Add a button label.</p>}</div>
-            <div className="max-w-[75ch]"><Label htmlFor="cf-success">Success message</Label><Textarea id="cf-success" className="mt-1.5" value={draft.successMessage} onChange={(e) => setDraft({ ...draft, successMessage: e.target.value })} data-testid="cf-success" /></div>
+          <section className={cn(CARD, 'cq space-y-5')} data-testid="cf-appearance">
+            <div className="cq-pair"><div><Label htmlFor="cf-heading">Heading</Label><Input id="cf-heading" className="mt-1.5" value={draft.heading} onChange={(e) => setDraft({ ...draft, heading: e.target.value })} data-testid="cf-heading" /></div>
+            <div><Label htmlFor="cf-button">Button label</Label><Input id="cf-button" className="mt-1.5" value={draft.buttonLabel} onChange={(e) => setDraft({ ...draft, buttonLabel: e.target.value })} aria-invalid={!draft.buttonLabel.trim()} data-testid="cf-button-label" />{!draft.buttonLabel.trim() && <p role="alert" className="mt-1.5 text-xs font-medium text-red-700">Add a button label.</p>}</div>
+            </div>
+            <div><Label htmlFor="cf-intro">Intro</Label><Textarea id="cf-intro" className="mt-1.5" value={draft.intro} onChange={(e) => setDraft({ ...draft, intro: e.target.value })} data-testid="cf-intro" /></div>
+            <div><Label htmlFor="cf-success">Success message</Label><Textarea id="cf-success" className="mt-1.5" value={draft.successMessage} onChange={(e) => setDraft({ ...draft, successMessage: e.target.value })} data-testid="cf-success" /></div>
           </section>
         )}
         {(
@@ -122,7 +123,7 @@ function Loaded({ initial }: { initial: ContactFormSettings }) {
 
 export function ContactFormEditor(_: { panel?: 'appearance' | 'preferences' } = {}) {
   const { data, loading, error, reload } = useApi(() => channelsApi.getContactForm(), [])
-  if (loading) return <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_500px]" data-testid="cf-loading"><Skeleton className="h-96 w-full rounded-2xl" /><Skeleton className="h-[560px] w-full rounded-2xl" /></div>
+  if (loading) return <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_clamp(400px,30vw,560px)]" data-testid="cf-loading"><Skeleton className="h-96 w-full rounded-2xl" /><Skeleton className="h-[560px] w-full rounded-2xl" /></div>
   if (error || !data) return <ErrorState title="Contact form didn't load" onRetry={reload} testId="cf-error" />
   return <Loaded initial={data} />
 }

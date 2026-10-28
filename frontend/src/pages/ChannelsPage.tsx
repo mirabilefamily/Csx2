@@ -29,8 +29,8 @@ export default function ChannelsPage() {
     <div className="space-y-6" data-testid="channels-page">
       <PageHeader title="Channels" description="How customers reach you: the chat widget, contact form and email." />
       <PageTabs tabs={TABS} current={tab!} label="Channels sections" testIdPrefix="channels-tab" status={meta.status} />
-      <ChannelStatus tab={tab!} />
-      <div className="[&_input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color])]:max-w-[480px]">
+      {tab !== 'chat' && <ChannelStatus tab={tab!} />}
+      <div>
         {tab === 'chat' && <div data-testid="channels-chat"><WidgetSettingsTab /></div>}
         {tab === 'form' && <div data-testid="channels-form"><ContactFormEditor /></div>}
         {tab === 'email' && <EmailTab />}

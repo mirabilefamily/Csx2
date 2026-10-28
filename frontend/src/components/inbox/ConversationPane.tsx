@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, MoreHorizontal, PanelRight, RotateCcw, SearchX, Sparkles, UserPlus, X } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, MessageCircleReply, MoreHorizontal, PanelRight, RotateCcw, SearchX, Sparkles, UserPlus, X } from 'lucide-react'
 import { WhyBrief } from './WhyBrief'
 import { SummaryPanel, SummaryRail } from './SummaryPanel'
 import { TEAMS } from '@/api/inbox'
@@ -106,14 +106,36 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
     setDetail(data)
   }, [data])
   const seen = useRef<number | null>(null)
+  const pinned = useRef(true)
+  const [replyEl, setReplyEl] = useState<HTMLDivElement | null>(null)
+  const [colEl, setColEl] = useState<HTMLDivElement | null>(null)
+  const [replyInView, setReplyInView] = useState(true)
   useEffect(() => {
     const n = detail?.messages.length
     if (!thread.current || n === undefined) return
-    // Open at the brief/top; only follow new messages after the first render.
-    if (seen.current !== null && n > seen.current) thread.current.scrollTop = thread.current.scrollHeight
-    else if (seen.current === null) thread.current.scrollTop = 0
+    // Open at the latest message (REQ-972) and follow new messages.
+    if (seen.current === null || n > seen.current) { pinned.current = true; thread.current.scrollTop = thread.current.scrollHeight }
     seen.current = n
   }, [detail?.messages.length])
+  // Stay pinned to the bottom while the reply area grows (REQ-971).
+  useEffect(() => {
+    if (!colEl) return
+    const r = new ResizeObserver(() => { const t = thread.current; if (t && pinned.current) t.scrollTop = t.scrollHeight })
+    r.observe(colEl)
+    return () => r.disconnect()
+  }, [colEl])
+  useEffect(() => {
+    if (!replyEl || !thread.current) { setReplyInView(true); return }
+    const io = new IntersectionObserver(([e]) => setReplyInView(e.isIntersecting), { root: thread.current, threshold: 0.15 })
+    io.observe(replyEl)
+    return () => io.disconnect()
+  }, [replyEl])
+  const onThreadScroll = () => { const t = thread.current; if (t) pinned.current = t.scrollHeight - t.scrollTop - t.clientHeight < 40 }
+  const jumpToReply = (mode: ComposerMode = 'reply') => {
+    if (replyEl) { pinned.current = true; replyEl.scrollIntoView({ behavior: 'smooth', block: 'end' }) }
+    if (composer.current) composer.current.focus(mode)
+    else (replyEl?.querySelector<HTMLElement>('[data-testid="draft-approve"]') ?? replyEl?.querySelector<HTMLElement>('button, textarea, [contenteditable="true"]'))?.focus({ preventScroll: true })
+  }
 
   const run = useCallback(async (fn: () => Promise<TicketDetail>, success?: string) => {
     try {
@@ -129,11 +151,11 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
   }, [upsert])
 
   useImperativeHandle(ref, () => ({
-    focusComposer: (mode) => composer.current?.focus(mode),
+    focusComposer: (mode) => jumpToReply(mode),
     closeTicket: () => { if (user && detail) void run(() => inboxApi.updateTicket(ticketId, { status: 'closed' }, user), `${ticketId} closed`) },
     insertReply: (text) => { setWriteOwn(true); setTimeout(() => composer.current?.insertText(text), 0) },
     approveDraft: () => { const d = detail?.drafts[0]; if (d) approveRef.current?.(d.id) },
-  }), [user, detail, run, ticketId])
+  }), [user, detail, run, ticketId, replyEl]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <div className="flex-1 space-y-4 p-6" data-testid="conversation-loading"><Skeleton className="h-6 w-2/3" /><Skeleton className="h-4 w-1/3" />{[0, 1, 2].map((i) => <Skeleton key={i} className="h-24 w-full" />)}</div>
   if (error) return <div className="flex-1"><ErrorState title="This conversation didn't load" onRetry={reload} testId="conversation-error" /></div>
@@ -240,6 +262,45 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
   const onSend = (html: string, isInternal: boolean, draftId?: string) => (user ? run(() => inboxApi.sendMessage(ticketId, { html, isInternal, draftId }, user), isInternal ? 'Note added' : 'Reply sent') : Promise.resolve(false))
   const toggleFull = () => setFull((f) => { sessionStorage.setItem(FULL_KEY, f ? '0' : '1'); return !f })
 
+  const inline = !isPhone
+  const replyArea = aiBusy ? (
+    <div className={cn('flex flex-wrap items-center gap-3 bg-white px-4 py-3', inline ? 'rounded-lg border border-border' : 'border-t border-border md:px-6')} data-testid="ai-handling-banner">
+      <Sparkles className="h-4 w-4 text-ink-muted" aria-hidden />
+      <p className="flex-1 text-[13px] text-ink" data-testid="ai-handling-text">{ticket.status === 'grok_handling' ? 'Grokbot' : 'AI'} is handling this conversation. <span className="text-ink-muted">{AI_STATE_LABEL[ai!]}</span></p>
+      <Button size="sm" onClick={takeOver} data-testid="ai-banner-take-over">Take over</Button>
+    </div>
+  ) : draft && !writeOwn ? (
+    <div className={inline ? undefined : cn('shrink-0 overflow-hidden border-t border-border bg-background py-4 max-sm:pb-[calc(12px+env(safe-area-inset-bottom))] max-sm:pt-3', GUTTER)} data-testid="draft-dock"><div className={inline ? undefined : COL}>
+    <DraftCard
+      draft={draft}
+      titles={detail.guidanceTitles}
+      busy={busyDraft === draft.id}
+      onApprove={(then) => approve(draft.id, then)}
+      onEdit={() => { setWriteOwn(true); setTimeout(() => composer.current?.loadDraft(draft.body, draft.id), 0) }}
+      onDiscard={async () => {
+        const ok = await run(() => inboxApi.discardDraft(ticketId, draft.id))
+        if (ok) toast('Draft discarded', { action: { label: 'Undo', onClick: () => void run(() => inboxApi.restoreDraft(draft), 'Draft restored') } })
+      }}
+      onWriteOwn={() => { setWriteOwn(true); setTimeout(() => composer.current?.focus('reply'), 0) }}
+    />
+    </div></div>
+  ) : (
+    <Composer
+      ref={composer}
+      inline={inline}
+      onDraftChange={setEditingDraft}
+      to={ticket.customer.email}
+      onResolve={() => update({ status: 'resolved' })}
+      onHandBack={(html, draftId) => (user ? run(() => inboxApi.handBack(ticketId, user, { html, draftId }), 'Sent and handed back to AI') : Promise.resolve(false))}
+      onSend={onSend}
+      extra={draft ? (
+        <button type="button" onClick={() => setWriteOwn(false)} className="min-h-8 rounded text-[13px] font-medium text-ink-muted underline-offset-2 hover:text-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11" data-testid="composer-use-draft">Use AI draft</button>
+      ) : (
+        <Button size="sm" variant="outline" loading={drafting} onClick={async () => { setDrafting(true); const ok = await run(() => inboxApi.generateDraft(ticketId), 'Draft ready'); setDrafting(false); if (ok) setWriteOwn(false) }} data-testid="composer-ask-draft"><Sparkles aria-hidden /> Ask AI to draft</Button>
+      )}
+    />
+  )
+
   const panelBody = (
     <>
       <SummaryPanel d={{ ...detail, ticket }} returns={loop.data} full={full} onToggle={toggleFull} onCollapse={isDesktop() ? togglePanel : undefined} onClose={isDesktop() ? undefined : () => setDetailsOpen(false)} />
@@ -297,8 +358,9 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
         )}
         {detail.fraudAlert && <FraudBanner a={detail.fraudAlert} />}
         <AiRepliedBanner d={{ ...detail, ticket }} />
-        <div ref={thread} className={cn('min-h-0 flex-1 overflow-y-auto bg-background py-6 max-sm:py-4', GUTTER)} data-testid="thread-scroll">
-          <div className={COL} data-testid="thread-column">
+        <div className="relative flex min-h-0 flex-1 flex-col" data-testid="thread-wrap">
+        <div ref={thread} onScroll={onThreadScroll} className={cn('min-h-0 flex-1 overflow-y-auto bg-background py-6 max-sm:py-4', GUTTER)} data-testid="thread-scroll">
+          <div ref={setColEl} className={COL} data-testid="thread-column">
           <WhyBrief key={ticket.status} d={{ ...detail, ticket }} />
           <ol className="-my-2 max-sm:-my-1.5" aria-label="Messages" data-testid="message-thread">
             {visible.map((m, i) => (
@@ -308,44 +370,16 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
               </li>
             ))}
           </ol>
+          {inline && <div ref={setReplyEl} className="mt-6 scroll-mb-6" data-testid="reply-area">{replyArea}</div>}
           </div>
         </div>
-        {aiBusy ? (
-          <div className="flex flex-wrap items-center gap-3 border-t border-border bg-white px-4 py-3 md:px-6" data-testid="ai-handling-banner">
-            <Sparkles className="h-4 w-4 text-ink-muted" aria-hidden />
-            <p className="flex-1 text-[13px] text-ink" data-testid="ai-handling-text">{ticket.status === 'grok_handling' ? 'Grokbot' : 'AI'} is handling this conversation. <span className="text-ink-muted">{AI_STATE_LABEL[ai!]}</span></p>
-            <Button size="sm" onClick={takeOver} data-testid="ai-banner-take-over">Take over</Button>
-          </div>
-        ) : draft && !writeOwn ? (
-          <div className={cn('shrink-0 overflow-hidden border-t border-border bg-background py-4 max-sm:pb-[calc(12px+env(safe-area-inset-bottom))] max-sm:pt-3', GUTTER)} data-testid="draft-dock"><div className={COL}>
-          <DraftCard
-            draft={draft}
-            titles={detail.guidanceTitles}
-            busy={busyDraft === draft.id}
-            onApprove={(then) => approve(draft.id, then)}
-            onEdit={() => { setWriteOwn(true); setTimeout(() => composer.current?.loadDraft(draft.body, draft.id), 0) }}
-            onDiscard={async () => {
-              const ok = await run(() => inboxApi.discardDraft(ticketId, draft.id))
-              if (ok) toast('Draft discarded', { action: { label: 'Undo', onClick: () => void run(() => inboxApi.restoreDraft(draft), 'Draft restored') } })
-            }}
-            onWriteOwn={() => { setWriteOwn(true); setTimeout(() => composer.current?.focus('reply'), 0) }}
-          />
-          </div></div>
-        ) : (
-          <Composer
-            ref={composer}
-            onDraftChange={setEditingDraft}
-            to={ticket.customer.email}
-            onResolve={() => update({ status: 'resolved' })}
-            onHandBack={(html, draftId) => (user ? run(() => inboxApi.handBack(ticketId, user, { html, draftId }), 'Sent and handed back to AI') : Promise.resolve(false))}
-            onSend={onSend}
-            extra={draft ? (
-              <button type="button" onClick={() => setWriteOwn(false)} className="min-h-8 rounded text-[13px] font-medium text-ink-muted underline-offset-2 hover:text-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11" data-testid="composer-use-draft">Use AI draft</button>
-            ) : (
-              <Button size="sm" variant="outline" loading={drafting} onClick={async () => { setDrafting(true); const ok = await run(() => inboxApi.generateDraft(ticketId), 'Draft ready'); setDrafting(false); if (ok) setWriteOwn(false) }} data-testid="composer-ask-draft"><Sparkles aria-hidden /> Ask AI to draft</Button>
-            )}
-          />
+        {inline && !replyInView && (
+          <button type="button" onClick={() => jumpToReply()} className={cn('absolute bottom-5 left-1/2 z-10 inline-flex h-9 -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-white px-4 text-[13px] font-medium text-ink shadow-popover transition-[background-color,transform] duration-150 animate-in fade-in slide-in-from-bottom-1 hover:-translate-y-0.5 hover:bg-surface-muted', focusRing)} data-testid="jump-to-reply">
+            <MessageCircleReply className="h-4 w-4" aria-hidden />Reply
+          </button>
         )}
+        </div>
+        {!inline && replyArea}
       </section>
       <aside
         aria-label="Ticket details"

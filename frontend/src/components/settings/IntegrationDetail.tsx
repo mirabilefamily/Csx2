@@ -107,7 +107,7 @@ function Header({ i }: { i: IntegrationStatus }) {
 }
 
 function Panel({ children }: { children: ReactNode }) {
-  return <div className="divide-y divide-border/70 rounded-2xl bg-surface px-6 py-6 shadow-card ring-1 ring-black/[0.04] max-sm:px-4">{children}</div>
+  return <div className="cq divide-y divide-border/70 rounded-2xl bg-surface px-6 py-6 shadow-card ring-1 ring-black/[0.04] max-sm:px-4">{children}</div>
 }
 
 function WidgetSummary({ w }: { w: NonNullable<IntegrationStatus['widget']> }) {

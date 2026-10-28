@@ -41,7 +41,7 @@ function VoiceField({ id, label, hint, value, onChange, rows, bare }: { id: Key;
     <div className="max-w-[640px]">
       {bare ? <Label htmlFor={`bv-${id}`} className="sr-only">{label}</Label> : <div className="flex items-baseline justify-between gap-3"><Label htmlFor={`bv-${id}`}>{label}</Label><Counter id={id} value={value} max={max} /></div>}
       {hint && <p className="mt-0.5 text-[13px] text-ink-muted">{hint}</p>}
-      <Field id={`bv-${id}`} rows={rows} className={cn('mt-2', rows ? 'min-h-[96px]' : 'max-w-[480px]')} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement & HTMLTextAreaElement>) => onChange(e.target.value)} aria-invalid={over} aria-describedby={`${id}-count${over ? ` bv-${id}-error` : ''}`} data-testid={`bv-${id}`} />
+      <Field id={`bv-${id}`} rows={rows} className={cn('mt-2', rows && 'min-h-[96px]')} value={value} onChange={(e: React.ChangeEvent<HTMLInputElement & HTMLTextAreaElement>) => onChange(e.target.value)} aria-invalid={over} aria-describedby={`${id}-count${over ? ` bv-${id}-error` : ''}`} data-testid={`bv-${id}`} />
       {over && <p id={`bv-${id}-error`} role="alert" className="mt-1.5 text-xs font-medium text-red-700" data-testid={`bv-error-${id}`}>Keep this under {max.toLocaleString()} characters.</p>}
     </div>
   )
@@ -63,7 +63,7 @@ function ChipInput({ id, label, value, onChange, tone }: { id: 'phrasesToUse' | 
           </li>
         ))}
       </ul>
-      <Input id={`bv-${id}-input`} className="mt-2 max-w-[480px]" placeholder={chips.length >= MAX_PHRASES ? `Limit of ${MAX_PHRASES} phrases reached` : 'Type a phrase and press Enter'} disabled={chips.length >= MAX_PHRASES} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add() } }} onBlur={add} data-testid={`bv-${id}-input`} />
+      <Input id={`bv-${id}-input`} className="mt-2" placeholder={chips.length >= MAX_PHRASES ? `Limit of ${MAX_PHRASES} phrases reached` : 'Type a phrase and press Enter'} disabled={chips.length >= MAX_PHRASES} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add() } }} onBlur={add} data-testid={`bv-${id}-input`} />
     </div>
   )
 }
@@ -119,7 +119,7 @@ function Loaded({ initial }: { initial: BrandVoice }) {
   const off = !draft.enabled && 'opacity-60'
   const side = <div className="space-y-4"><Preview draft={draft} saved={!dirty} /><HowItWorks /></div>
   return (
-    <div className="grid gap-6 pb-6 lg:grid-cols-[minmax(0,720px)_minmax(320px,420px)] lg:justify-between" data-testid="brand-voice-tab">
+    <div className="grid gap-7 pb-6 lg:grid-cols-[minmax(0,1fr)_clamp(400px,30vw,560px)]" data-testid="brand-voice-tab">
       <div className="min-w-0 space-y-4">
         <AiCard title="Identity" description={`One voice for every AI reply. Last saved ${timeAgo(saved.updatedAt)}.`} testId="bv-card-identity"
           action={<label className="flex min-h-11 items-center gap-2.5 text-sm font-medium text-ink"><Switch checked={draft.enabled} onCheckedChange={(v) => set({ enabled: v })} data-testid="bv-enabled" aria-label="Voice on" />Voice on</label>}>
@@ -164,7 +164,7 @@ export function BrandVoiceTab() {
   const { data, loading, error, reload } = useApi(() => aiApi.getBrandVoice(), [])
   const [key, setKey] = useState(0)
   useEffect(() => setKey((k) => k + 1), [data])
-  if (loading) return <div className="grid gap-6 lg:grid-cols-[minmax(0,720px)_380px] lg:justify-between" data-testid="bv-loading"><div className="space-y-4"><Skeleton className="h-40 w-full rounded-2xl" /><Skeleton className="h-96 w-full rounded-2xl" /></div><Skeleton className="h-80 w-full rounded-2xl" /></div>
+  if (loading) return <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_clamp(400px,30vw,560px)]" data-testid="bv-loading"><div className="space-y-4"><Skeleton className="h-40 w-full rounded-2xl" /><Skeleton className="h-96 w-full rounded-2xl" /></div><Skeleton className="h-80 w-full rounded-2xl" /></div>
   if (error || !data) return <ErrorState title="Brand voice didn't load" onRetry={reload} testId="bv-error" />
   return <Loaded key={key} initial={data} />
 }

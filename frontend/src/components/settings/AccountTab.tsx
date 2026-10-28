@@ -19,7 +19,7 @@ function PasswordField({ id, label, auto, value, error, onChange }: { id: 'curre
   return (
     <div>
       <Label htmlFor={`acct-${id}`}>{label}</Label>
-      <div className="relative mt-1.5 max-w-[480px]">
+      <div className="relative mt-1.5">
         <Input id={`acct-${id}`} type={show ? 'text' : 'password'} autoComplete={auto} className="pr-12" value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={!!error} aria-describedby={error ? `acct-${id}-error` : undefined} data-testid={`account-password-${id}`} />
         <button type="button" onClick={() => setShow(!show)} aria-label={show ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`} aria-pressed={show} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-lg text-ink-subtle hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`account-password-${id}-eye`}>
           {show ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
@@ -51,8 +51,10 @@ function Password() {
   return (
     <form onSubmit={submit} noValidate className="space-y-4" data-testid="account-password-form">
       {field('current', 'Current password', 'current-password')}
-      {field('next', 'New password', 'new-password')}
-      {field('confirm', 'Confirm new password', 'new-password')}
+      <div className="cq-pair">
+        {field('next', 'New password', 'new-password')}
+        {field('confirm', 'Confirm new password', 'new-password')}
+      </div>
       <Button type="submit" loading={busy} data-testid="account-password-submit">Change password</Button>
     </form>
   )
@@ -64,7 +66,7 @@ function Notifications({ userId }: { userId: string }) {
   const { data, loading, error, reload } = useApi(() => accountApi.getNotificationPrefs(userId), [userId])
   const [p, setP] = useState<NotificationPrefs | null>(null)
   useEffect(() => setP(data ?? null), [data])
-  if (loading) return <Skeleton className="h-28 w-full max-w-[480px]" />
+  if (loading) return <Skeleton className="h-28 w-full" />
   if (error || !p) return <ErrorState compact title="Notification settings didn't load" onRetry={reload} testId="account-notifs-error" />
   const toggle = async (k: keyof NotificationPrefs, v: boolean) => {
     const next = { ...p, [k]: v }
@@ -72,7 +74,7 @@ function Notifications({ userId }: { userId: string }) {
     try { await accountApi.saveNotificationPrefs(userId, next); toast.success('Notification settings saved') } catch { setP(p); toast.error("Couldn't save. Try again.") }
   }
   return (
-    <ul className="max-w-[480px] divide-y divide-border rounded-xl border border-border" data-testid="account-notifs">
+    <ul className="divide-y divide-border rounded-xl border border-border" data-testid="account-notifs">
       {NOTIFS.map(([k, l]) => (
         <li key={k} className="flex min-h-12 items-center justify-between gap-3 px-4">
           <span className="text-sm text-ink" id={`notif-${k}`}>Email me when {l.charAt(0).toLowerCase() + l.slice(1)}</span>
@@ -96,7 +98,7 @@ export function AccountTab() {
   const list = (sessions.data ?? []).filter((s) => !ended || s.current)
   const others = list.filter((s) => !s.current).length
   return (
-    <div className="divide-y divide-border/70 rounded-2xl bg-surface px-6 py-6 shadow-card ring-1 ring-black/[0.04] max-sm:px-4" data-testid="account-tab">
+    <div className="cq divide-y divide-border/70 rounded-2xl bg-surface px-6 py-6 shadow-card ring-1 ring-black/[0.04] max-sm:px-4" data-testid="account-tab">
       <FormSection title="Profile" description="How you appear to the team and in internal notes." testId="account-section-profile">
         <div className="flex items-center gap-4" data-testid="account-profile">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-tobacco-100 text-lg font-semibold text-tobacco-800" aria-hidden>{initials}</span>
@@ -109,8 +111,8 @@ export function AccountTab() {
       <FormSection title="Change password" description="At least 8 characters." testId="account-section-password"><Password /></FormSection>
       <FormSection title="Notifications" description="Email alerts for things that need you." testId="account-section-notifications"><Notifications userId={user.id} /></FormSection>
       <FormSection title="Sessions" description="Where you're signed in. Sign out everywhere except this browser." testId="account-section-sessions">
-        {sessions.loading && !sessions.data ? <Skeleton className="h-36 w-full max-w-[480px]" /> : (
-          <ul className="max-w-[480px] divide-y divide-border rounded-xl border border-border" data-testid="account-sessions">
+        {sessions.loading && !sessions.data ? <Skeleton className="h-36 w-full" /> : (
+          <ul className="divide-y divide-border rounded-xl border border-border" data-testid="account-sessions">
             {list.map((s) => (
               <li key={s.id} className="flex min-h-12 items-center gap-3 px-4 py-2.5 text-sm" data-testid={`account-session-${s.id}`}>
                 <MonitorSmartphone className="h-4 w-4 shrink-0 text-ink-subtle" aria-hidden />

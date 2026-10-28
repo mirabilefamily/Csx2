@@ -42,6 +42,7 @@ await step('widths', async () => {
 
 await p.setViewportSize({ width: 1440, height: 900 })
 await step('flyout', async () => {
+  log('SKIP flyout: superseded (views flyout replaced by the docked views panel in phase 11)'); return
   await go('/inbox')
   await p.click('[data-testid="views-panel-toggle"]')
   log('flyout open:', await p.locator('[data-testid="views-flyout"]').isVisible())
@@ -84,6 +85,8 @@ await step('handover cases', async () => {
 
 await step('composer + ai', async () => {
   await go('/inbox/GB-1076')
+  await p.click('[data-testid="draft-write-own"]')
+  log('REQ-971 composer inside thread-column:', await p.evaluate(() => document.querySelector('[data-testid="thread-column"]').contains(document.querySelector('[data-testid="composer"]'))))
   log('send disabled empty:', await p.locator('[data-testid="composer-send"]').isDisabled())
   log('REQ-856 macro search bar:', await p.locator('[data-testid="composer-macro-search"]').count(), '| toolbar:', (await p.locator('[data-testid="composer"] button[aria-label], [data-testid="composer-link"]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')))).join(','))
   await p.keyboard.press('Escape')
@@ -96,6 +99,7 @@ await step('composer + ai', async () => {
 })
 
 await step('header controls', async () => {
+  log('SKIP header controls: superseded (breadcrumb/team/snooze moved into the header More menu in phase 11)'); return
   await go('/inbox/GB-1076')
   log('breadcrumb:', await txt(p, '[data-testid="conversation-breadcrumb"]'))
   log('team:', await txt(p, '[data-testid="header-team"]'))
@@ -107,6 +111,7 @@ await step('header controls', async () => {
 })
 
 await step('refund', async () => {
+  log('SKIP refund: superseded (order actions moved into full details; covered by customer-panel-check)'); return
   await go('/inbox/GB-1076')
   const btn = p.locator('[data-testid^="order-refund-"]').first()
   const oid = (await btn.getAttribute('data-testid')).replace('order-refund-', '')
@@ -127,8 +132,10 @@ await step('refund', async () => {
     log(`${k}:`, await txt(p, '[data-testid="order-action-confirmation"]'))
     await p.click('[data-testid="order-action-done"]')
   }
+})
 
 await step('tags', async () => {
+  log('SKIP tags: superseded (tag editing moved into full details in phase 11)'); return
   await go('/inbox/GB-1076')
   await p.click('[data-testid="ticket-tag-add"]')
   await p.fill('[data-testid="ticket-tag-input"]', 'vip')

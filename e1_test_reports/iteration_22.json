@@ -1,0 +1,68 @@
+{
+  "iteration": 22,
+  "phase": "18-followups",
+  "scope": "JRN-216, JRN-217 (REQ-956..970). JRN-218 (REQ-971..975) skipped per briefing - not built.",
+  "passed": 5,
+  "failed": 0,
+  "retest_needed": false,
+  "bugs": [],
+  "action_items": [
+    {
+      "type": "environment_note",
+      "severity": "low",
+      "detail": "Ownership/lock of /app: no stale ownership found. No lock or ownership file exists under /app or /app/.emergent (only markers .bootstrap-complete and .restore-complete), no file contains the 'owned by the regression harness' message, and /app/e1_test_reports was writable. This run created no lock, so there was nothing to release. If the builder still sees '/app is owned by the regression harness', the refusal comes from outside the repo (its tool layer), not from anything left in /app."
+    },
+    {
+      "type": "improvement",
+      "severity": "low",
+      "detail": "At 1920x1080 the 720px widget panel renders at scale 1, but on Channels > Chat its bottom sits at y~1301, below the fold, so users must scroll to see the whole widget. The criterion is met; this is a layout polish point."
+    },
+    {
+      "type": "improvement",
+      "severity": "low",
+      "detail": "The scroll-to-latest arrow (round, radius 999px) works, but it is low-contrast against the white conversation surface (see the p18-jrn217-conversation-look scrolled-up screenshot)."
+    },
+    {
+      "type": "note",
+      "severity": "low",
+      "detail": "No backend in this prototype (mock frontend only), so there is no backend lane. Console errors were only Vite dev-server WebSocket noise."
+    }
+  ],
+  "checks": [
+    {
+      "criterion": "JRN-216 Settings and forms fill the page",
+      "name": "p18-jrn216-fill-page",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Chat/Form/Email/CSAT/Brand voice: @1440 settings 272-948, preview 976-1408 (w432), gap 28, status strip 272-1408; @1920 settings 288-1284, preview 1312-1872 (w560), gap 28, strip right 1872. Contact form @1440 Heading R924 = Intro R924 (stacked); @1920 Heading sits beside Button label, Intro R1260 = Button label R1260. Account notifs/sessions/password right edge = card inner padding (1384@1440, 1848@1920). Office 365 detail controls reach 1408/1872. No horizontal scroll at 1024/768/390 on all 7 pages."
+    },
+    {
+      "criterion": "JRN-217a Taller chat preview",
+      "name": "p18-jrn217-preview-home",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "1920x1080: data-scale 1, panel 400x720. 1440x900: scale 0.95, panel 682px rendered (~718 native, >= min(680, 788)). Caption 'Uses the same code shoppers get...' top 1429 > stage bottom 1405 (1920) and 693 > 669 (1440): no overlap."
+    },
+    {
+      "criterion": "JRN-217b Widget Home look",
+      "name": "p18-jrn217-preview-home",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Panel bg #E8E3D8 @0.88 + backdrop blur(24px), radius 36px, no header, no greeting. Cart/Track orders/Close top 15px, right side. Starters (Returns Info, Friday Drops Info, Where is my order?, Can I cancel / edit my order?, Wholesale Inquiry, See last conversation) all left 19px, rgba(255,255,255,.45), 16px, 42px tall. 'Ask anything' with attach icon; 'AI notice • Privacy' centred. 'See last conversation' opened a 2-message earlier thread."
+    },
+    {
+      "criterion": "JRN-217c Widget Conversation look",
+      "name": "p18-jrn217-conversation-look",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Send arrow absent until typing. Conversation surface rgb(255,255,255), radius 36px; Back/Cart/Track/Close white floating at top 16px; AI text 16px, transparent bg, no border; customer pill #F2F3F5, radius 22px, right gap 20px; thumbs-up -> bg rgb(31,29,26) with white icon; placeholder 'Reply'. After scrolling up, the round scroll-to-latest arrow appeared and hid on click. Order starter -> 'Happy to help you track your order.' + 'What email did you use for your order?'. Greeting hint text matches exactly; a filled greeting shows above the starters."
+    },
+    {
+      "criterion": "JRN-217c Widget Conversation look - 390 full-screen (ingress preview URL)",
+      "name": "p18-jrn217-phone-storefront",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "https://goorin-inbox.preview.emergentagent.com/widget-demo @390x844: full-screen panel; Home frosted #E8E3D8 bg, no header, translucent starters, floating bar, 'Ask anything', no hscroll; Conversation white surface, AI 16px, customer #F2F3F5."
+    }
+  ]
+}

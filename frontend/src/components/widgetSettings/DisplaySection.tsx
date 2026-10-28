@@ -36,7 +36,7 @@ export function DisplaySection({ draft, update }: { draft: WidgetSettings; updat
     <>
       <Segmented label="Show on" testId="ws-show-on" value={d.mode} onChange={(v) => update((x) => { x.display.mode = v })} options={[{ id: 'all', label: 'All pages' }, { id: 'page_types', label: 'Selected page types' }]} />
       {d.mode === 'page_types' && <PageTypePicker value={d.pageTypes} onChange={(v) => update((x) => { x.display.pageTypes = v })} testId="ws-page-types" />}
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="cq-pair">
         <PatternChips label="Include URLs" testId="ws-url-include" value={d.urlInclude} placeholder="/products/*" onChange={(v) => update((x) => { x.display.urlInclude = v })} />
         <PatternChips label="Exclude URLs" testId="ws-url-exclude" value={d.urlExclude} placeholder="/pages/wholesale" onChange={(v) => update((x) => { x.display.urlExclude = v })} />
       </div>

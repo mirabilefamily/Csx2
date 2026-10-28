@@ -66,7 +66,7 @@ await step('JRN-210 settings + account', async () => {
   for (const [k, v] of Object.entries(want)) { await spa(p, `/settings/${k}`); expect(`description ${k}`, (await t(p, '[data-testid="settings-tab-description"]')) === v) }
   await spa(p, '/settings/account')
   const xs = await Promise.all(['current', 'next', 'confirm'].map((k) => p.locator(`[data-testid="account-password-${k}"]`).boundingBox().then((r) => Math.round(r.x))))
-  const lx = await p.locator('label[for="acct-current"]').boundingBox(); expect('aligned fields + label above', new Set(xs).size === 1 && lx.y < (await p.locator('[data-testid="account-password-current"]').boundingBox()).y, xs.join(','))
+  const lx = await p.locator('label[for="acct-current"]').boundingBox(); expect('aligned fields + label above', xs[0] === xs[1] && xs[2] > xs[1] && lx.y < (await p.locator('[data-testid="account-password-current"]').boundingBox()).y, xs.join(','))
   await p.fill('[data-testid="account-password-current"]', 'goorin123'); await p.click('[data-testid="account-password-current-eye"]')
   expect('eye shows', (await p.getAttribute('[data-testid="account-password-current"]', 'type')) === 'text'); await p.click('[data-testid="account-password-current-eye"]'); expect('eye hides', (await p.getAttribute('[data-testid="account-password-current"]', 'type')) === 'password')
   await p.fill('[data-testid="account-password-next"]', 'newpass123'); await p.fill('[data-testid="account-password-confirm"]', 'other123'); await p.click('[data-testid="account-password-submit"]'); await settle(p)
@@ -146,6 +146,119 @@ await step('JRN-214 DOM sweep', async () => {
 await step('JRN-214 agent no-access', async () => {
   const a = await page(1440, 900); await a.click('[data-testid="user-menu-trigger"]'); await a.click('[data-testid="role-toggle-agent"]'); await a.keyboard.press('Escape')
   await spa(a, '/settings/account'); expect('agent no access', (await a.locator('text=/access/i').count()) > 0)
+})
+await step('JRN-216 fill the page', async () => {
+  const SCREENS = [['/channels/chat', '[data-testid="widget-settings-form"]', '[data-testid="channels-preview"]', '[data-testid="channels-page"]', '[data-testid="ws-section-branding"]'], ['/channels/form', '[data-testid="contact-form-editor"] > div:first-child', '[data-testid="cf-preview-pane"]', '[data-testid="channels-status-form"]', '[data-testid="cf-appearance"]'], ['/channels/email', '[data-testid="email-settings"]', '[data-testid="email-preview-pane"]', '[data-testid="channels-status-email"]', '[data-testid="email-settings"]'], ['/settings/csat', '[data-testid="csat-settings-tab"] > div:first-child', '[data-testid="csat-preview-pane"]', '[data-testid="settings-tab-row"]', null], ['/ai/voice', '[data-testid="brand-voice-tab"] > div:first-child', '[data-testid="bv-rail"]', '[data-testid="ai-tab-row"]', null]]
+  for (const w of [1440, 1920]) {
+    const q = await page(w, 1000)
+    for (const [r, set, pv, strip, card] of SCREENS) {
+      await spa(q, r); await q.waitForSelector(pv); await settle(q, 400)
+      if (card === '[data-testid="ws-section-branding"]') { const bt = q.locator(`${card} button`).first(); if ((await bt.getAttribute('aria-expanded')) !== 'true') await bt.click(); await settle(q, 300) }
+      const [a, c, s] = await Promise.all([set, pv, strip].map((x) => q.locator(x).first().boundingBox()))
+      const gap = Math.round(c.x - (a.x + a.width)), right = Math.round(c.x + c.width - (s.x + s.width))
+      const rights = card ? await q.locator(card).first().evaluate((el) => { const fs = [...el.querySelectorAll('input:not([type=checkbox]):not([type=color]):not([type=hidden]):not([type=file]):not([type=radio]), textarea')].filter((f) => f.offsetParent); const cardR = el.getBoundingClientRect().right; const rs = fs.map((f) => Math.round(f.getBoundingClientRect().right)); return { rs, cardR: Math.round(cardR) } }) : { rs: [], cardR: 0 }
+      const maxR = Math.max(...rights.rs, 0), aligned = rights.rs.every((x) => Math.abs(x - maxR) <= 2 || x < maxR - 100)
+      const paired = rights.rs.filter((x) => Math.abs(x - maxR) > 2).length
+      expect(`${w} ${r} gap ${gap} ≤32, preview right ${right} ±2, fields share right edge`, gap >= 0 && gap <= 32 && Math.abs(right) <= 2 && (!card || rights.rs.length === 0 || (aligned && maxR >= rights.cardR - 64)), `paired-left:${paired} fields:${rights.rs.length}`)
+    }
+    for (const r of ['/settings/account', '/settings/integrations/outlook']) {
+      await spa(q, r); await settle(q, 600)
+      const ok = await q.evaluate(() => { const card = document.querySelector('[data-testid="account-tab"]') ?? document.querySelector('[data-testid="integration-section-credentials"]')?.parentElement; if (!card) return 'no card'; const cr = card.getBoundingClientRect().right; const items = [...card.querySelectorAll('section > div:last-child')]; return items.map((d) => Math.round(cr - d.getBoundingClientRect().right)).join(',') })
+      expect(`${w} ${r} controls reach card padding`, String(ok).split(',').every((x) => Number(x) <= 40), ok)
+    }
+    if (w === 1440) { await spa(q, '/settings/account'); const [n, c] = await Promise.all(['next', 'confirm'].map((k) => q.locator(`[data-testid="account-password-${k}"]`).boundingBox())); expect('1440 new + confirm side by side', Math.abs(n.y - c.y) < 2 && c.x > n.x, `${Math.round(n.x)},${Math.round(c.x)}`) }
+    await q.context().close()
+  }
+})
+await step('JRN-217 chat preview fits the viewport', async () => {
+  for (const [w, h] of [[1440, 900], [1920, 1080]]) {
+    const q = await page(w, h); await spa(q, '/channels/chat'); await q.waitForSelector('[data-testid="preview-stage"]'); await settle(q, 600)
+    for (const v of ['home', 'active_chat', 'order_tracking']) {
+      await q.click(`[data-testid="preview-view-${v}"]`); await settle(q, 500)
+      if (v === 'home') expect(`${w} REQ-970 preview shows "See last conversation" last`, (await q.locator('[data-testid="channels-preview"] [data-testid^="widget-starter-"]').last().innerText()) === 'See last conversation')
+      const scale = Number(await q.locator('[data-testid="preview-stage"]').getAttribute('data-scale'))
+      const [pb, lb, sb, cb] = await Promise.all(['widget-panel', 'widget-launcher', 'preview-surface', 'preview-caption'].map((x) => q.locator(`[data-testid="channels-preview"] [data-testid="${x}"]`).first().boundingBox()))
+      const sy = await q.evaluate(() => scrollY)
+      const scrolls = await q.locator('[data-testid="preview-surface"]').evaluate((e) => e.scrollHeight > e.clientHeight + 1)
+      const visible = pb.y >= sb.y - 1 && lb.y + lb.height <= sb.y + sb.height + 1 && lb.y + lb.height <= h
+      expect(`${w}×${h} ${v} canvas + caption end ≥24px above fold (no page scroll)`, sy === 0 && sb.y + sb.height <= h - 24 && cb.y + cb.height <= h - 24 + 1 && cb.y >= sb.y + sb.height - 1, `canvas ${Math.round(sb.y)}-${Math.round(sb.y + sb.height)} caption→${Math.round(cb.y + cb.height)}`)
+      expect(`${w}×${h} ${v} scale ${scale} ≥0.85, ${w === 1920 ? 'whole widget + launcher visible' : 'visible or canvas scrolls'}`, scale >= 0.85 && (w === 1920 ? visible && !scrolls : visible || scrolls), `panel ${Math.round(pb.y)}-${Math.round(pb.y + pb.height)} launcher→${Math.round(lb.y + lb.height)} scrolls ${scrolls}`)
+    }
+    await q.context().close()
+  }
+  const wq = await page(1440, 900); await wq.goto(`${BASE}/widget-demo`); await settle(wq, 1500); await wq.click('[data-testid="widget-launcher"]'); await settle(wq, 600)
+  const look = await wq.locator('[data-testid="widget-panel"]').evaluate((e) => { const cs = getComputedStyle(e); return { bg: cs.backgroundColor, blur: cs.backdropFilter, r: parseFloat(cs.borderTopLeftRadius), bw: cs.borderTopWidth, h: Math.round(e.getBoundingClientRect().height) } })
+  expect('REQ-962 Home frosted warm panel, radius ≥36, no border', look.bg !== 'rgb(255, 255, 255)' && look.blur.includes('blur') && look.r >= 36 && look.bw === '0px', JSON.stringify(look))
+  expect('REQ-968 no greeting by default, no Back on Home', (await wq.locator('[data-testid="widget-home-greeting"]').count()) === 0 && (await wq.locator('[data-testid="widget-back"]').count()) === 0)
+  const [stb, inb, bodyb] = await Promise.all(['widget-starters', 'widget-composer-input', 'widget-body'].map((x) => wq.locator(`[data-testid="${x}"]`).boundingBox()))
+  expect('REQ-968 starters at the bottom, above input', stb.y > bodyb.y + bodyb.height * 0.4 && stb.y + stb.height < inb.y, `${Math.round(stb.y)}-${Math.round(stb.y + stb.height)} / input ${Math.round(inb.y)}`)
+  const sp = await wq.locator('[data-testid^="widget-starter-"]').evaluateAll((els) => els.map((e) => { const cs = getComputedStyle(e); return `${cs.fontSize}|${Math.round(e.getBoundingClientRect().height)}|${cs.backgroundColor}` }))
+  expect('REQ-969 starters translucent 16px ~44px', sp.every((x) => { const [f, h, bg] = x.split('|'); return f === '16px' && +h >= 42 && /rgba\(255, 255, 255, 0\.4/.test(bg) }), sp[0])
+  expect('REQ-961 live panel height', look.h >= 680 || look.h >= 900 - 112 - 2, look.h)
+  expect('REQ-967 Home placeholder + no send while empty', (await wq.locator('[data-testid="widget-composer-input"]').getAttribute('placeholder')) === 'Ask anything' && (await wq.locator('[data-testid="widget-send"]').count()) === 0)
+  await wq.fill('[data-testid="widget-composer-input"]', 'Is the Hampton Wool Fedora water resistant?'); expect('REQ-967 send appears with text', (await wq.locator('[data-testid="widget-send"]').count()) === 1)
+  await wq.press('[data-testid="widget-composer-input"]', 'Enter'); await settle(wq, 2600)
+  const cu = await wq.locator('[data-testid="widget-msg-customer"] .gw-bubble-text').last().evaluate((e) => { const cs = getComputedStyle(e); return `${cs.backgroundColor} ${cs.borderTopLeftRadius} ${cs.fontSize}` })
+  expect('REQ-964 customer pill #F2F3F5 r22 16px', cu === 'rgb(242, 243, 245) 22px 16px', cu)
+  const ai = await wq.locator('[data-testid="widget-msg-ai"] .gw-ai-text').last().evaluate((e) => { const cs = getComputedStyle(e); return `${cs.fontSize} ${(parseFloat(cs.lineHeight) / parseFloat(cs.fontSize)).toFixed(2)} ${cs.backgroundColor}` })
+  expect('REQ-964 AI plain 16px/1.55', ai === '16px 1.55 rgba(0, 0, 0, 0)', ai)
+  await settle(wq, 400)
+  expect('REQ-962 conversation surface white', (await wq.locator('[data-testid="widget-panel"]').evaluate((e) => getComputedStyle(e).backgroundColor)) === 'rgb(255, 255, 255)')
+  expect('REQ-967 Reply placeholder', (await wq.locator('[data-testid="widget-composer-input"]').getAttribute('placeholder')) === 'Reply')
+  await wq.locator('[data-testid="widget-thumb-up"]').last().click(); await settle(wq, 200)
+  const th = await wq.locator('[data-testid="widget-thumbs"]').last().evaluate((e) => [...e.querySelectorAll('button')].map((x) => getComputedStyle(x).backgroundColor).join('|'))
+  expect('REQ-965 chosen thumb filled dark, other outline', th.startsWith('rgb(31, 29, 26)|') && !th.endsWith('rgb(31, 29, 26)'), th)
+  const fb = await wq.locator('[data-testid="widget-float-bar"] button').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)))
+  expect('REQ-963 floating controls ~44px', fb.every((x) => x >= 42 && x <= 46), fb.join())
+  for (const q2 of ['Do you ship to Canada?', 'How long does it take?']) { await wq.fill('[data-testid="widget-composer-input"]', q2); await wq.press('[data-testid="widget-composer-input"]', 'Enter'); await settle(wq, 2600) }
+  expect('REQ-966 no scroll-to-latest at bottom', (await wq.locator('[data-testid="widget-scroll-latest"]').count()) === 0)
+  await wq.locator('[data-testid="widget-body"]').evaluate((e) => { e.scrollTop = 0 }); await settle(wq, 300)
+  expect('REQ-966 scroll-to-latest when scrolled up', (await wq.locator('[data-testid="widget-scroll-latest"]').count()) === 1)
+  await wq.click('[data-testid="widget-scroll-latest"]'); await settle(wq, 900)
+  expect('REQ-966 tap returns to latest', (await wq.locator('[data-testid="widget-scroll-latest"]').count()) === 0)
+  await wq.context().close()
+})
+await step('JRN-218 inbox reply at end of thread', async () => {
+  const q = await page(1440, 900); await spa(q, '/inbox/GB-1076'); await q.waitForSelector('[data-testid="message-thread"]'); await settle(q, 900)
+  const inCol = await q.evaluate(() => { const col = document.querySelector('[data-testid="thread-column"]'); const ra = document.querySelector('[data-testid="reply-area"]'); const dd = document.querySelector('[data-testid="draft-dock"]'); return !!(col && ra && col.contains(ra) && dd && ra.contains(dd)) })
+  expect('REQ-971 draft-dock inside thread-column (not a fixed dock)', inCol)
+  const [mt, dc] = await Promise.all(['message-thread', 'draft-dock'].map((x) => q.locator(`[data-testid="${x}"]`).boundingBox()))
+  expect('REQ-971 draft same width as messages', Math.abs(mt.width - dc.width) <= 2 && Math.abs(mt.x - dc.x) <= 2, `${Math.round(mt.width)}/${Math.round(dc.width)}`)
+  const gapB = await q.locator('[data-testid="thread-scroll"]').evaluate((e) => Math.round(e.scrollHeight - e.scrollTop - e.clientHeight))
+  expect('REQ-972 opens at the bottom', gapB <= 4, gapB)
+  expect('REQ-973 no Reply pill while reply area in view', (await q.locator('[data-testid="jump-to-reply"]').count()) === 0)
+  await q.locator('[data-testid="thread-scroll"]').evaluate((e) => { e.scrollTop = 0 }); await settle(q, 400)
+  expect('REQ-973 Reply pill when scrolled up', await q.locator('[data-testid="jump-to-reply"]').isVisible())
+  const pill = await q.locator('[data-testid="jump-to-reply"]').boundingBox(), ts = await q.locator('[data-testid="thread-scroll"]').boundingBox()
+  expect('REQ-973 pill bottom-centre of thread', Math.abs(pill.x + pill.width / 2 - (ts.x + ts.width / 2)) <= 12 && ts.y + ts.height - (pill.y + pill.height) <= 40, `${Math.round(pill.x + pill.width / 2)} vs ${Math.round(ts.x + ts.width / 2)}`)
+  await q.click('[data-testid="jump-to-reply"]'); await settle(q, 1000)
+  expect('REQ-973 pill scrolls to reply + focuses Approve & send', (await q.locator('[data-testid="jump-to-reply"]').count()) === 0 && await q.evaluate(() => document.activeElement?.getAttribute('data-testid') === 'draft-approve'), await q.evaluate(() => document.activeElement?.getAttribute('data-testid')))
+  await q.locator('[data-testid="thread-scroll"]').evaluate((e) => { e.scrollTop = 0 }); await settle(q, 300)
+  await q.locator('body').click({ position: { x: 5, y: 5 } }); await q.keyboard.press('r'); await settle(q, 1000)
+  expect('REQ-973 reply shortcut scrolls + focuses Approve & send', await q.evaluate(() => { const r = document.querySelector('[data-testid="reply-area"]').getBoundingClientRect(); return document.activeElement?.getAttribute('data-testid') === 'draft-approve' && r.bottom <= innerHeight + 2 }), await q.evaluate(() => document.activeElement?.getAttribute('data-testid')))
+  await q.click('[data-testid="draft-write-own"]'); await settle(q, 500)
+  expect('REQ-971 composer inside thread-column', await q.evaluate(() => document.querySelector('[data-testid="thread-column"]').contains(document.querySelector('[data-testid="composer"]'))))
+  const ed = q.locator('[data-testid="composer-editor"]'); await ed.click()
+  await q.keyboard.type('Thanks for waiting, Margaret. Line one.'); for (let i = 0; i < 5; i++) { await q.keyboard.press('Shift+Enter'); await q.keyboard.type(`More detail ${i}`) }
+  await settle(q, 300)
+  const gapG = await q.locator('[data-testid="thread-scroll"]').evaluate((e) => Math.round(e.scrollHeight - e.scrollTop - e.clientHeight))
+  expect('REQ-971 stays pinned while composer grows', gapG <= 4, gapG)
+  const before = await q.locator('[data-testid="message-thread"] > li').count()
+  await q.click('[data-testid="composer-send"]'); await settle(q, 1200)
+  const after = (await q.locator('[data-testid="message-thread"] > li').last().innerText()).includes('Thanks for waiting, Margaret') ? before + 1 : before
+  const [lastMsg, comp] = await Promise.all([q.locator('[data-testid="message-thread"] > li').last().boundingBox(), q.locator('[data-testid="reply-area"]').boundingBox()])
+  const gapS = await q.locator('[data-testid="thread-scroll"]').evaluate((e) => Math.round(e.scrollHeight - e.scrollTop - e.clientHeight))
+  expect('REQ-972 sent message above reply area, pinned to bottom', after > before && (!lastMsg || lastMsg.y < comp.y) && gapS <= 4, `${before}→${after} gap ${gapS}`)
+  await q.locator('[data-testid="thread-scroll"]').evaluate((e) => { e.scrollTop = 0 }); await settle(q, 300)
+  await q.locator('body').click({ position: { x: 5, y: 5 } }); await q.keyboard.press('r'); await settle(q, 1000)
+  expect('REQ-973 reply shortcut with composer open focuses the composer', await q.evaluate(() => { const ra = document.querySelector('[data-testid="reply-area"]'); const r = ra.getBoundingClientRect(); return ra.contains(document.activeElement) && r.bottom <= innerHeight + 2 }))
+  await spa(q, '/inbox/GB-1080'); await q.waitForSelector('[data-testid="ai-handling-banner"]'); await settle(q, 600)
+  expect('REQ-975 AI-handling bar at end of thread', await q.evaluate(() => document.querySelector('[data-testid="thread-column"]').contains(document.querySelector('[data-testid="ai-handling-banner"]'))))
+  await q.context().close()
+  const m = await page(390, 844, true); await spa(m, '/inbox/GB-1076'); await m.waitForSelector('[data-testid="draft-dock"]'); await settle(m, 800)
+  const docked = await m.evaluate(() => { const d = document.querySelector('[data-testid="draft-dock"]'); return !document.querySelector('[data-testid="thread-scroll"]').contains(d) && Math.round(d.getBoundingClientRect().bottom) })
+  expect('REQ-974 phone keeps the docked reply', docked && docked >= 844 - 2 && (await m.locator('[data-testid="jump-to-reply"]').count()) === 0, docked)
+  await m.context().close()
 })
 await step('JRN-215 tablet + phone', async () => {
   for (const [w, mobile] of [[1024, false], [768, false], [390, true]]) {

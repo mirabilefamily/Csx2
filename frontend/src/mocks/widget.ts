@@ -53,7 +53,7 @@ export const widgetSettings: WidgetSettings = {
   messaging: {
     headerTitle: 'Goorin Bros.',
     headerSubtitle: 'Hat makers since 1895 · Replies in minutes',
-    greeting: "Good day! I can help with sizing, orders, returns and finding the right hat. What brings you in?",
+    greeting: '',
     proactive: { enabled: true, delaySec: 5, pages: ['home', 'product', 'collection', 'cart'] },
     preChat: { email: 'required', name: 'optional', orderNumber: 'optional' },
     aiDisclosure: "You're chatting with Goorin's AI assistant",

@@ -2,6 +2,7 @@ import { BRAND_VOICE_LIMITS, type BrandVoice, type ConversationTestInput, type R
 import { ApiError, request } from './client'
 import { db } from './db'
 import { runSandbox } from './guidance'
+import { activeWorkflowFor } from './workflows'
 
 // GET /api/ai/brand-voice
 export function getBrandVoice(): Promise<BrandVoice> {
@@ -73,7 +74,9 @@ export async function testConversation(input: ConversationTestInput): Promise<Te
   const pool = r.articles.length ? r.articles : prior
   const articles = followUp ? pool.slice(0, 1 + (hash(input.message) % Math.max(1, pool.length))) : r.articles
   const text = styleWithVoice(draft, voice, input.channel)
-  return { role: 'ai', text, result: { ...r, articles, confidence, threshold, wouldEscalate: confidence < threshold, draft: text } }
+  // Same published-trigger matching as the widget (REQ-996, Q-870).
+  const wf = activeWorkflowFor(input.message, input.channel)
+  return { role: 'ai', text, result: { ...r, articles, confidence, threshold, wouldEscalate: confidence < threshold, draft: text, workflow: wf ? { id: wf.id, name: wf.name } : null } }
 }
 
 // Voice preview samples (REQ-809). Late order uses seeded #GB20398 tracking.
@@ -105,4 +108,4 @@ export const getReplyImpact = (): Promise<ReplyImpact> => request(() => ({ resol
 export const estimateAutoSend = (threshold: number) => Math.round(Math.max(5, Math.min(99, 100 - (threshold * threshold) / 256)))
 
 // GET /api/ai/test-customers: seeded customers for Conversation testing, with their latest order.
-export const listTestCustomers = (): Promise<TestCustomer[]> => request(() => db.customers.filter((c) => c.orders.length).slice(0, 6).map((c) => ({ id: c.id, name: c.name, email: c.email, orderNumber: c.orders[0]?.number ?? null })))
+export const listTestCustomers = (): Promise<TestCustomer[]> => request(() => db.customers.filter((c) => c.orders.length).slice(0, 6).map((c) => ({ id: c.id, name: c.name, email: c.email, orderNumber: c.orders[0]?.number ?? null, ordersCount: c.orders.length, orderStatus: c.orders[0]?.status ?? null })))

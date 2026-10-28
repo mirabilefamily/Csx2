@@ -36,7 +36,7 @@ export default function AiPage() {
         <PageTabs tabs={TABS} current={current!} label="AI & Workflows sections" testIdPrefix="ai-tab" status={current === 'voice' || current === 'replies' || workflowId ? 'ai-save-state' : undefined} />
         {!workflowId && <p className="mt-3 text-sm text-ink-muted" data-testid="ai-tab-intro">{INTRO[current!]}</p>}
       </div>
-      <div className="[&_#sandbox-question]:max-w-none [&_textarea]:max-w-[75ch]">
+      <div>
         {current === 'voice' && <BrandVoiceTab />}
         {current === 'replies' && <AiTab />}
         {current === 'workflows' && (workflowId ? <WorkflowEditor key={workflowId} id={workflowId} /> : <WorkflowsTab />)}

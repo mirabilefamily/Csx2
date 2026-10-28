@@ -1,0 +1,46 @@
+{
+  "summary": "Frontend-only retest of Phase 18 round: inline reply area in Inbox (REQ-971..975 / JRN-218), Channels->Chat preview fitting the viewport, and widget scroll-to-latest contrast. Everything requested passed. Verified with Playwright at 1440x900, 1920x1080 and 390x844 on the public URL. Note: the ingress sometimes returned HTTP 429 on full page reloads (Vite dev module requests), so tests used SPA navigation after login. This is an environment issue, not an app bug.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ConversationPane jumpToReply (draft card case)", "issue": "When the reply area holds the AI draft card, the Reply pill and the 'r' shortcut move focus to the first button in reply-area, which is the draft card's '...' menu (data-testid=draft-more). Approve & send, or the card itself, would be a more useful focus target. The composer case is fine: focus goes to the editor.", "selector": "[data-testid=jump-to-reply], [data-testid=draft-more]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Channels -> Chat @1920x1080", "issues": ["The stage is clamped at exactly 0.85. preview-surface has scrollHeight 724 vs clientHeight 723, so there is 1px of internal scroll (scrollTop=1). The panel and launcher are fully visible, so this is cosmetic. It comes from rounding (h*0.85 + 24px padding > height)."]},
+      {"screen": "Channels -> Chat @1440x900", "issues": ["The preview header wraps: the Offline toggle drops to a second line (~45px). That pushes preview-surface to top=339, while the settings column starts at 249, and leaves the canvas only 493px tall. Keeping the toolbar and Offline on one row would give back most of the height that is now scrolled internally."]},
+      {"screen": "Inbox mobile 390 composer", "issues": ["The docked composer wrapper uses pb-16 (64px) when demoTools is on, so ~118px of empty white space sits below Send on the phone, even though the demo flask is top-right on mobile. This predates this round (it is in Composer.tsx's non-inline branch)."]}
+    ]
+  },
+  "passed_checks": [
+    "1440 /inbox/GB-1076: draft-dock is inside reply-area inside thread-column, after message-thread, 720px wide like message-thread, position static. thread-scroll opens at the bottom (gap 0). No horizontal scroll.",
+    "1440: after scrolling to the top, jump-to-reply appears centred on the thread (0px offset) 20px from the bottom. Clicking it scrolls to the bottom (gap 0), focus lands in reply-area and the pill goes away. The 'r' shortcut while scrolled up does the same.",
+    "1440: draft-write-own shows the composer inside thread-column at 720px with the editor focused. Seven lines with Shift+Enter stay pinned (gap 0). Send shows the new message above the composer (last li bottom 628 < reply-area top 644), the view stays pinned and the 'Reply sent' toast shows.",
+    "1440 /inbox/GB-1080: ai-handling-banner with ai-banner-take-over is inside thread-column after message-thread and visible at the bottom.",
+    "390x844: draft-dock and composer sit outside thread-scroll, docked at the bottom (dock bottom = 844). No reply-area wrapper, no jump-to-reply even when scrolled up, no horizontal scroll.",
+    "1920x1080 /channels/chat: surface bottom 1028 and caption bottom 1056 are both <= 1056. data-scale 0.85. widget-panel (316-928) and widget-launcher (941-996) are inside the surface (305-1028) in both the Home and Conversation views.",
+    "1440x900 /channels/chat (fresh load and after resizing from 1920): surface bottom 832 and caption bottom 876 are both <= 876. Scale 0.85. The surface scrolls internally starting at the bottom (scrollTop 231 = max). Scrolling to 0 shows the panel top with Track orders and close.",
+    "channels-status-chat is the first child of widget-settings-form at the top of the settings column. The form, email and install tabs keep a full-width strip (1136px) under the tabs.",
+    "/widget-demo: after 3 sent messages and scrolling widget-body to the top, widget-scroll-latest shows with bg #FFF, 1px solid rgb(229,229,229), a two-layer shadow (0 2px 4px .1, 0 8px 24px .18) and a #1F1D1A arrow. Clicking it scrolls to the bottom (gap 0) and the button goes away.",
+    "Regression: the Home panel is frosted rgba(E8E3D8 / .88) with blur(24px), starters at the bottom and no visible greeting. The Conversation panel is white."
+  ],
+  "test_report_links": [],
+  "action_items": [
+    "(Low) In jumpToReply, when the draft card is shown, focus [data-testid=draft-approve] (or the card) instead of the first button (draft-more).",
+    "(Low/cosmetic) Channels Chat @1920: remove the 1px internal overflow (floor the scaled height, or subtract 1).",
+    "(Low/design) Channels Chat @1440: keep the preview toolbar and Offline switch on one row so the canvas gets ~45px more height.",
+    "(Low, pre-existing) Composer docked mobile: drop pb-16 on max-sm, where the demo flask isn't at the bottom."
+  ],
+  "critical_code_review_comments": [
+    "WidgetPreview height is measured only on mount and on window resize (useLayoutEffect []). Layout shifts above the canvas, like the status strip loading or a header wrap change, won't re-measure it. A ResizeObserver on the page or the header would be more robust.",
+    "ConversationPane IntersectionObserver threshold 0.15: a tall reply area that is only partly visible counts as 'in view', so the pill hides even when the action buttons are off-screen. This is acceptable but worth knowing.",
+    "ConversationPane.tsx is 401 lines, which is fine. useImperativeHandle deps disable exhaustive-deps; jumpToReply is redefined every render, which is fine as written."
+  ],
+  "updated_files": ["/app/test_reports/iteration_23.json"],
+  "success_rate": {"backend": "N/A (no backend)", "frontend": "100% (10/10 requested checks); 1 low-priority UX nit"},
+  "test_credentials": "ava@goorin.com / goorin123 (mock auth, from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None. Sent one TEST reply on GB-1076 and 3 TEST widget messages; mock data resets on reload.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "There was no iteration_22.json on disk (the last file was iteration_10), so this file is numbered 23 to match the main agent's numbering. The public URL returns 429 on rapid full reloads. Log in once, then navigate with history.pushState + a popstate event. Widget elements are in an open shadow root: Playwright locators pierce it, but page.evaluate needs host.shadowRoot."
+}

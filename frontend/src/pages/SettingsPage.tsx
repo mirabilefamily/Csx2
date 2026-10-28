@@ -43,7 +43,7 @@ export default function SettingsPage() {
 
   const meta = TABS.find((t) => t.id === tab)!
   return (
-    <div className="space-y-8 [&_input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color])]:max-w-[480px] [&_button[role=combobox]]:max-w-[480px]" data-testid="settings-page">
+    <div className="space-y-8" data-testid="settings-page">
       <div className="space-y-6">
         <PageHeader title="Settings" description={<span data-testid="settings-tab-description">{meta.description}</span>} />
         <Tabs tab={tab!} status={params.integrationId ? 'integration-save-state' : meta.status} />

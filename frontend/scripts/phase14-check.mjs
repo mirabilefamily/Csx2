@@ -53,12 +53,12 @@ await step('JRN-171 wholesale + cart + notice', async () => {
   await p.click('[data-testid="widget-cart"]'); await settle(p, 300); log('  cart drawer on /widget-demo:', await p.locator('[data-testid="widget-cart-drawer"]').count()); await p.click('[data-testid="widget-cart-close"]')
   await p.click('[data-testid="widget-ai-notice-open"]'); await settle(p, 300); log('  AI notice sheet:', await t(p, '[data-testid="widget-ai-notice"]')); await p.click('[data-testid="widget-notice-close"]')
 })
-await step('JRN-172 contrast on frosted panel', async () => {
+await step('JRN-172 contrast on frosted Home panel', async () => {
   await p.click('[data-testid="widget-back"]'); await settle(p)
   // Sample the rendered panel pixels behind text and compute the contrast of #1F1D1A text against the lightest/darkest samples.
   const box = await p.locator('[data-testid="widget-panel"]').boundingBox()
   const st = await p.locator('[data-testid="widget-starters"]').boundingBox()
-  // Empty panel area to the right of the left-aligned starters: pure frosted background over the storefront.
+  // Empty panel area to the right of the left-aligned starters: pure frosted Home background (default #E8E3D8, Frosted).
   const shot = await p.screenshot({ clip: { x: box.x + box.width - 72, y: st.y, width: 56, height: st.height } })
   const res = await p.evaluate(async (b64) => {
     const img = new Image(); img.src = `data:image/png;base64,${b64}`; await img.decode()
@@ -87,7 +87,7 @@ await step('JRN-173 channels layout', async () => {
     await q.click(`[data-testid="preview-view-${v}"]`); await settle(q, 500)
     const st = await pv.locator('[data-testid="widget-root"]').getAttribute('data-state')
     const pb = await pv.locator('[data-testid="widget-panel"]').boundingBox(), lb = await pv.locator('[data-testid="widget-launcher"]').boundingBox(), sb = await pv.locator('[data-testid="preview-surface"]').boundingBox()
-    log(`  ${v}: state ${st} | panel open ${!!pb} | centred offset ${pb ? Math.round(pb.x + pb.width / 2 - (sb.x + sb.width / 2)) : '-'}px | launcher below-right ${pb && lb ? lb.y > pb.y + pb.height && lb.x + lb.width >= pb.x + pb.width - 2 : false} | scale ${await pv.locator('[data-testid="preview-stage"]').getAttribute('data-scale')}`)
+    log(`  ${v}: state ${st} | panel open ${!!pb} | centred offset ${pb ? Math.round(pb.x + pb.width / 2 - (sb.x + sb.width / 2)) : '-'}px | launcher below-right ${pb && lb ? lb.y > pb.y + pb.height && lb.x + lb.width >= pb.x + pb.width - 2 : false} | scale ${await pv.locator('[data-testid="preview-stage"]').getAttribute('data-scale')} | panel h ${pb ? Math.round(pb.height) : '-'}`)
   }
   await pv.locator('[data-testid="widget-close"]').click(); await settle(q, 300)
   await pv.locator('[data-testid="widget-launcher"]').click(); await settle(q, 400)

@@ -95,15 +95,15 @@ function Loaded({ initial }: { initial: EmailChannelSettings }) {
   const r = resend.data
   const sig = d.signature.replace('{agent_first_name}', user?.name.split(' ')[0] ?? 'Ava')
   return (
-    <div className="grid gap-8 pb-24 lg:grid-cols-[minmax(0,640px)_minmax(0,440px)] lg:justify-between" data-testid="email-tab">
-      <div className={cn(CARD, 'min-w-0 divide-y divide-border/70')} data-testid="email-settings">
+    <div className="grid gap-7 pb-24 lg:grid-cols-[minmax(0,1fr)_clamp(400px,30vw,560px)]" data-testid="email-tab">
+      <div className={cn(CARD, 'cq min-w-0 divide-y divide-border/70')} data-testid="email-settings">
         <Block title="Sender" description="What customers see in their inbox." testId="email-section-sender">
-          <div><Label htmlFor="email-from">From name</Label><Input id="email-from" className="mt-1.5" value={d.fromName} onChange={(e) => setD({ ...d, fromName: e.target.value })} aria-invalid={!d.fromName.trim()} data-testid="email-from-name" />{!d.fromName.trim() && <p role="alert" className="mt-1.5 text-xs font-medium text-red-700">Add a from name.</p>}</div>
+          <div className="cq-pair"><div><Label htmlFor="email-from">From name</Label><Input id="email-from" className="mt-1.5" value={d.fromName} onChange={(e) => setD({ ...d, fromName: e.target.value })} aria-invalid={!d.fromName.trim()} data-testid="email-from-name" />{!d.fromName.trim() && <p role="alert" className="mt-1.5 text-xs font-medium text-red-700">Add a from name.</p>}</div>
           <div>
             <Label htmlFor="email-reply-to">Reply-to</Label>
             <Input id="email-reply-to" type="email" className="mt-1.5" value={d.replyTo} onChange={(e) => setD({ ...d, replyTo: e.target.value })} aria-invalid={replyBad} aria-describedby={replyBad ? 'email-reply-to-error' : undefined} data-testid="email-reply-to" />
             {(replyBad || (tried && replyBad)) && <p id="email-reply-to-error" role="alert" className="mt-1.5 text-xs font-medium text-red-700" data-testid="email-reply-to-error">Enter a valid email address.</p>}
-          </div>
+          </div></div>
         </Block>
         <Block title="Signature" description="Added under every agent and AI email. {agent_first_name} fills in automatically." testId="email-section-signature">
           <div><Label htmlFor="email-signature">Signature</Label><Textarea id="email-signature" rows={5} className="mt-1.5" value={d.signature} onChange={(e) => setD({ ...d, signature: e.target.value })} data-testid="email-signature" /></div>
