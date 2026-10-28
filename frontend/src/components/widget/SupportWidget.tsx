@@ -207,6 +207,11 @@ function WidgetApp({ settings: s, mode = 'live', forcedState, pageType = 'other'
     setUnread(0)
     setBubble('dismissed')
     setBounce(false)
+    if (mode === 'contained' && forcedState) {
+      // Preview: reopening always returns to the selected view.
+      const f = initialState(s, forcedState, loggedIn)
+      if (f.open) { setView(f.view); setMessages(f.messages); setHandoff(f.handoff); setWfRun(null); wfRef.current = null; return }
+    }
     if (!view) setView(offlineActive ? 'offline' : 'home')
   }
   const closePanel = () => {

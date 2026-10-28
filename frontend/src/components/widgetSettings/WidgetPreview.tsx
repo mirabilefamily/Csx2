@@ -1,6 +1,9 @@
-import { ChevronDown, EyeOff, Monitor, Smartphone } from 'lucide-react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { EyeOff, Monitor, Smartphone } from 'lucide-react'
 import type { WidgetSettings, WidgetState } from '@/types'
 import { SupportWidget } from '@/components/widget/SupportWidget'
+import { launcherSize } from '@/components/widget/Launcher'
+import { Switch } from './fields'
 import { WIDGET_STATES } from '@/components/storefront/DemoControls'
 import { hiddenReason, PAGE_TYPE_LABELS } from '@/lib/widgetRules'
 import { cn } from '@/lib/utils'
@@ -69,21 +72,93 @@ export function DeviceStage({ settings, opts, keyExtra = '' }: { settings: Widge
 }
 
 const VIEWS: { id: WidgetState; label: string }[] = [{ id: 'home', label: 'Home' }, { id: 'active_chat', label: 'Conversation' }, { id: 'order_tracking', label: 'Order tracking' }]
+const SURFACE = 'radial-gradient(120% 90% at 15% 0%, #F7F3EC 0%, #EEE8DF 55%, #E7E0D5 100%)'
 
-export function WidgetPreview({ settings, opts, onChange }: { settings: WidgetSettings; opts: PreviewOptions; onChange: (o: PreviewOptions) => void }) {
-  const set = <K extends keyof PreviewOptions>(k: K, v: PreviewOptions[K]) => onChange({ ...opts, [k]: v })
+// Scales a fixed-size stage down to fit the available width and viewport height.
+function Fit({ w, h, children, testId }: { w: number; h: number; children: ReactNode; testId: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const top = Math.max(0, el.getBoundingClientRect().top + window.scrollY)
+    const on = () => setScale(Math.min(1, el.clientWidth / w, Math.max(360, window.innerHeight - top - 64) / h))
+    on()
+    const ro = new ResizeObserver(on)
+    ro.observe(el)
+    window.addEventListener('resize', on)
+    return () => { ro.disconnect(); window.removeEventListener('resize', on) }
+  }, [w, h])
+  return (
+    <div ref={ref} className="flex w-full justify-center" style={{ height: h * scale }} data-testid={testId} data-scale={scale.toFixed(2)}>
+      <div className="relative shrink-0 origin-top" style={{ width: w, height: h, transform: `scale(${scale})` }}>{children}</div>
+    </div>
+  )
+}
+
+// Channels preview: just the widget on a quiet surface (no mock storefront).
+function PreviewStage({ settings, opts, nonce }: { settings: WidgetSettings; opts: PreviewOptions; nonce: number }) {
+  const isMobile = opts.device === 'mobile'
+  const offline = opts.outsideHours && settings.display.outsideHours === 'offline_form'
+  const state = offline ? 'offline' : opts.state
+  const reason = hiddenReason(settings, { pageType: 'product', pagePath: PREVIEW_PATHS.product, isMobile, outsideHours: opts.outsideHours })
+  const key = [state, opts.device, opts.outsideHours, nonce, settings.launcher.size, settings.launcher.position].join('|')
+  const off = settings.launcher.offset
+  const w = isMobile ? 300 : 400 + off.x * 2
+  const h = isMobile ? 620 : (state === 'home' ? 580 : 680) + off.y + launcherSize(settings.launcher) + 32
+  const widget = (
+    <>
+      <SupportWidget key={key} settings={settings} mode="contained" viewport={isMobile ? 'mobile' : 'desktop'} forcedState={state} pageType="product" pagePath={PREVIEW_PATHS.product} outsideHours={opts.outsideHours} />
+      {reason && (
+        <div className="absolute inset-x-3 bottom-3 z-20 flex items-start gap-3 rounded-lg border border-border bg-surface/95 p-3 shadow-popover backdrop-blur" role="status" data-testid="preview-hidden-overlay">
+          <EyeOff className="mt-0.5 h-4 w-4 shrink-0 text-ink-muted" aria-hidden />
+          <div>
+            <p className="text-sm font-semibold text-ink">{reason.title}</p>
+            <p className="text-xs text-ink-muted">{reason.detail}</p>
+          </div>
+        </div>
+      )}
+    </>
+  )
+  return (
+    <div className="rounded-2xl px-3 py-5 ring-1 ring-black/[0.04]" style={{ background: SURFACE }} data-testid="preview-surface">
+      <Fit w={w} h={h} testId="preview-stage">
+        {isMobile ? (
+          <div className="h-full w-full rounded-[44px] border-[1.5px] border-ink/20 bg-surface/40 p-[7px]" data-testid="device-frame-mobile">
+            <div className="relative h-full w-full overflow-hidden rounded-[37px]" style={{ fontFamily: STORE_FONT, background: SURFACE }} data-testid="preview-screen">{widget}</div>
+          </div>
+        ) : (
+          <div className="relative h-full w-full" style={{ fontFamily: STORE_FONT }} data-testid="preview-screen">{widget}</div>
+        )}
+      </Fit>
+    </div>
+  )
+}
+
+function AfterHours({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-ink-muted">
+      Outside business hours
+      <Switch checked={value} onCheckedChange={onChange} aria-label="Outside business hours" data-testid="preview-outside-hours" />
+    </label>
+  )
+}
+
+export function WidgetPreview({ settings, opts, onChange, title }: { settings: WidgetSettings; opts: PreviewOptions; onChange: (o: PreviewOptions) => void; title?: string }) {
+  const [nonce, setNonce] = useState(0)
+  const set = <K extends keyof PreviewOptions>(k: K, v: PreviewOptions[K]) => { setNonce((n) => n + 1); onChange({ ...opts, [k]: v }) }
   return (
     <div className="space-y-3" data-testid="widget-preview">
+      <div className="flex min-h-8 items-center justify-between gap-3" data-testid="preview-header">
+        {title ? <p className="text-[15px] font-semibold text-ink">{title}</p> : <span />}
+        <AfterHours value={opts.outsideHours} onChange={(v) => set('outsideHours', v)} />
+      </div>
       <div className="flex flex-wrap items-center gap-2 rounded-xl bg-surface-muted/70 p-1.5" role="toolbar" aria-label="Preview controls" data-testid="preview-toolbar">
         <Seg label="Preview device" testId="preview-device" value={opts.device === 'mobile' ? 'mobile' : 'desktop'} onChange={(v) => set('device', v)} options={[{ id: 'desktop', label: 'Desktop', icon: <Monitor className="h-3.5 w-3.5" aria-hidden /> }, { id: 'mobile', label: 'Phone', icon: <Smartphone className="h-3.5 w-3.5" aria-hidden /> }]} />
-        <Seg label="Preview view" testId="preview-view" value={VIEWS.some((v) => v.id === opts.state) ? opts.state : 'active_chat'} onChange={(v) => set('state', v)} options={VIEWS} />
+        <Seg label="Preview view" testId="preview-view" value={VIEWS.some((v) => v.id === opts.state) ? opts.state : 'home'} onChange={(v) => set('state', v)} options={VIEWS} />
       </div>
-      <DeviceStage settings={settings} opts={{ ...opts, page: 'product' }} />
+      <PreviewStage settings={settings} opts={opts} nonce={nonce} />
       <p className="text-xs text-ink-muted" data-testid="preview-caption">Uses the same code shoppers get. Shows your draft; nothing is sent from the preview.</p>
-      <label className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
-        <input type="checkbox" checked={opts.outsideHours} onChange={(e) => set('outsideHours', e.target.checked)} className="accent-[#6B4F3A]" data-testid="preview-outside-hours" />
-        Outside business hours
-      </label>
     </div>
   )
 }

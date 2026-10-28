@@ -5,16 +5,9 @@ import { workflowsApi } from '@/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import { TextField } from './fields'
+import { Switch, TextField } from './fields'
 import type { Update } from './validate'
 
-function Switch({ checked, onCheckedChange, className, ...rest }: { checked: boolean; onCheckedChange: (v: boolean) => void; className?: string; 'aria-label'?: string; 'data-testid'?: string }) {
-  return (
-    <button type="button" role="switch" aria-checked={checked} onClick={() => onCheckedChange(!checked)} className={cn('relative inline-flex h-6 w-10 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', checked ? 'bg-tobacco-600' : 'bg-border-strong', className)} {...rest}>
-      <span className={cn('absolute left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform motion-reduce:transition-none', checked && 'translate-x-4')} />
-    </button>
-  )
-}
 
 export const MAX_STARTERS = 8
 // Validation copy per REQ-798.

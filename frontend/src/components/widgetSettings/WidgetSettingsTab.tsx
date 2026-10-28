@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CircleDot, ExternalLink, Eye, Filter, Home, MessageSquareText, Palette, Star, type LucideIcon } from 'lucide-react'
+import { CircleDot, Eye, Filter, Home, MessageSquareText, Palette, Star, type LucideIcon } from 'lucide-react'
 import { ConversationSection, HomeSection } from './HomeSection'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { SheetCloseButton } from '@/components/ui/sheet'
@@ -79,10 +79,6 @@ function Loaded({ saved: initial, theme, view, group }: { saved: WidgetSettings;
     }
     setSaving(false)
   }
-  const previewOnStore = () => {
-    widgetApi.stashDeskPreview(preview)
-    window.open('/widget-demo?desk_preview=1', '_blank', 'noopener')
-  }
 
   const saveBar = dirty && (
     <SaveBar note={invalid && <span className="hidden text-xs text-red-600 sm:inline" data-testid="ws-invalid-note">Fix the highlighted fields</span>}>
@@ -125,10 +121,7 @@ function Loaded({ saved: initial, theme, view, group }: { saved: WidgetSettings;
             <DialogContent className="max-sm:top-0 max-sm:h-[100dvh] max-sm:max-h-none max-sm:rounded-none max-sm:p-3 max-sm:pt-[max(0.75rem,env(safe-area-inset-top))]" aria-describedby={undefined} data-testid="widget-preview-sheet">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <DialogTitle className="text-[15px] font-semibold text-ink">Live preview</DialogTitle>
-                <div className="flex items-center gap-1">
-                  <Button variant="outline" size="sm" onClick={previewOnStore} data-testid="preview-on-store"><ExternalLink aria-hidden /> My store</Button>
-                  <SheetCloseButton label="Close preview" />
-                </div>
+                <SheetCloseButton label="Close preview" />
               </div>
               <WidgetPreview settings={preview} opts={opts} onChange={setOpts} />
             </DialogContent>
@@ -136,13 +129,7 @@ function Loaded({ saved: initial, theme, view, group }: { saved: WidgetSettings;
         </>
       ) : (
       <aside className="min-w-0 lg:sticky lg:top-6 lg:h-[calc(100vh-48px)] lg:self-start" aria-label="Live preview" data-testid="channels-preview">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-[15px] font-semibold text-ink">Preview</p>
-          <Button variant="ghost" size="sm" onClick={previewOnStore} data-testid="preview-on-store">
-            <ExternalLink aria-hidden /> On my store
-          </Button>
-        </div>
-        <WidgetPreview settings={preview} opts={opts} onChange={setOpts} />
+        <WidgetPreview settings={preview} opts={opts} onChange={setOpts} title="Preview" />
       </aside>
       )}
       {saveBar}
