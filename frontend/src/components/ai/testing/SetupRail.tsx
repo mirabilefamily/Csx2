@@ -36,9 +36,9 @@ export function SetupRail({ channel, setChannel, customers, customerId, pickCust
         {c && (
           <div className="mt-2 flex gap-3 rounded-xl bg-surface-sunken p-3 text-[13px] ring-1 ring-border/70" data-testid="test-customer-context">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface ring-1 ring-border" aria-hidden><UserRound className="h-4 w-4 text-ink-muted" /></span>
-            <div className="min-w-0 space-y-0.5 break-words">
+            <div className="min-w-0 flex-1 space-y-0.5">
               <p className="font-semibold text-ink" data-testid="test-context-name">{c.name}</p>
-              <p className="break-all text-ink-muted" data-testid="test-context-email">{c.email}</p>
+              <p className="truncate text-[12px] text-ink-muted" title={c.email} data-testid="test-context-email">{c.email}</p>
               <p className="text-ink-muted" data-testid="test-context-orders">{c.ordersCount} {c.ordersCount === 1 ? 'order' : 'orders'}{c.orderNumber && <> · Latest <span className="font-medium text-ink">{c.orderNumber}{c.orderStatus ? ` · ${statusLabel(c.orderStatus)}` : ''}</span></>}</p>
             </div>
           </div>

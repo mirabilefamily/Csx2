@@ -59,7 +59,7 @@ export function DisplaySection({ draft, update }: { draft: WidgetSettings; updat
 export function CsatInChatSection({ draft, update, questions }: { draft: WidgetSettings; update: Update; questions: CsatQuestion[] | undefined }) {
   return (
     <>
-      <Segmented label="Inline survey style" testId="ws-csat-style" value={draft.csat.style} onChange={(v) => update((x) => { x.csat.style = v })} options={[{ id: 'stars', label: 'Stars' }, { id: 'emoji', label: 'Emoji' }, { id: 'numeric', label: 'Numeric 1–5' }]} />
+      <p className="text-sm text-ink-muted" data-testid="ws-csat-style-note">Survey questions and style live in <Link to="/settings/csat" className="font-medium text-tobacco-700 underline underline-offset-2" data-testid="ws-csat-settings-link">Settings → CSAT</Link>.</p>
       <div>
         <div className="mb-2 flex items-center justify-between">
           <p className="text-sm font-medium text-ink">Questions (from CSAT Settings)</p>

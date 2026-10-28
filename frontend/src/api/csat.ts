@@ -2,7 +2,7 @@ import type { CsatSurvey } from '@/types'
 import { request } from './client'
 import { CSAT_QUESTIONS_KEY, db } from './db'
 
-// GET /api/csat/survey
+// GET /api/csat/survey (messages + ratingStyle defaults live in mocks/csat.ts, REQ-1007)
 export function getCsatSurvey(): Promise<CsatSurvey> {
   return request(() => db.csatSurvey)
 }

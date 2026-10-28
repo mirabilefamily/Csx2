@@ -76,7 +76,17 @@ export async function testConversation(input: ConversationTestInput): Promise<Te
   const text = styleWithVoice(draft, voice, input.channel)
   // Same published-trigger matching as the widget (REQ-996, Q-870).
   const wf = activeWorkflowFor(input.message, input.channel)
-  return { role: 'ai', text, result: { ...r, articles, confidence, threshold, wouldEscalate: confidence < threshold, draft: text, workflow: wf ? { id: wf.id, name: wf.name } : null } }
+  const out: TestTurn = { role: 'ai', text, result: { ...r, articles, confidence, threshold, wouldEscalate: confidence < threshold, draft: text, workflow: wf ? { id: wf.id, name: wf.name } : null } }
+  // Demo presets so Run all shows a mix of outcomes.
+  const preset = !followUp && input.scenario ? SCENARIO_PRESETS[input.scenario] : undefined
+  if (preset && out.result) Object.assign(out.result, { workflow: null, ...preset, wouldEscalate: preset.handoffReason ? true : (preset.confidence ?? out.result.confidence) < threshold })
+  return out
+}
+
+const SCENARIO_PRESETS: Record<string, { confidence?: number; handoffReason?: string }> = {
+  Sizing: { confidence: 86 },
+  Damaged: { confidence: 82, handoffReason: 'refund above $75' },
+  Wholesale: { confidence: 58 },
 }
 
 // Voice preview samples (REQ-809). Late order uses seeded #GB20398 tracking.

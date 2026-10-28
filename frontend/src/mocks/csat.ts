@@ -17,6 +17,13 @@ export const csatSurvey: CsatSurvey = {
   lowScoreRecipients: ['ava@goorin.com'],
   lowScoreThreshold: 2,
   updatedAt: daysAgo(14),
+  messages: {
+    subject: 'How did we do, {first_name}?',
+    intro: 'Thanks for reaching out about “{ticket_subject}”. It takes 10 seconds to tell us how it went.',
+    chatPrompt: 'Glad that’s sorted! Mind rating this chat?',
+    thanks: 'Thanks, {first_name}! Your feedback helps us make better hats and better help.',
+  },
+  ratingStyle: 'stars',
 }
 
 // Hand-written responses with comments, tied to real resolved/closed tickets.

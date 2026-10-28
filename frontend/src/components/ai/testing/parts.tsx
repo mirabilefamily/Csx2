@@ -17,7 +17,7 @@ export type Result = NonNullable<TestTurn['result']>
 export const strong = (r: Result) => r.articles.filter((a) => a.score >= STRONG)
 export const decisionKind = (r: Result) => (r.workflow ? 'workflow' : r.wouldEscalate ? 'handoff' : 'send')
 export const DECISION_SHORT = { workflow: 'Would start workflow', handoff: 'Would hand to a person', send: 'Would send' } as const
-export const decisionWords = (r: Result) => (r.workflow ? `Would start workflow: ${r.workflow.name}` : r.wouldEscalate ? `Would hand to a person — confidence below ${r.threshold}%` : 'Would send on its own')
+export const decisionWords = (r: Result) => (r.workflow ? `Would start workflow: ${r.workflow.name}` : r.wouldEscalate ? `Would hand to a person — ${r.handoffReason ?? `confidence below ${r.threshold}%`}` : 'Would send on its own')
 export const chipTone = (c: number, t: number) => (c >= t ? 'bg-green-50 text-green-800 ring-green-200' : 'bg-amber-50 text-amber-900 ring-amber-200')
 export const statusLabel = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
 

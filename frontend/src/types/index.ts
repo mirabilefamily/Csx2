@@ -206,6 +206,8 @@ export interface CsatQuestion {
 
 export type DelayUnit = 'minutes' | 'hours'
 
+export interface CsatMessages { subject: string; intro: string; chatPrompt: string; thanks: string }
+
 export interface CsatSurvey {
   id: string
   questions: CsatQuestion[]
@@ -214,6 +216,8 @@ export interface CsatSurvey {
   lowScoreRecipients: string[]
   lowScoreThreshold: number
   updatedAt: string
+  messages: CsatMessages
+  ratingStyle: CsatStyle
 }
 
 export interface CsatResponse {
@@ -645,8 +649,8 @@ export interface VoiceSample { id: 'sizing' | 'late' | 'damaged'; label: string;
 export interface ReplyImpact { resolvedPct: number; handedPct: number; autoSent: number; autoRefunds: number; autoRefundTotal: number }
 export interface TestCustomer { id: string; name: string; email: string; orderNumber: string | null; ordersCount: number; orderStatus: string | null }
 
-export interface TestTurn { role: 'customer' | 'ai'; text: string; result?: SandboxResult & { workflow?: { id: string; name: string } | null } }
-export interface ConversationTestInput { history: TestTurn[]; message: string; channel: 'email' | 'chat'; orderNumber?: string; voice?: BrandVoice }
+export interface TestTurn { role: 'customer' | 'ai'; text: string; result?: SandboxResult & { workflow?: { id: string; name: string } | null; handoffReason?: string } }
+export interface ConversationTestInput { history: TestTurn[]; message: string; channel: 'email' | 'chat'; orderNumber?: string; voice?: BrandVoice; scenario?: string }
 
 export type ContactFieldType = 'name' | 'email' | 'order' | 'topic' | 'message' | 'attachments'
 export interface ContactField { id: ContactFieldType; label: string; enabled: boolean; required: boolean; options?: string[] }

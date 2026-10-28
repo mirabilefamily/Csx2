@@ -46,7 +46,7 @@ function MetaLine({ t, i, selected, onInspect, label }: { t: TestTurn; i: number
 function Turn({ t, i, customer, selected, wide, children, onSelect }: { t: TestTurn; i: number; customer: string; selected: boolean; wide: boolean; children?: React.ReactNode; onSelect: () => void }) {
   const ai = t.role === 'ai'
   return (
-    <article onClick={ai && wide ? onSelect : undefined} className={cn('w-[78%] rounded-2xl border px-4 py-3 shadow-[0_1px_2px_rgba(31,29,26,0.04)] transition-[box-shadow,border-color] duration-150 max-sm:w-[92%]', ai ? 'ml-auto border-border bg-surface' : 'mr-auto border-transparent bg-surface-muted/70', ai && wide && 'cursor-pointer hover:border-ink/20', selected && 'border-tobacco-600/60 ring-2 ring-tobacco-600/15')} data-testid={`test-turn-${i}`} data-selected={selected || undefined}>
+    <article onClick={ai && wide ? onSelect : undefined} className={cn('w-[78%] rounded-2xl border px-4 py-3 shadow-[0_1px_2px_rgba(31,29,26,0.04)] transition-[box-shadow,border-color] duration-150 max-sm:w-[92%]', ai ? 'ml-auto border-border bg-surface' : 'mr-auto border-transparent bg-surface-muted/70', ai && wide && 'cursor-pointer hover:border-ink/20', selected && 'ring-2 ring-[#B08D57]/30')} data-testid={`test-turn-${i}`} data-selected={selected || undefined}>
       <header className="flex items-center gap-2">
         {ai ? <AuthorBadge type="claude" label="AI" /> : <><span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-[10px] font-semibold text-ink ring-1 ring-border" aria-hidden>{customer.split(' ').map((w) => w[0]).join('').slice(0, 2)}</span><span className="text-xs font-medium text-ink">{customer}</span></>}
       </header>
@@ -100,7 +100,7 @@ export function ConversationTesting() {
   const customer = customers.data?.find((c) => c.id === customerId)
   const pickCustomer = (id: string) => { setCustomerId(id); setOrder(customers.data?.find((c) => c.id === id)?.orderNumber ?? '') }
 
-  const ask = (history: TestTurn[], text: string) => aiApi.testConversation({ history, message: text, channel, orderNumber: order, voice: draftVoice })
+  const ask = (history: TestTurn[], text: string) => aiApi.testConversation({ history, message: text, channel, orderNumber: order, voice: draftVoice, scenario: SCENARIOS.find((x) => x[2] === text)?.[0] })
   const reply = async (history: TestTurn[], text: string) => {
     setStatus('loading'); setLastText(text)
     try { const r = await ask(history, text); setTurns((t) => [...t, r]); setStatus('idle') } catch { setStatus('error') }
@@ -122,7 +122,7 @@ export function ConversationTesting() {
   const name = customer?.name ?? 'Guest'
 
   return (
-    <div ref={wsRef} style={mode === 'inline' ? undefined : height} className={cn('grid gap-4', mode === 'rail' ? 'grid-cols-[288px_minmax(0,1fr)_340px]' : mode === 'sheet' ? 'grid-cols-[280px_minmax(0,1fr)]' : 'grid-cols-1')} data-testid="test-workspace">
+    <div ref={wsRef} style={mode === 'inline' ? undefined : height} className={cn('grid gap-4', mode === 'rail' ? 'grid-cols-[264px_minmax(0,1fr)_300px]' : mode === 'sheet' ? 'grid-cols-[264px_minmax(0,1fr)]' : 'grid-cols-1')} data-testid="test-workspace">
       {mode !== 'inline' && <aside className="min-h-0 overflow-y-auto rounded-xl bg-surface p-4 ring-1 ring-border" aria-label="Test setup" data-testid="test-setup">{rail}</aside>}
 
       <section className={cn('flex min-h-0 flex-col overflow-hidden rounded-xl bg-surface-sunken ring-1 ring-border', mode === 'inline' && 'h-[calc(100dvh-220px)] min-h-[520px]')} aria-label="Test chat" data-testid="test-chat">
