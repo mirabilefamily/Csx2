@@ -1,14 +1,16 @@
 import React, { Fragment, useState } from 'react'
-import { ArrowDown, ArrowUp, CornerDownRight, GripVertical, MoreHorizontal, Plus, Zap } from 'lucide-react'
+import { ArrowDown, ArrowUp, CornerDownRight, GripVertical, Mail, MessageCircle, MoreHorizontal, NotebookPen, Plus, Zap } from 'lucide-react'
 import type { Step, StepType, Workflow } from '@/types'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { workflowsApi } from '@/api'
 import { STEP_GROUPS, STEP_LABEL, TERMINAL, handlesOf, linearNeighbour, outEdge, stepNumbers } from '@/lib/workflowGraph'
-import { STEP_ICON, VarText, stepSummary } from './stepMeta'
+import { CategoryTile, STEP_ICON, VarText, stepSummary } from './stepMeta'
 
 type W = Pick<Workflow, 'steps' | 'edges' | 'trigger'>
 interface Props {
+  stats?: Record<string, number>
   wf: W
   selected: string | null
   current: string | null
@@ -47,7 +49,6 @@ export function StepList(p: Props) {
   const [drag, setDrag] = useState<string | null>(null)
 
   const Card = ({ st }: { st: Step }) => {
-    const I = STEP_ICON[st.type]
     const up = linearNeighbour(p.wf, st.id, -1)
     const down = linearNeighbour(p.wf, st.id, 1)
     return (
@@ -60,9 +61,13 @@ export function StepList(p: Props) {
         data-testid={`step-card-${st.id}`} data-current={p.current === st.id || undefined}
       >
         <span className="mt-0.5 cursor-grab text-ink-subtle max-sm:hidden" aria-hidden><GripVertical className="h-4 w-4" /></span>
-        <button type="button" onClick={() => p.onSelect(st.id)} className="min-w-0 flex-1 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`step-open-${st.id}`}>
-          <span className="flex items-center gap-2 text-[13px] font-semibold text-ink"><span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-surface-muted px-1 text-[11px] tabular-nums text-ink-muted">{nums.get(st.id)}</span><I className="h-4 w-4 text-ink-muted" aria-hidden />{STEP_LABEL[st.type]}</span>
-          <span className="mt-1 block text-[13px] text-ink-muted" data-testid={`step-summary-${st.id}`}><VarText text={stepSummary(st)} /></span>
+        <button type="button" onClick={() => p.onSelect(st.id)} className="flex min-w-0 flex-1 items-start gap-3 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`step-open-${st.id}`}>
+          <CategoryTile type={st.type} />
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-2 whitespace-nowrap text-[13px] font-semibold text-ink"><span className="text-[11px] font-medium tabular-nums text-ink-subtle">{nums.get(st.id)}</span><span className="truncate">{STEP_LABEL[st.type]}</span></span>
+            <span className="mt-0.5 line-clamp-2 text-[13px] text-ink-muted" title={stepSummary(st, workflowsApi.workflowName)} data-testid={`step-summary-${st.id}`}><VarText text={stepSummary(st, workflowsApi.workflowName)} /></span>
+            {p.stats?.[st.id] !== undefined && <span className="mt-1 inline-flex rounded-full bg-tobacco-50 px-2 py-0.5 text-[11px] font-medium tabular-nums text-tobacco-800" data-testid={`step-stat-${st.id}`}>{p.stats[st.id]} reached · 7 days</span>}
+          </span>
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger className={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm' }), 'max-sm:h-11 max-sm:w-11')} aria-label={`Step ${nums.get(st.id)} actions`} data-testid={`step-menu-${st.id}`}><MoreHorizontal aria-hidden /></DropdownMenuTrigger>
@@ -97,10 +102,10 @@ export function StepList(p: Props) {
       if (hs.length === 1) { src = id; h = hs[0][0]; id = outEdge(p.wf, src, h)?.target ?? null; out.push(<Connector key={`k-${src}`} />); continue }
       const myJoins: string[] = []
       out.push(
-        <div key={`br-${id}`} className="mt-2 grid gap-3 rounded-2xl bg-surface-sunken p-3" style={{ gridTemplateColumns: `repeat(${hs.length}, minmax(220px, 1fr))` }} data-testid={`branches-${id}`}>
+        <div key={`br-${id}`} className="mt-2 grid gap-4 rounded-2xl bg-surface-muted/40 p-3" style={{ gridTemplateColumns: `repeat(${hs.length}, minmax(300px, 1fr))` }} data-testid={`branches-${id}`}>
           {hs.map(([hid, label]) => (
             <div key={hid} className="min-w-0" data-testid={`branch-${id}-${hid}`}>
-              <p className="mb-1 truncate text-center text-xs font-semibold text-ink" title={label}>{label}</p>
+              <p className="mx-auto mb-2 w-fit max-w-full truncate rounded-full bg-surface px-3 py-1 text-xs font-semibold text-ink shadow-[0_1px_2px_rgba(31,29,26,0.05)] ring-1 ring-border" title={label} data-testid={`branch-label-${id}-${hid}`}>{label}</p>
               {chain(outEdge(p.wf, id!, hid)?.target ?? null, id!, hid, true, myJoins)}
             </div>
           ))}
@@ -117,9 +122,17 @@ export function StepList(p: Props) {
 
   return (
     <div className="mx-auto w-full max-w-[880px] overflow-x-auto pb-12" data-testid="step-list">
-      <button type="button" onClick={() => p.onSelect('trigger')} className={cn('flex w-full items-start gap-3 rounded-xl border bg-surface p-3 text-left', p.selected === 'trigger' ? 'border-tobacco-500 ring-2 ring-tobacco-200' : 'border-border')} data-testid="step-card-trigger">
-        <Zap className="mt-0.5 h-4 w-4 text-brass-600" aria-hidden />
-        <span className="min-w-0"><span className="block text-[13px] font-semibold text-ink">When the AI detects “{p.wf.trigger.intent || 'No intent yet'}”</span><span className="block truncate text-[13px] text-ink-muted">{p.wf.trigger.phrases.map((x) => `“${x}”`).join(', ') || 'No example phrases'} · {p.wf.trigger.channels.join(', ')}</span>{p.wf.trigger.quickReply && <span className="mt-1.5 inline-flex rounded-full border border-border bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-ink" data-testid="trigger-quick-reply">Quick reply: {p.wf.trigger.quickReply}</span>}</span>
+      <button type="button" onClick={() => p.onSelect('trigger')} className={cn('flex w-full items-start gap-3 rounded-xl border bg-surface p-4 text-left shadow-[0_1px_2px_rgba(31,29,26,0.04)]', p.selected === 'trigger' ? 'border-tobacco-500 ring-2 ring-tobacco-200' : 'border-border hover:border-border-strong')} data-testid="step-card-trigger">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brass-50 text-brass-700 ring-1 ring-brass-200" aria-hidden><Zap className="h-4 w-4" /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11px] font-semibold text-ink-subtle">Start</span>
+          <span className="block text-[13px] font-semibold text-ink">When the AI detects “{p.wf.trigger.intent || 'No intent yet'}”</span>
+          <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            {p.wf.trigger.phrases.length ? p.wf.trigger.phrases.map((x) => <span key={x} className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-ink">“{x}”</span>) : <span className="text-xs text-ink-muted">No example phrases</span>}
+            <span className="ml-1 flex items-center gap-1 text-ink-muted" aria-label={`Channels: ${p.wf.trigger.channels.join(', ')}`}>{p.wf.trigger.channels.map((c) => { const I = c === 'chat' ? MessageCircle : c === 'email' ? Mail : NotebookPen; return <I key={c} className="h-3.5 w-3.5" aria-hidden /> })}</span>
+          </span>
+          {p.wf.trigger.quickReply && <span className="mt-2 inline-flex rounded-full bg-ink px-2.5 py-0.5 text-xs font-medium text-white" data-testid="trigger-quick-reply">Quick reply: {p.wf.trigger.quickReply}</span>}
+        </span>
       </button>
       <Connector />
       {chain(outEdge(p.wf, 'trigger', 'next')?.target ?? null, 'trigger', 'next', false, [])}

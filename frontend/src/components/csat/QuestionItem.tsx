@@ -67,7 +67,7 @@ export function QuestionItem({ q, index, total, errors, onChange, onMove, onDele
         >
           <GripVertical className="h-4 w-4" aria-hidden />
         </button>
-        <span className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Question {index + 1}</span>
+        <span className="text-sm font-medium text-ink">Question {index + 1}</span>
         <div className="ml-auto flex items-center gap-1">
           <Select
             value={q.type}

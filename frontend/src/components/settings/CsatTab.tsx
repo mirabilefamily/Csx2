@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/States'
 import { QuestionList } from '@/components/csat/QuestionList'
 import { SurveyPreview } from '@/components/csat/SurveyPreview'
+import { PreviewPane } from '@/components/PreviewPane'
 import type { QuestionErrors } from '@/components/csat/QuestionItem'
 import { Delivery, validate } from '@/components/csat/CsatSettingsDrawer'
 import { SaveBar } from './SaveBar'
@@ -41,7 +42,7 @@ export function CsatTab() {
         <QuestionList questions={draft.questions} errors={errors} onChange={(questions) => update({ ...draft, questions })} />
         <Delivery draft={draft} set={update} />
       </div>
-      <div className="lg:sticky lg:top-20 lg:self-start"><SurveyPreview survey={draft} /></div>
+      <PreviewPane label="Survey preview" testId="csat-preview-pane" className="lg:top-20"><SurveyPreview survey={draft} /></PreviewPane>
       {dirty && (
         <SaveBar note={hasErrors && <span className="text-xs font-medium text-red-700" role="alert" data-testid="csat-save-blocked">Fix the highlighted questions to save.</span>}>
           <Button variant="ghost" size="sm" onClick={() => { setDraft(saved); setErrors({}) }} data-testid="csat-cancel">Discard</Button>

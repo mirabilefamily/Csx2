@@ -1,54 +1,53 @@
-import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowUpRight, FilePlus2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import Papa from 'papaparse'
+import { ArrowUpRight, ChevronDown, Download, FilePlus2, FileSpreadsheet, Upload } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { useUnsavedGuard } from '@/components/UnsavedGuard'
 import { useAuth } from '@/components/auth/AuthContext'
-import { Button } from '@/components/ui/button'
-import { SubTabs } from '@/components/PageTabs'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { ArticlesTab } from '@/components/guidance/ArticlesTab'
-import { MacrosTab } from '@/components/guidance/MacrosTab'
-import { CsvImportDialog } from '@/components/guidance/CsvImportDialog'
+import { CsvImportDialog, downloadCsv, TEMPLATE } from '@/components/guidance/CsvImportDialog'
+import { directoryApi } from '@/api'
 
-type Tab = 'articles' | 'macros' | 'import'
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'articles', label: 'Articles' },
-  { id: 'macros', label: 'Macros' },
-  { id: 'import', label: 'Import CSV' },
-]
-
+// Guidance (Phase 17): one library, no section tabs. Import / export lives in a header menu.
 export default function GuidancePage() {
   const [params, setParams] = useSearchParams()
   const { confirmLeave } = useUnsavedGuard()
   const { user } = useAuth()
+  const [rev, setRev] = useState(0)
   const article = params.get('article')
-  const tab: Tab = article ? 'articles' : TABS.find((t) => t.id === params.get('tab'))?.id ?? 'articles'
+  const tab = params.get('tab')
+  if (tab && tab !== 'import') return <Navigate to="/guidance" replace />
+  const importing = tab === 'import' && !article
   const go = (next: Record<string, string>) => setParams(next)
+  const exportAll = async () => {
+    const all = await directoryApi.listArticles()
+    downloadCsv('guidance-articles.csv', Papa.unparse(all.map((a) => ({ title: a.title, body: a.body, category: a.category, tags: a.tags.join(';'), active: a.active, updatedAt: a.updatedAt }))))
+  }
 
   return (
     <div className="space-y-6" data-testid="guidance-page">
       <PageHeader
         title="Guidance"
-        description="What the AI knows, and how your team replies."
-        actions={
+        description="What the AI knows and the policies it follows."
+        actions={!article && (
           <>
-            {user?.role === 'admin' && (
-              <Link to="/ai" className="inline-flex min-h-11 items-center gap-1 rounded px-2 text-sm font-medium text-tobacco-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid="guidance-ai-link">
-                Brand voice, workflows and testing <ArrowUpRight className="h-4 w-4" aria-hidden />
-              </Link>
-            )}
-            <Button onClick={() => confirmLeave(() => go({ tab: 'articles', article: 'new' }))} data-testid="new-article"><FilePlus2 aria-hidden /> New article</Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger className={buttonVariants({ variant: 'outline' })} data-testid="guidance-io-menu"><FileSpreadsheet aria-hidden /> Import / export <ChevronDown className="h-4 w-4" aria-hidden /></DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-60">
+                <DropdownMenuItem onSelect={() => go({ tab: 'import' })} data-testid="guidance-import"><Upload className="h-4 w-4" aria-hidden /> Import CSV…</DropdownMenuItem>
+                <DropdownMenuItem onSelect={exportAll} data-testid="export-csv"><Download className="h-4 w-4" aria-hidden /> Export all articles (CSV)</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => downloadCsv('guidance-template.csv', TEMPLATE)} data-testid="csv-template-menu"><Download className="h-4 w-4" aria-hidden /> Download sample template</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={() => confirmLeave(() => go({ article: 'new' }))} data-testid="new-article"><FilePlus2 aria-hidden /> New article</Button>
           </>
-        }
+        )}
       />
-      <div className="space-y-3">
-        <SubTabs tabs={TABS} value={tab} onChange={(t) => tab !== t && confirmLeave(() => go({ tab: t }))} label="Guidance sections" testIdPrefix="guidance-tab" />
-        <p className="text-sm text-ink-muted" data-testid="guidance-helper">Active articles guide the AI's chat replies and agent drafts. Publish customer-safe policy only.</p>
-      </div>
-      <div role="tabpanel" aria-label={TABS.find((t) => t.id === tab)?.label}>
-        {tab === 'articles' && <ArticlesTab articleId={article} openArticle={(id) => go(id ? { tab: 'articles', article: id } : { tab: 'articles' })} />}
-        {tab === 'macros' && <MacrosTab />}
-        {tab === 'import' && <CsvImportDialog inline open onOpenChange={() => go({ tab: 'articles' })} onImported={() => go({ tab: 'articles' })} />}
-      </div>
+      <ArticlesTab key={rev} articleId={article} openArticle={(id) => go(id ? { article: id } : {})} />
+      <CsvImportDialog open={importing} onOpenChange={(o) => !o && go({})} onImported={() => setRev((r) => r + 1)} />
     </div>
   )
 }

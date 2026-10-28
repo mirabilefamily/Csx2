@@ -72,7 +72,6 @@ export function getAiSettings(): Promise<AiSettings> {
 // PUT /api/settings/ai
 export function saveAiSettings(s: AiSettings): Promise<AiSettings> {
   return request(() => {
-    if (s.hours.some((h) => h.open && h.to <= h.from)) throw new ApiError('Closing time must be after opening time.', 422)
     const limit = s.autoRefund.limit
     if (!(limit >= 0 && limit <= 500)) throw new ApiError('Enter an amount between $0 and $500.', 422)
     db.aiSettings = structuredClone(s)
@@ -86,9 +85,18 @@ export function inviteUser(email: string, role: Role): Promise<User> {
     const e = email.trim().toLowerCase()
     if (!isValidEmail(e)) throw new ApiError('Enter a valid email address.', 422)
     if (db.users.some((u) => u.email === e)) throw new ApiError('A user with this email already exists.', 409)
-    const user: User = { id: `u-${Date.now()}`, name: e.split('@')[0].replace(/^\w/, (c) => c.toUpperCase()), email: e, role, status: 'invited', lastLoginAt: null }
+    const user: User = { id: `u-${Date.now()}`, name: e.split('@')[0].replace(/^\w/, (c) => c.toUpperCase()), email: e, role, status: 'invited', lastLoginAt: null, invitedAt: new Date().toISOString() }
     db.users.push(user)
     return user
+  })
+}
+
+// POST /api/users/:id/resend-invite
+export function resendInvite(id: string): Promise<User> {
+  return request(() => {
+    const u = db.users.find((x) => x.id === id)!
+    u.invitedAt = new Date().toISOString()
+    return { ...u }
   })
 }
 

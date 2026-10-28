@@ -18,7 +18,8 @@
 - REQ-719 [always] The system shall keep selects and inputs one line high, with no wrapping text inside a select (fixes "Message contains keyword" wrapping), and align rule rows to one grid.
 
 ### Routing tab
-- REQ-720 [always] The system shall show on /ai/routing the escalation rules, business hours and assignment rule (round-robin / manual), moved from Workflows with the same behaviour.
+- REQ-805 [always] (User change, supersedes REQ-720 to REQ-722 and the Routing tab in REQ-717) The system shall have NO Routing tab and no escalation-rules, business-hours or assignment-rule settings anywhere. The AI & Workflows tabs are Brand voice · AI replies · Workflows · Conversation testing. /ai/routing redirects to /ai/workflows.
+- REQ-720 [always] (superseded by REQ-805) The system shall show on /ai/routing the escalation rules, business hours and assignment rule (round-robin / manual), moved from Workflows with the same behaviour.
 - REQ-721 [always] The system shall render escalation rules as sentence rows "If [condition] [value] → hand to [Grokbot / Team / Person]", with drag-to-reorder and delete.
 - REQ-722 [event] When the user opens the old Workflows deep links for rules or hours (search results), the system shall land on /ai/routing.
 

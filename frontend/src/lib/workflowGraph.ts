@@ -1,22 +1,28 @@
 import dagre from '@dagrejs/dagre'
 import type { Edge, Step, StepConfig, StepType, Workflow, WorkflowIssue } from '@/types'
 
-export const TERMINAL: StepType[] = ['handover', 'end']
+export const TERMINAL: StepType[] = ['handover', 'end', 'run_workflow']
 
 export const STEP_LABEL: Record<StepType, string> = {
   message: 'Send message', ask: 'Ask a question', send_code: 'Send email code', check_code: 'Check code', find_orders: 'Find orders by email', show_orders: 'Show orders',
   update_address: 'Update shipping address', find_returns: 'Find returns', start_return: 'Start a return', condition: 'Condition', add_tag: 'Add tag', set_field: 'Set field', handover: 'Hand over to a person', end: 'End workflow',
+  pick_order: 'Pick an order', pick_items: 'Pick items', address_form: 'Address form', upload_photos: 'Upload photos', consent: 'Consent', check_inventory: 'Check inventory', cancel_order: 'Cancel order',
+  create_replacement: 'Create replacement order', issue_refund: 'Issue refund', create_discount: 'Create discount code', send_email: 'Send email', wait: 'Wait', run_workflow: 'Run another workflow', add_to_list: 'Add to email list',
 }
 
 export const STEP_GROUPS: [string, StepType[]][] = [
-  ['Talk', ['message', 'ask']], ['Verify', ['send_code', 'check_code']], ['Shopify', ['find_orders', 'show_orders', 'update_address']], ['Loop', ['find_returns', 'start_return']],
-  ['Logic', ['condition']], ['Ticket', ['add_tag', 'set_field', 'handover']], ['End', ['end']],
+  ['Talk', ['message', 'ask', 'pick_order', 'pick_items', 'address_form', 'upload_photos', 'consent']], ['Verify', ['send_code', 'check_code']],
+  ['Shopify', ['find_orders', 'show_orders', 'update_address', 'check_inventory', 'cancel_order', 'create_replacement', 'issue_refund', 'create_discount']], ['Loop', ['find_returns', 'start_return']],
+  ['Messaging', ['send_email']], ['Logic', ['condition', 'wait', 'run_workflow']], ['Marketing', ['add_to_list']], ['Ticket', ['add_tag', 'set_field', 'handover']], ['End', ['end']],
 ]
 
 export const DEFAULT_CONFIG: Partial<Record<StepType, StepConfig>> = {
   message: { text: '' }, ask: { text: '', kind: 'text', variable: '' }, send_code: { text: "We've sent a 6-digit code to {{email}}. It expires in 10 minutes." },
   check_code: { attempts: 3, wrongText: "That code didn't match. {{tries_left_text}}" }, find_orders: { variable: 'email' }, show_orders: { limit: 3 },
   condition: { condVar: '', op: 'eq', condValue: '', yesLabel: 'If', noLabel: 'Otherwise' }, add_tag: { tag: '' }, set_field: { field: '', fieldValue: '' }, handover: { team: 'Support' }, end: { csat: false },
+  pick_order: { text: 'Which order is this about?', orderFilter: 'any', withinDays: 30, noneText: "I don't see a matching order." }, pick_items: { text: 'Which items?' }, address_form: { text: "What's the new shipping address?" },
+  upload_photos: { text: 'Please add 1–3 photos of the item (jpg or png, up to 10MB).', minPhotos: 1, maxPhotos: 3, required: true }, consent: { text: '' }, issue_refund: { amountMode: 'items' },
+  create_discount: { discountType: 'percent', discountValue: 10, expiryDays: 30 }, send_email: { subject: '', body: '' }, wait: { waitFor: 'duration', waitMinutes: 60 }, run_workflow: { workflowId: '' }, add_to_list: { listId: '' },
 }
 
 // Outgoing handles per step: [handle id, label].
@@ -25,8 +31,15 @@ export function handlesOf(st: Step): [string, string][] {
   if (st.type === 'condition') return [['yes', st.config.yesLabel || 'If'], ['no', st.config.noLabel || 'Otherwise']]
   if (st.type === 'check_code') return [['ok', 'Code is correct'], ['fail', 'Out of tries']]
   if (st.type === 'ask' && st.config.kind === 'buttons') return (st.config.options ?? []).map((o) => [o.id, o.label])
+  if (st.type === 'pick_order') return [['next', 'Order picked'], ['none', 'No matching orders']]
+  if (st.type === 'check_inventory') return [['next', 'In stock'], ['out', 'Out of stock']]
+  if (st.type === 'issue_refund') return [['next', 'Success'], ['approval', 'Needs approval'], ['failed', 'Failed']]
+  if (ACTIONS.includes(st.type)) return [['next', 'Success'], ['failed', 'Failed']]
   return [['next', 'Next']]
 }
+
+// Shopify and Loop actions get Success / Failed outputs (REQ-833).
+export const ACTIONS: StepType[] = ['update_address', 'start_return', 'cancel_order', 'create_replacement', 'create_discount']
 
 export const SETS: Partial<Record<StepType, (c: StepConfig) => string[]>> = {
   ask: (c) => (c.variable ? [c.variable] : []),
@@ -34,10 +47,12 @@ export const SETS: Partial<Record<StepType, (c: StepConfig) => string[]>> = {
   find_orders: () => ['orders', 'orders.count', 'orders.unfulfilled', 'order.number', 'order.tracking_url'],
   start_return: () => ['rma'],
   find_returns: () => ['returns.count'],
+  pick_order: () => ['order.number', 'order.total', 'order.items', 'order.fulfilled'], pick_items: () => ['item', 'item.price'], address_form: () => ['new_address'], upload_photos: () => ['photos'],
+  check_inventory: () => ['stock.qty'], cancel_order: () => ['refund.total'], create_replacement: () => ['replacement'], issue_refund: () => ['refund.amount'], create_discount: () => ['discount_code'],
 }
-const BUILTIN = ['channel', 'customer.name', 'tries_left', 'tries_left_text']
+const BUILTIN = ['channel', 'customer.name', 'tries_left', 'tries_left_text', 'refund.limit']
 
-export const usedVars = (c: StepConfig) => [...`${c.text ?? ''} ${c.note ?? ''}`.matchAll(/\{\{\s*([\w.]+)\s*\}\}/g)].map((m) => m[1]).concat(c.condVar && c.condVar !== 'channel' ? [c.condVar] : [])
+export const usedVars = (c: StepConfig) => [...`${c.text ?? ''} ${c.note ?? ''} ${c.body ?? ''}`.matchAll(/\{\{\s*([\w.]+)\s*\}\}/g)].map((m) => m[1]).concat(c.condVar && c.condVar !== 'channel' ? [c.condVar] : [])
 
 // Same intent matching for Test workflow and the widget runtime.
 export function matchesTrigger(t: Workflow['trigger'], text: string) {
@@ -111,6 +126,11 @@ export function validate(wf: Pick<Workflow, 'steps' | 'edges' | 'trigger'>): Wor
     if (st.type === 'ask' && !st.config.variable?.trim()) issues.push({ stepId: st.id, text: `${name(st)}: save the answer to a variable.` })
     if (st.type === 'ask' && st.config.kind === 'buttons' && !st.config.options?.length) issues.push({ stepId: st.id, text: `${name(st)}: add at least one button.` })
     if (st.type === 'check_code' && !wf.steps.some((x) => x.type === 'send_code' && ancestors(wf, st.id).has(x.id))) issues.push({ stepId: st.id, text: `${name(st)}: needs a Send email code step before it.` })
+    const c = st.config
+    const rule = st.type === 'add_to_list' && !c.listId ? 'Choose an email list.' : st.type === 'run_workflow' && !c.workflowId ? 'Pick a workflow to run.' : st.type === 'send_email' && !c.subject?.trim() ? 'Add a subject.'
+      : st.type === 'consent' && !c.text?.trim() ? 'Add the consent text.' : st.type === 'create_discount' && !(Number(c.discountValue) > 0) ? 'Set the discount amount.' : st.type === 'issue_refund' && c.amountMode === 'custom' && !(Number(c.amount) > 0) ? 'Set the refund amount.'
+      : st.type === 'upload_photos' && (c.minPhotos ?? 1) > (c.maxPhotos ?? 3) ? 'Minimum photos is more than the maximum.' : st.type === 'wait' && c.waitFor !== 'reply' && !(Number(c.waitMinutes) > 0) ? 'Set how long to wait.' : null
+    if (rule) issues.push({ stepId: st.id, text: `${name(st)}: ${rule}` })
     const known = variablesBefore(wf, st.id)
     for (const v of usedVars(st.config)) if (!known.includes(v)) { issues.push({ stepId: st.id, text: `${name(st)}: {{${v}}} isn't set before this step.` }); break }
   }

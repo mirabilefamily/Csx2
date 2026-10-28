@@ -16,7 +16,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
 Textarea.displayName = 'Textarea'
 
 export const Label = React.forwardRef<HTMLLabelElement, React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>>(({ className, ...props }, ref) => (
-  <LabelPrimitive.Root ref={ref} className={cn('text-sm font-medium text-ink', className)} {...props} />
+  <LabelPrimitive.Root ref={ref} className={cn('block text-sm font-medium text-ink', className)} {...props} />
 ))
 Label.displayName = 'Label'
 

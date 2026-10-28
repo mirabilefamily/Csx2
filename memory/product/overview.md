@@ -71,6 +71,14 @@ A fully clickable, front-end-only prototype of an AI-first customer service desk
 | F-56 | Routing tab (escalation rules, business hours, assignment) and refined AI & Workflows page design | Admin | 13 |
 | F-57 | Chat widget redesign to match the reference: frosted panel, floating Cart / Track orders / Close, stacked conversation starters, "Ask anything" pill input, bubble-less AI replies with thumbs feedback, round launcher | Customer | 14 |
 | F-58 | Channels page cleanup: one tab level, compact settings column + sticky store-backdrop preview, Home screen settings with conversation starters editor (ask AI / start workflow / open link) | Admin | 14 |
+| F-59 | AI & Workflows design pass: Routing removed; Brand voice live voice preview; AI replies impact strip + threshold estimate; Workflows table + template preview + editor polish; Conversation testing with customer picker, insight rows, Run all scenarios | Admin | 15 |
+| F-60 | 8 real workflows replacing templates: Order tracking, Start a return (Loop), Change shipping address, Cancel an order, Damaged item claim, Wholesale inquiry, Hat size finder, Friday Drops & restock alerts (Needs setup) | Admin, Customer | 16 |
+| F-61 | New workflow step types: pick order/items, address form, photo upload, consent, inventory, cancel, replacement, refund (limit-aware), discount code, send email, wait, run another workflow, add to email list | Admin | 16 |
+| F-62 | Draft/publish with versions (restore, change summary) and run history per workflow (stats, funnel, runs table, run detail linked to Inbox, step stats overlay) | Admin | 16 |
+| F-63 | Guidance refinement: no tabs, one New article + Import / export menu, summary counts, category list with counts, status/tag/sort filters, readable rows (excerpt, relative updated, AI uses), two-column editor with toolbar + chip tags + settings panel, stepped CSV import | Admin, Agent | 17 |
+| F-64 | Channels refinement: status strip per tab, Email settings + live email preview, numbered Installation steps with collapsed script fallback, offline wording | Admin | 18 |
+| F-65 | Settings refinement: per-tab descriptions, Account rows + password eye + sessions list, Users summary + resend invite + roles card, grouped Integrations with one status each and shared detail header, CSAT tidy | Admin | 18 |
+| F-66 | App-wide consistency sweep: shared header/tabs/save bar/status chips, labels above fields, no overlines/slivers/nested cards, leftover-term clean-up | Admin, Agent | 18 |
 
 ## Phases
 - **Phase 1: Foundation + Dashboard.** Gets the Vite/TS project, tokens, shell, login, mock data + API layer, Dashboard and CSAT drawer, and styleguide foundations working. Delivers F-1 to F-18. [requirement](phase1/requirement.md) · [journeys](phase1/journeys.md)
@@ -87,6 +95,10 @@ A fully clickable, front-end-only prototype of an AI-first customer service desk
 - **Phase 12: Simpler Dashboard.** 5 KPIs, paired blocks, tabbed cards, top-3 + View all. Delivers F-52. [requirement](phase12/requirement.md) · [journeys](phase12/journeys.md)
 - **Phase 13: AI & Workflows refresh + Workflows automation.** Multiple workflows, List + Canvas editor, Order tracking with email-code verification, 4 templates, Routing tab, Test workflow with mock inbox, widget runtime. Delivers F-53 to F-56. [requirement](phase13/requirement.md) · [journeys](phase13/journeys.md)
 - **Phase 14: Chat widget redesign + Channels chat settings.** Frosted panel, floating Cart / Track orders / Close, stacked starters, pill input, plain AI replies with thumbs, round launcher; one tab level, compact settings + sticky preview, starters editor. Delivers F-57 and F-58. [requirement](phase14/requirement.md) · [journeys](phase14/journeys.md)
+- **Phase 15: AI & Workflows design pass.** Routing removed; Brand voice live preview, AI replies impact strip + estimate, Workflows table/templates/editor polish, Conversation testing with customer picker, insight rows and Run all. Delivers F-59. [requirement](phase15/requirement.md) · [journeys](phase15/journeys.md)
+- **Phase 16: Workflows build-out.** Templates removed; 8 real workflows (Order tracking, Return, Address change, Cancel, Damaged claim, Wholesale, Hat size, Restock alerts); 14 new step types; draft/publish with versions; run history with funnel and run detail. Delivers F-60 to F-62. [requirement](phase16/requirement.md) · [journeys](phase16/journeys.md)
+- **Phase 17: Guidance refinement.** One organized article library with categories, counts, AI usage, calmer editor and stepped import. Delivers F-63. [requirement](phase17/requirement.md) · [journeys](phase17/journeys.md)
+- **Phase 18: Channels + Settings refinement, app-wide consistency.** Delivers F-64 to F-66. Runs before Phase 16. [requirement](phase18/requirement.md) · [journeys](phase18/journeys.md)
 
 ## UI/UX Rules
 - Light mode only. Heritage-craft warmth with modern SaaS usability, not corporate blue.
@@ -126,7 +138,7 @@ Seeding is explicit scope. All of it lives in /src/mocks:
 - ~40 tickets (IDs like GB-1042) covering all 6 statuses and both channels (email, chat). Scenarios: sizing, order status, returns, damaged items, custom orders, wholesale inquiries. Resolvers mix Claude, Grokbot and human.
 - Messages per ticket (customer / claude / grokbot / agent / system, some internal notes), AI attempts per ticket, AI drafts awaiting approval on some needs_human tickets.
 - Customers with Shopify orders (status, tracking, line items).
-- 15 guidance articles, 8 macros.
+- 15 guidance articles in 6 categories, each with a mock "AI uses in 30 days" count (phase 17). Macros were removed entirely (REQ-856).
 - 3 users: Ava Martinez (Admin, active, ava@goorin.com), Sam Okafor (Agent, active), Priya Shah (Agent, invited).
 - 90 days of daily dashboard metrics, CSAT survey config + responses with comments (including scores ≤2).
 - Phase 3+: integration statuses, AI settings. Phase 4/5: widget settings, Shopify install status.

@@ -3,17 +3,18 @@ import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
-import { Bold, ChevronDown, Italic, Link2, MessageSquareText, Paperclip, Search } from 'lucide-react'
+import { Bold, ChevronDown, Italic, Link2, Paperclip } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
-import type { Macro } from '@/types'
 import { Button, buttonVariants, focusRing } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/overlay'
 import { Input } from '@/components/ui/input'
 import { demoToolsEnabled } from '@/components/DemoStateSwitcher'
-import { MacroPicker, macroToHtml } from './MacroPicker'
 import { richText } from './MessageItem'
 import { cn } from '@/lib/utils'
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const textToHtml = (body: string) => body.split(/\n{2,}/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')
 
 export type ComposerMode = 'reply' | 'note'
 export interface ComposerHandle {
@@ -23,8 +24,6 @@ export interface ComposerHandle {
 }
 
 interface Props {
-  macros: Macro[]
-  fill: (text: string) => string
   onSend: (html: string, isInternal: boolean, draftId?: string) => Promise<boolean>
   onResolve?: () => void
   onHandBack?: (html: string, draftId?: string) => Promise<boolean>
@@ -63,18 +62,14 @@ function LinkButton({ editor }: { editor: Editor }) {
   )
 }
 
-export const Composer = forwardRef<ComposerHandle, Props>(({ macros, fill, onSend, onResolve, onHandBack, extra, onDraftChange, to }, ref) => {
+export const Composer = forwardRef<ComposerHandle, Props>(({ onSend, onResolve, onHandBack, extra, onDraftChange, to }, ref) => {
   const [mode, setMode] = useState<ComposerMode>('reply')
   const [saved, setSaved] = useState<'idle' | 'saving' | 'saved'>('idle')
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const [picker, setPicker] = useState<{ source: 'slash' | 'button'; query: string } | null>(null)
   const [sending, setSending] = useState(false)
   const draftId = useRef<string | null>(null)
   const modeRef = useRef(mode)
-  const pickerRef = useRef(picker)
-  const pickerKeys = useRef<(e: KeyboardEvent) => boolean>(() => false)
   modeRef.current = mode
-  pickerRef.current = picker
 
   const editor = useEditor({
     extensions: [
@@ -85,7 +80,6 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ macros, fill, onSen
     editorProps: {
       attributes: { class: cn('min-h-[88px] max-sm:min-h-[56px] max-h-56 overflow-y-auto px-3 py-2 text-sm text-ink focus:outline-none', richText), role: 'textbox', 'aria-multiline': 'true', 'aria-label': 'Message composer', 'data-testid': 'composer-editor' },
       handleKeyDown: (_view, e) => {
-        if (pickerRef.current?.source === 'slash' && pickerKeys.current(e)) return true
         if (e.key === 'Escape') {
           ;(e.target as HTMLElement).blur()
           return true
@@ -98,9 +92,6 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ macros, fill, onSen
       },
     },
     onUpdate: ({ editor: ed }) => {
-      const m = /^\/(\S*)$/.exec(ed.getText())
-      if (m) setPicker({ source: 'slash', query: m[1] })
-      else if (pickerRef.current?.source === 'slash') setPicker(null)
       clearTimeout(saveTimer.current)
       if (!ed.getText().trim()) return setSaved('idle')
       setSaved('saving')
@@ -117,12 +108,12 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ macros, fill, onSen
       setMode('reply')
       draftId.current = id
       onDraftChange(id)
-      editor?.commands.setContent(macroToHtml(body))
+      editor?.commands.setContent(textToHtml(body))
       setTimeout(() => editor?.commands.focus('end'), 0)
     },
     insertText: (text) => {
       setMode('reply')
-      editor?.commands.setContent(macroToHtml(text))
+      editor?.commands.setContent(textToHtml(text))
       setTimeout(() => editor?.commands.focus('end'), 0)
     },
   }), [editor, onDraftChange])
@@ -132,13 +123,6 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ macros, fill, onSen
   }, [mode, editor])
 
   if (!editor) return null
-  const insert = (macro: Macro) => {
-    const html = macroToHtml(fill(macro.body))
-    if (picker?.source === 'slash') editor.commands.setContent(html)
-    else editor.chain().focus().insertContent(html).run()
-    setPicker(null)
-    setTimeout(() => editor.commands.focus('end'), 0)
-  }
   const send = async (then?: 'resolve' | 'handback') => {
     if (editor.isEmpty || !editor.getText().trim()) return
     setSending(true)
@@ -158,7 +142,6 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ macros, fill, onSen
   return (
     <div className={cn('border-t border-border bg-white px-4 pt-3 md:px-6', demoToolsEnabled ? 'pb-16' : 'pb-3')}>
       <div className={cn('relative rounded-lg border transition-colors', note ? 'border-amber-300 bg-amber-50/60' : 'border-border bg-white')} data-testid="composer" data-mode={mode}>
-        {picker && <MacroPicker macros={macros} source={picker.source} query={picker.query} onQuery={(q) => setPicker({ ...picker, query: q })} onPick={insert} onClose={() => setPicker(null)} keyHandler={pickerKeys} />}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-2 py-1.5">
           <div role="tablist" aria-label="Composer mode" className="inline-flex rounded-md border border-border p-0.5">
             {(['reply', 'note'] as const).map((m) => (
@@ -171,15 +154,11 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ macros, fill, onSen
           <span className="min-w-0 truncate text-xs text-ink-muted" data-testid="composer-goes-to">{note ? 'Only your team sees this' : <>To: <span className="font-medium text-ink">{to}</span></>}</span>
           <span className="ml-auto text-xs text-ink-muted" role="status" data-testid="composer-draft-state">{saved === 'saving' ? 'Saving draft…' : saved === 'saved' ? 'Draft saved' : ''}</span>
         </div>
-        <button type="button" onClick={() => setPicker(picker ? null : { source: 'button', query: '' })} aria-expanded={picker?.source === 'button'} className={cn('flex min-h-9 w-full items-center gap-2 border-b border-border px-3 text-left text-[13px] text-ink-muted hover:bg-surface-sunken max-sm:min-h-11', focusRing)} data-testid="composer-macro-search">
-          <Search className="h-4 w-4" aria-hidden /><span className="flex-1 truncate">Search macros by name, tags or body...</span>
-        </button>
         <EditorContent editor={editor} />
         <div className="flex items-center gap-0.5 border-t border-border px-2 py-1">
           <ToolButton label="Bold" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="h-4 w-4" aria-hidden /></ToolButton>
           <ToolButton label="Italic" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="h-4 w-4" aria-hidden /></ToolButton>
           <LinkButton editor={editor} />
-          <ToolButton label="Macros" active={picker?.source === 'button'} onClick={() => setPicker(picker ? null : { source: 'button', query: '' })}><MessageSquareText className="h-4 w-4" aria-hidden /></ToolButton>
           <ToolButton label="Attach" onClick={() => toast("Attachments aren't available in this demo.")}><Paperclip className="h-4 w-4" aria-hidden /></ToolButton>
           {note && <span className="ml-auto pr-1 text-xs font-semibold text-amber-900">Internal note</span>}
         </div>

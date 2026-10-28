@@ -67,9 +67,9 @@ export function InboxSamples() {
           <ul><MessageItem m={NOTE} /></ul>
         </Specimen>
       </div>
-      <Specimen label="Composer · reply / internal note, formatting, macros">
+      <Specimen label="Composer · reply / internal note, formatting">
         <Card className="overflow-hidden p-4">
-          <Composer macros={[]} fill={(t) => t} onSend={async () => true} onDraftChange={noop} to="grace@example.com" />
+          <Composer onSend={async () => true} onDraftChange={noop} to="grace@example.com" />
         </Card>
       </Specimen>
     </div>

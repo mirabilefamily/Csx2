@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BookOpen, Loader2, Search, SlidersHorizontal, Ticket as TicketIcon, UserRound } from 'lucide-react'
+import { BookOpen, Loader2, MessagesSquare, Search, SlidersHorizontal, Ticket as TicketIcon, UserRound } from 'lucide-react'
 import { useAuth } from '@/components/auth/AuthContext'
 import type { SearchResults } from '@/types'
 import { directoryApi } from '@/api'
@@ -20,7 +20,6 @@ const SETTINGS_INDEX: [string, string, string][] = [
   ['ai-replies', 'AI replies & confidence threshold', 'AI & Workflows · /ai/replies'],
   ['auto-refunds', 'Auto-refunds', 'AI & Workflows · /ai/replies'],
   ['workflows', 'Process automations like order tracking', 'AI & Workflows · /ai/workflows'],
-  ['routing', 'Escalation rules, business hours & assignment', 'AI & Workflows · /ai/routing'],
   ['testing', 'Conversation testing', 'AI & Workflows · /ai/testing'],
   ['chat-widget', 'Chat widget appearance', 'Channels · /channels/chat'],
   ['launcher-position', 'Launcher position', 'Channels · /channels/chat'],
@@ -172,7 +171,7 @@ export function GlobalSearch() {
               const Icon = ICONS[group]
               return (
                 <div key={group} role="group" aria-label={group} data-testid={`search-group-${group.toLowerCase()}`}>
-                  <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{group}</p>
+                  <p className="px-4 pb-1 pt-2 text-[11px] font-semibold text-ink-muted">{group}</p>
                   {groupItems.map((item) => {
                     const idx = items.indexOf(item)
                     return (
@@ -187,7 +186,7 @@ export function GlobalSearch() {
                         onClick={() => pick(item)}
                         className={cn('mx-2 flex cursor-pointer items-center gap-3 rounded-md px-2 py-2', idx === active && 'bg-surface-muted ring-1 ring-ring/40')}
                       >
-                        <Icon className="h-4 w-4 shrink-0 text-tobacco-500" aria-hidden />
+                        {(() => { const I = item.meta.startsWith('Channels') ? MessagesSquare : Icon; return <I className="h-4 w-4 shrink-0 text-tobacco-500" aria-hidden data-icon={item.meta.startsWith('Channels') ? 'channels' : undefined} /> })()}
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium text-ink">{item.title}</span>
                           <span className="block truncate text-xs text-ink-muted">{item.meta}</span>

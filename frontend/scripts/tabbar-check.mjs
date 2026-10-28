@@ -13,14 +13,14 @@ await p.getByRole('button', { name: 'Sign in' }).click()
 await p.waitForURL('**/dashboard')
 const out = []
 for (const [route, open, ready] of [
-  ['/guidance?tab=articles', '[data-testid=new-article]', '[data-testid=article-editor], textarea'],
-  ['/guidance?tab=macros', '[data-testid=new-macro]', 'textarea'],
-  ['/guidance?tab=articles', '[data-testid=import-csv]', '[data-testid=csv-import-dialog]'],
+  ['/guidance', '[data-testid=new-article]', '[data-testid=article-editor], textarea'],
+  ['/guidance', '[data-testid=guidance-io-menu]', '[data-testid=csv-import-dialog]'],
 ]) {
   await p.goto(`${BASE}${route}`)
   await p.waitForSelector(open)
   const before = await bar()
   await p.click(open)
+  if (open.includes('io-menu')) await p.click('[data-testid=guidance-import]')
   await p.waitForSelector(ready)
   await p.waitForTimeout(300)
   const during = await bar()

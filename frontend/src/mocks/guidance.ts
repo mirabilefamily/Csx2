@@ -1,4 +1,4 @@
-import type { GuidanceArticle, Macro } from '@/types'
+import type { GuidanceArticle } from '@/types'
 import { daysAgo } from './time'
 
 type ArticleSeed = [id: string, title: string, category: string, tags: string[], ageDays: number, updatedBy: string, body: string, active?: boolean]
@@ -38,23 +38,7 @@ const articleSeeds: ArticleSeed[] = [
 
 export const guidanceArticles: GuidanceArticle[] = articleSeeds.map(([id, title, category, tags, ageDays, updatedBy, body, active = true]) => ({
   id, title, category, tags, body, active, updatedAt: daysAgo(ageDays), updatedBy,
+  aiUses30d: active ? 12 + ((id.charCodeAt(id.length - 1) * 37 + title.length * 11) % 180) : 0,
   version: 1 + ((id.charCodeAt(id.length - 1) + title.length) % 6),
   history: Array.from({ length: Math.min(3, 1 + ((id.charCodeAt(id.length - 1) + title.length) % 6)) }, (_, i) => ({ version: 1 + ((id.charCodeAt(id.length - 1) + title.length) % 6) - i, editor: i === 0 ? updatedBy : 'Ava Martinez', at: daysAgo(ageDays + i * 23) })),
-}))
-
-type MacroSeed = [name: string, shortcut: string, tags: string[], body: string]
-
-const macroSeeds: MacroSeed[] = [
-  ['Warm greeting', '/hello', ['general'], 'Hi {{customer.first_name}},\n\nThanks for writing to Goorin Bros. Happy to help.'],
-  ['Ask for head measurement', '/measure', ['sizing'], 'Could you measure around your head, about a finger above your brows? Send it in inches or cm and I will match you to a size.'],
-  ['Share tracking', '/tracking', ['order-status'], 'Your order {{order.number}} shipped with {{order.carrier}}. You can follow it here: {{order.tracking_url}}'],
-  ['Return label sent', '/label', ['returns'], 'I have emailed you a fresh prepaid return label. Drop it at any {{order.carrier}} location.'],
-  ['Request damage photos', '/photos', ['damaged'], 'I am so sorry your hat arrived that way. Could you send a photo or two of the damage so I can get a replacement moving?'],
-  ['Replacement shipped', '/replace', ['damaged', 'replacement'], 'A replacement is on its way with expedited shipping. No need to send the damaged one back.'],
-  ['Wholesale handoff', '/wholesale', ['wholesale'], 'I am looping in our wholesale desk, who will reply within one business day with pricing and minimums.'],
-  ['Closing thank-you', '/thanks', ['general'], 'Thanks again for choosing Goorin. Wear it well.\n\n{{agent.first_name}}, Goorin Bros.'],
-]
-
-export const macros: Macro[] = macroSeeds.map(([name, shortcut, tags, body], i) => ({
-  id: `mc-0${i + 1}`, name, shortcut, tags, body, usageCount: [212, 148, 391, 167, 88, 74, 31, 256][i], updatedAt: daysAgo(10 + i * 4),
 }))

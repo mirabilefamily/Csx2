@@ -53,7 +53,6 @@ export default function InboxPage() {
   const [selectMode, setSelectMode] = useState(false)
   const conv = useRef<ConversationHandle>(null)
   const { data: allUsers } = useApi(() => directoryApi.listUsers(), [])
-  const { data: macros } = useApi(() => directoryApi.listMacros(), [])
   const users = useMemo(() => (allUsers ?? []).filter((u) => u.status === 'active'), [allUsers])
 
   const savedId = params.get('saved')
@@ -222,7 +221,7 @@ export default function InboxPage() {
       </section>
       <div className={cn('min-h-0 min-w-0 flex-1 lg:flex', ticketId ? 'flex' : 'hidden')}>
         {ticketId ? (
-          <ConversationPane key={ticketId} ref={conv} ticketId={ticketId} users={users} macros={macros ?? []} crumb={viewLabel} onAsk={() => setAsking(true)} onStep={(dir) => { const i = list.findIndex((t) => t.id === ticketId); const n = list[i + dir]; if (n) open(n.id) }} canStep={{ prev: list.findIndex((t) => t.id === ticketId) > 0, next: list.findIndex((t) => t.id === ticketId) < list.length - 1 }} onBack={() => navigate({ pathname: '/inbox', search })} />
+          <ConversationPane key={ticketId} ref={conv} ticketId={ticketId} users={users} crumb={viewLabel} onAsk={() => setAsking(true)} onStep={(dir) => { const i = list.findIndex((t) => t.id === ticketId); const n = list[i + dir]; if (n) open(n.id) }} canStep={{ prev: list.findIndex((t) => t.id === ticketId) > 0, next: list.findIndex((t) => t.id === ticketId) < list.length - 1 }} onBack={() => navigate({ pathname: '/inbox', search })} />
         ) : (
           <div className="flex flex-1 items-center justify-center" data-testid="conversation-placeholder">
             <EmptyState title="Select a ticket to view the conversation" description="Press j and k to move through the list, or ? for every shortcut." icon={<MessagesSquare className="h-6 w-6" aria-hidden />} />

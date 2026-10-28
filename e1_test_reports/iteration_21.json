@@ -1,0 +1,28 @@
+{
+  "phase": "16",
+  "passed": 10,
+  "failed": 0,
+  "bugs": [],
+  "action_items": [],
+  "notes": [
+    "Frontend-only mock prototype; no backend lane (no APIs).",
+    "Version summary for a publish that renamed the workflow and added+removed a step reads 'Paths changed'. It doesn't mention the rename. This is a wording note, not a bug.",
+    "'Draft changes' chip on list rows was not explicitly asserted. The draft header and shared bar were verified in the editor.",
+    "When the return switches to Damaged item claim, the customer is asked to pick the order again (no second code). The criterion only requires no re-verification.",
+    "Published-only runtime for live chats is not observable in the UI (spec deviation). Not verified.",
+    "Only dev-server WebSocket console errors were seen."
+  ],
+  "retest_needed": false,
+  "checks": [
+    {"criterion": "JRN-184 List", "name": "p16-workflows-list", "lane": "browser", "status": "passed", "evidence": "8 rows, no Templates. Order tracking v3, Damaged v2, 7 On. Restock Off + 'Needs setup', switch disabled with title 'Fix 1 issue before turning this on.'. Damaged runs 13 = Runs tab total 13."},
+    {"criterion": "JRN-185 New step types", "name": "p16-new-step-types", "lane": "browser", "status": "passed", "evidence": "Menu has all 9 groups and 14 new types. Send email added: settings panel shown; blank subject -> issue 'Step 1 · Send email: Add a subject.'; summary updates."},
+    {"criterion": "JRN-186 Start a return", "name": "p16-start-return-test", "lane": "browser", "status": "passed", "evidence": "Verified Margaret with code from mock inbox -> #GB20398 -> item -> Too small -> Original payment -> 'Your return #LR-xxxx is started', link 'Download return label', email 'Your Goorin return #LR-'. 'Arrived damaged' -> 'Switched to Damaged item claim', only 1 code email."},
+    {"criterion": "JRN-187 Address + Cancel", "name": "p16-address-cancel-test", "lane": "browser", "status": "passed", "evidence": "Imogen #GB20388: bad ZIP -> 'Please include the street address and a 5-digit ZIP code.'; valid address -> 'will now ship to'. Margaret #GB20398 -> handed to Support. Cancel #GB20388 -> 'Order #GB20388 is cancelled. $… will go back'; Keep -> 'stays as it is'; shipped -> switched to Start a return."},
+    {"criterion": "JRN-188 Damaged item claim", "name": "p16-damaged-claim-test", "lane": "browser", "status": "passed", "evidence": "Continue with no photo -> 'Add at least 1 photo.'; Attach 2 -> 2 tiles. $148 -> handed to Returns, note 'Refund $148.00 above $75 limit, photos attached'. Theo $68 refunded. Replacement #D…. Panama out of stock -> refund offered."},
+    {"criterion": "JRN-189 Wholesale, Hat size, Restock", "name": "p16-wholesale-size-restock", "lane": "browser", "status": "passed", "evidence": "Invalid store URL rejected; thank-you email; handed to Wholesale, tag wholesale. 57 -> M, 23.6 in -> XL, I don't know -> tape tip. Restock toggle disabled: 'Fix 1 issue', 'Add to email list: Choose an email list.'"},
+    {"criterion": "JRN-190 Draft, publish, versions", "name": "p16-draft-publish-versions", "lane": "browser", "status": "passed", "evidence": "Published v2 -> edit -> Draft changes + Save draft/Publish bar; Testing draft. Issue -> 'Fix 1 issue before publishing.', no dialog. Publish with note -> Published v3; v3 Live chip, note, summary; v1 read-only View; Restore v1 confirm -> Draft changes."},
+    {"criterion": "JRN-191 Runs tab", "name": "p16-runs-tab-widget", "lane": "browser", "status": "passed", "evidence": "Damaged 7d: 13/6/6/1/0; 30d: 48. Funnel marks biggest drop-off. Handed filter -> 6 rows. GB-1076 detail masks m•••@example.com and code ••••••. Open ticket GB-1076 shows the handover text. Hat size test run left Runs at 58."},
+    {"criterion": "JRN-192 Widget starter", "name": "p16-runs-tab-widget", "lane": "browser", "status": "passed", "evidence": "Widget demo starter 'Can I cancel / edit my order?' (st-cancel) starts Cancel an order and asks 'What email did you use'."},
+    {"criterion": "JRN-193 Phone + access", "name": "p16-phone-agent-access", "lane": "browser", "status": "passed", "evidence": "At 390, scrollWidth 390 = clientWidth on list, editor and runs. Agent role -> /ai/workflows shows ai-no-access."}
+  ]
+}

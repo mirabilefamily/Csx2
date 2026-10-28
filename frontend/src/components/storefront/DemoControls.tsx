@@ -31,7 +31,7 @@ interface Props {
 
 const TOGGLES = [
   ['loggedIn', 'Logged-in customer', 'Dev Patel, skips pre-chat'],
-  ['outsideHours', 'Outside business hours', 'Offline form instead of chat'],
+  ['outsideHours', 'Team offline', 'Offline form instead of chat'],
   ['hostile', 'Hostile store CSS', 'Aggressive global theme styles'],
 ] as const
 
@@ -52,7 +52,7 @@ export function DemoControls({ side, page, onPage, current, onJump, toggles, onT
       {open && (
         <div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto border-t border-border px-4 pb-4 pt-3">
           <section>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Store page</p>
+            <p className="text-[11px] font-semibold text-ink-muted">Store page</p>
             <div className="mt-2 grid grid-cols-3 gap-1 rounded-lg bg-surface-muted p-1" role="radiogroup" aria-label="Store page">
               {STORE_PAGES.map((p) => (
                 <button key={p.id} type="button" role="radio" aria-checked={page === p.id} onClick={() => onPage(p.id)} className={cn('h-8 rounded-md text-[12px] font-medium', page === p.id ? 'bg-surface text-ink shadow-card' : 'text-ink-muted hover:text-ink')} data-testid={`demo-page-${p.id}`}>{p.label}</button>
@@ -60,7 +60,7 @@ export function DemoControls({ side, page, onPage, current, onJump, toggles, onT
             </div>
           </section>
           <section>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Jump to state</p>
+            <p className="text-[11px] font-semibold text-ink-muted">Jump to state</p>
             <div className="mt-2 grid grid-cols-2 gap-1.5">
               {WIDGET_STATES.map((s) => (
                 <button key={s.id} type="button" onClick={() => onJump(s.id)} aria-pressed={current === s.id} className={cn('min-h-8 rounded-md border px-2 py-1.5 text-left text-[12px] leading-tight', current === s.id ? 'border-tobacco-600 bg-tobacco-50 font-semibold text-tobacco-700' : 'border-border hover:bg-surface-muted')} data-testid={`demo-jump-${s.id}`}>{s.label}</button>

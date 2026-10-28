@@ -1,17 +1,27 @@
 import type { ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
-import { useUnsavedGuard } from '@/components/UnsavedGuard'
+import { useDirtyCount, useUnsavedGuard } from '@/components/UnsavedGuard'
 import { cn } from '@/lib/utils'
 
 export interface PageTab { id: string; label: string; to: string; Icon?: LucideIcon; extra?: ReactNode }
 
 // Route-backed segmented tabs used by AI & Workflows, Channels and Settings. Respects the unsaved-changes guard.
-export function PageTabs({ tabs, current, label, testIdPrefix }: { tabs: PageTab[]; current: string; label: string; testIdPrefix: string }) {
+export function PageTabs({ tabs, current, label, testIdPrefix, status }: { tabs: PageTab[]; current: string; label: string; testIdPrefix: string; status?: string }) {
+  const dirty = useDirtyCount() > 0
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2" data-testid={`${testIdPrefix}-row`}>
+      <TabNav tabs={tabs} current={current} label={label} testIdPrefix={testIdPrefix} />
+      {status && <span className="sm:ml-auto"><SaveState dirty={dirty} testId={status} /></span>}
+    </div>
+  )
+}
+
+function TabNav({ tabs, current, label, testIdPrefix }: { tabs: PageTab[]; current: string; label: string; testIdPrefix: string }) {
   const navigate = useNavigate()
   const { confirmLeave } = useUnsavedGuard()
   return (
-    <nav aria-label={label} className="-mx-4 max-w-[100vw] overflow-x-auto px-4 sm:mx-0 sm:px-0">
+    <nav aria-label={label} className="-mx-4 min-w-0 max-w-[calc(100%+2rem)] overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:px-0">
       <div className="inline-flex gap-1 rounded-xl bg-surface-muted p-1">
         {tabs.map((t) => {
           const active = current === t.id

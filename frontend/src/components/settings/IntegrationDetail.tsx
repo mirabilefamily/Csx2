@@ -32,8 +32,8 @@ function PromptTester({ i, model }: { i: IntegrationStatus; model: string }) {
   return (
     <div className="space-y-3">
       <div>
-        <Label htmlFor={`prompt-${i.id}`} className="text-xs text-ink-muted">Test prompt</Label>
-        <Textarea id={`prompt-${i.id}`} className="mt-1 min-h-[72px]" value={prompt} onChange={(e) => setPrompt(e.target.value)} data-testid={`prompt-input-${i.id}`} />
+        <Label htmlFor={`prompt-${i.id}`}>Test prompt</Label>
+        <Textarea id={`prompt-${i.id}`} className="mt-1.5 min-h-[72px]" value={prompt} onChange={(e) => setPrompt(e.target.value)} data-testid={`prompt-input-${i.id}`} />
       </div>
       <Button size="sm" variant="outline" onClick={run} loading={busy} data-testid={`prompt-run-${i.id}`}>Run prompt</Button>
       <Result r={res} />
@@ -56,7 +56,7 @@ function ResendTester() {
   }
   return (
     <div className="space-y-2">
-      <Label htmlFor="resend-to" className="text-xs text-ink-muted">Send test email</Label>
+      <Label htmlFor="resend-to">Send test email</Label>
       <div className="flex flex-wrap gap-2">
         <Input id="resend-to" type="email" inputMode="email" autoCapitalize="none" className="h-9 min-w-0 flex-1" value={to} onChange={(e) => setTo(e.target.value)} aria-invalid={!!err} placeholder="you@goorin.com" data-testid="resend-test-email" />
         <Button size="sm" variant="outline" onClick={send} loading={busy} data-testid="resend-send-test">Send test email</Button>
@@ -77,7 +77,7 @@ function Header({ i }: { i: IntegrationStatus }) {
     try { setRes(await settingsApi.testIntegration(i.id)) } catch { setRes({ ok: false, ms: 0, message: 'Connection failed: could not reach the server' }) }
     setTesting(false)
   }
-  const back = <Link to="/settings/integrations" className={BACK} aria-label={isPhone ? 'Back to Integrations' : undefined} data-testid="integration-back"><ArrowLeft className="h-4 w-4" aria-hidden /> {!isPhone && 'Integrations'}</Link>
+  const back = <Link to="/settings/integrations" className={BACK} aria-label={isPhone ? 'All integrations' : undefined} data-testid="integration-back"><ArrowLeft className="h-4 w-4" aria-hidden /> {!isPhone && 'All integrations'}</Link>
   return (
     <>
       {isPhone && (
@@ -161,10 +161,10 @@ function Body({ i, onSaved }: { i: IntegrationStatus; onSaved: (n: IntegrationSt
             </dl>
           ) : <p className="text-sm text-ink-muted">Calls are made with the API key below.</p>}
           {i.id === 'shopify' && <Link to="/channels/install" className="inline-flex min-h-11 items-center rounded text-sm font-medium text-tobacco-700 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid="shopify-widget-install-link">Install the chat widget (Channels)</Link>}
-          {i.id === 'loop' && <a href="https://returns.goorin.com" target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded text-sm font-medium text-tobacco-700 underline underline-offset-2" data-testid="loop-portal-link">Open return portal (MOCKED)</a>}
+          {i.id === 'loop' && <a href="https://returns.goorin.com" target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded text-sm font-medium text-tobacco-700 underline underline-offset-2" data-testid="loop-portal-link">Open return portal</a>}
           {i.checklist && (
             <ul className="space-y-1.5" data-testid="resend-checklist">
-              <li className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Domain verification</li>
+              <li className="text-sm font-medium text-ink">Domain verification</li>
               {i.checklist.map((c) => <li key={c.label} className="flex items-center gap-2 text-sm text-ink">{c.ok ? <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden /> : <XCircle className="h-4 w-4 text-red-600" aria-hidden />}{c.label} <span className="text-xs text-ink-muted">{c.ok ? 'Verified' : 'Pending'}</span></li>)}
             </ul>
           )}
@@ -172,9 +172,9 @@ function Body({ i, onSaved }: { i: IntegrationStatus; onSaved: (n: IntegrationSt
         <FormSection title="Configuration" description={i.models ? 'Which model answers, and a quick prompt to try it.' : i.id === 'resend' ? 'Send yourself a test email.' : 'Nothing to configure here; the connection is managed by the provider.'} testId="integration-section-configuration">
           {i.models && (
             <div className="max-w-xs">
-              <Label htmlFor={`model-${i.id}`} className="text-xs text-ink-muted">Model</Label>
+              <Label htmlFor={`model-${i.id}`}>Model</Label>
               <Select value={model} onValueChange={setModel}>
-                <SelectTrigger id={`model-${i.id}`} className="mt-1" data-testid={`model-select-${i.id}`}><SelectValue /></SelectTrigger>
+                <SelectTrigger id={`model-${i.id}`} className="mt-1.5" data-testid={`model-select-${i.id}`}><SelectValue /></SelectTrigger>
                 <SelectContent>{i.models.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -182,7 +182,7 @@ function Body({ i, onSaved }: { i: IntegrationStatus; onSaved: (n: IntegrationSt
           {i.models && <PromptTester i={i} model={model} />}
           {i.id === 'resend' && <ResendTester />}
         </FormSection>
-        <FormSection title="Credentials" description="Secrets never leave the server; only a masked preview is shown." testId="integration-section-credentials"><Credentials i={i} /></FormSection>
+        <FormSection title="Credentials" description="Read-only. Secrets never leave the server; only a masked preview is shown." testId="integration-section-credentials"><Credentials i={i} /></FormSection>
       </Panel>
       {i.widget && <WidgetSummary w={i.widget} />}
       {dirty && (

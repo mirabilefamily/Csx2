@@ -90,8 +90,8 @@ frontend/
 | `/` | signed-in | redirects to `/dashboard` |
 | `/dashboard` (`?csat=settings` redirects to `/settings/csat`) | signed-in | KPIs (Last 24 hours/7d/30d/90d/Custom), volume, Chat reply timing (last 30 min vs previous 30, independent of the range), refunds, fraud alerts (optional review note), CSAT section |
 | `/inbox`, `/inbox/:ticketId` (`?view=all_open\|needs_human\|ai_handling\|mine\|unassigned\|resolved\|closed\|all\|spam\|trash`) | signed-in | VIEWS + SET ASIDE (Spam, Trash with Restore / Delete forever), "+ New" ticket, short ids (`#E3B75B`), 25-per-page pagination, conversation with Assign me / ⋯ / Resolve, AI replied banner, Email timing, delivery status + timeline, Reply / Internal note composer, CUSTOMER & SHOPIFY panel |
-| `/guidance` (`?tab=articles\|macros\|import`, `?article=<id>\|new`) | signed-in | Articles / Macros / Import CSV. `?tab=sandbox` redirects to `/ai/testing` |
-| `/ai` → `/ai/voice`; `/ai/voice`, `/ai/replies`, `/ai/workflows`, `/ai/testing` | admin | AI & Workflows: Brand voice, AI replies (threshold, auto-send, auto-refunds, Grokbot fallback, prompts), Workflows (escalation rules, business hours, assignment), Conversation testing (multi-turn) |
+| `/guidance` (`?tab=articles\|import`; `?tab=macros` redirects to Articles, `?article=<id>\|new`) | signed-in | Articles / Import CSV (articles only). `?tab=sandbox` redirects to `/ai/testing` |
+| `/ai` → `/ai/voice`; `/ai/voice`, `/ai/replies`, `/ai/workflows`, `/ai/testing` | admin | AI & Workflows: Brand voice, AI replies (threshold, auto-send, auto-refunds, Grokbot fallback, prompts), Workflows (process automations), Conversation testing (multi-turn). `/ai/routing` redirects to `/ai/workflows` (REQ-805: no escalation rules, business hours or assignment settings) |
 | `/channels` → `/channels/chat`; `/channels/chat` (`?kind=chat\|form`, `?panel=appearance\|preferences`), `/channels/email`, `/channels/install` | admin | Channels: Chat & form (widget editor + live preview, contact form builder + preview), Email (Office 365 mailbox, sender, signature, auto-ack, Resend domain, test email), Installation |
 | `/settings` → `/settings/integrations` | admin | Agents see "You don't have access to Settings" (same for AI & Workflows and Channels) |
 | `/settings/account`, `/settings/users`, `/settings/integrations`, `/settings/csat` | admin | Account (profile, password, notifications, sign out everywhere), Users, Integrations tile grid (Configured pill, Connected dot, Manage, amber "Needs attention" edge), CSAT survey settings |
@@ -124,8 +124,9 @@ Each row lists a file in `src/components` (and `src/pages`), its exports and a o
 | `components/AuthorBadge.tsx` | `AuthorBadge` | Customer / Claude / Grokbot / Agent / System badge with icon and color |
 | `components/PageTabs.tsx` | `PageTabs`, `SubTabs`, `SaveState` | Route-backed segmented page tabs (respect the unsaved guard), underline sub-tabs, "All changes saved / Unsaved changes" indicator |
 | `components/NoAccess.tsx` | `NoAccess` | Agent no-access state for Settings, AI & Workflows, Channels |
-| `components/ai/BrandVoiceTab.tsx` | `BrandVoiceTab` | Voice on, brand name /100, five style fields /2,000 (examples /4,000) with counters, over-limit errors, sticky "Save brand voice" (enabled only when dirty and valid), rail with "Test this voice" |
-| `components/ai/ConversationTesting.tsx` | `ConversationTesting` | Multi-turn customer chat with Claude: per-turn verdict, confidence gauge, order context, articles + scores; channel, order number, examples, Reset; uses the unsaved voice draft from router state |
+| `components/ai/AiCard.tsx` | `AiCard`, `StatStrip`, `StripCell` | Phase 15 shared section card (24px padding, 15px title, header action) and the 4-cell hairline stats strip used by AI replies and Workflows |
+| `components/ai/BrandVoiceTab.tsx` | `BrandVoiceTab` | Settings column (≤720px) with field cards: Identity (Voice on switch), Tone (preset chips Warm / Concise / Playful / Formal / Old-world craft plus the textarea), How to respond (plus example replies), Words (Use / Avoid chip inputs, one phrase per line), Sign-off. Counters, over-limit errors, one sticky save bar. Sticky "Voice preview" card with 3 samples rewritten live from the draft (`aiApi.previewVoice`, 250ms debounce), "Test this voice", and one "How brand voice works" card |
+| `components/ai/ConversationTesting.tsx` | `ConversationTesting` | Left setup card: Channel, Customer picker (seeded customers or Guest; fills the order), Order, Saved/Draft voice indicator, scenario cards with descriptions, Run all scenarios, Reset. Transcript in Inbox message-card style; each AI reply has a compact insight row (coloured confidence chip, Would send / Would hand to a person, article count) that expands to articles, data checked and reasoning. "Run all scenarios" shows a results table; each row reopens its conversation |
 | `components/channels/ContactFormEditor.tsx` | `ContactFormEditor` | Contact form Appearance (heading, intro, button, success) / Preferences (field builder: show, required, reorder, topic options) + live form preview |
 | `components/channels/EmailTab.tsx` | `EmailTab` | Office 365 mailbox status, From name, Reply-to, signature + preview, auto-acknowledgement, Resend domain checks, Send test email |
 | `components/dashboard/ChatTimingPanel.tsx` | `ChatTimingPanel` | Chat reply timing, last 30 complete minutes vs the 30 before |
@@ -203,8 +204,7 @@ Each row lists a file in `src/components` (and `src/pages`), its exports and a o
 | `components/inbox/MessageItem.tsx` | `MessageItem`, `richText`, `stamp` | One message card (≤85%/760px, customer left, AI/agent right, delivery tick + copy in header, AI footer), internal note (light amber), centered event line |
 | `components/inbox/DraftCard.tsx` | `DraftCard` | AI draft: "Draft by Claude · <n>% confidence · <article>", 4-line preview with fade + "Show full draft", one action row (Approve & send split, Edit, Discard, Write my own) |
 | `components/inbox/EscalationChip.tsx` | `EscalationChip`, `escalationPath` | Claude → Grokbot → Human timeline chip with reasons |
-| `components/inbox/Composer.tsx` | `Composer`, `ComposerHandle`, `ComposerMode` | Tiptap reply / internal-note composer with formatting and macros |
-| `components/inbox/MacroPicker.tsx` | `MacroPicker`, `macroToHtml` | Searchable macro insert popover |
+| `components/inbox/Composer.tsx` | `Composer`, `ComposerHandle`, `ComposerMode` | Tiptap reply / internal-note composer: Bold, Italic, Link, Attach (no macros, REQ-856) |
 | `components/inbox/DetailParts.tsx` | `CountBadge`, `Section`, `KV`, `LABEL_COL`, `TagChips`, `Identity`, `StatsGrid`, `initials` | Shared Details/Summary building blocks: count bubbles, accordion sections, label column, identity header, 2×2 stats |
 | `components/inbox/DetailsSidebar.tsx` | `DetailsSidebar` | Customer & Shopify panel: customer header, stats, orders (newest first, latest expanded), past tickets, AI attempt log. At ≥1024px it's the always-visible right panel (`customer-panel`, open by default, `customer-panel-collapse` with aria-expanded, rail when collapsed, kept in sessionStorage `goorin.customerPanel`). Below 1024px and on phones it's the Details sheet. |
 | `components/inbox/LoopReturns.tsx` | `LoopReturnsSection`, `LoopReturnCard`, `LoopMark`, `loopStats` | "Loop Returns" section below Shopify orders (`loop-returns-section`). Loop wordmark header (`/images/brand/loop-wordmark.svg`, official, #0472FF ring). Stats (`loop-stats`): Returns count, Returned $ and Return rate % of lifetime spend; cancelled/expired returns are counted but left out of the $ and %. Amber "High return rate" chip over 30%. Return cards (`loop-return-<id>`) show state + outcome pills, items with reason, totals, label status and `loop-view-<id>` (MOCKED admin.loopreturns.com, new tab, with the Loop mark `/images/brand/loop-mark.svg`). Empty state `loop-empty` "No returns with Loop". The collapsed rail shows the Loop mark + count. |
@@ -214,19 +214,34 @@ Each row lists a file in `src/components` (and `src/pages`), its exports and a o
 ### Guidance (`components/guidance`)
 | file | exports | purpose |
 |---|---|---|
-| `components/guidance/ArticlesTab.tsx` | `ArticlesTab` | Article list, search, active toggle, import/export |
-| `components/guidance/ArticleEditor.tsx` | `ArticleEditor`, `markdownStyles` | Markdown article editor with preview (Write/Preview tabs below 1024px) |
-| `components/guidance/CsvImportDialog.tsx` | `CsvImportDialog`, `downloadCsv` | CSV import with column mapping (papaparse), CSV export helper |
-| `components/guidance/MacrosTab.tsx` | `MacrosTab` | Macro list + editor (duplicate-name validation) |
-| `components/guidance/SandboxTab.tsx` | `SandboxTab` | Test a question against guidance: ranked articles, draft, confidence, escalation |
+| `components/guidance/ArticlesTab.tsx` | `ArticlesTab`, `plainExcerpt` | Phase 17 library: summary line, category rail at ≥1024 or a chip row below, search across title and body, All / Active / Off segmented control with counts, Tag select, Sort (Recently updated / Most used by AI / A–Z), rows with a plain-text excerpt, "Updated <ago> by <name>", "Used in <n> AI replies · 30 days" or "Not used by the AI", muted Off rows, optimistic toggle with revert, "No articles match" + Clear filters |
+| `components/guidance/ArticleEditor.tsx` | `ArticleEditor`, `markdownStyles` | Two columns at ≥1280 (writing + settings), stacked below. Borderless title, Markdown toolbar (Bold, Italic, Heading, Bulleted, Numbered, Link) inserting at the cursor, Write / Split / Preview (Split default at ≥1280). Settings: Status switch with an AI-uses label, Category + "New category…", Tags chip input, Details, version history. Shared `SaveBar`, "Discard unsaved changes?" guard |
+| `components/guidance/CsvImportDialog.tsx` | `CsvImportDialog`, `downloadCsv`, `TEMPLATE` | CSV import with steps Upload · Map columns · Review & import, one mapping row per field plus a 5-row preview, singular/plural skip toast; CSV export helper and sample template |
+
+### Phase 17: Guidance refinement (MOCKED)
+- **Article type:** `GuidanceArticle.aiUses30d` (number; 0 for an Off article) is served by `directoryApi.listArticles()` and kept on save. A saved article moves to the top of Recently updated, with its version +1.
+- **SandboxTab:** the unused component has been removed.
+- **Check:** `scripts/phase17-check.mjs [baseUrl]` covers JRN-194..205. Use the dev server URL for the demo Loading / Empty / Error states.
+
+### Phase 18: Channels + Settings refinement, app-wide consistency (MOCKED)
+| file | exports | purpose |
+|---|---|---|
+| `components/StatusChip.tsx` | `StatusChip`, `TONE_BY_LABEL`, `Tone` | The one status chip (REQ-916): Connected/Active/Live/Installed green, Needs attention amber, Error red, Invited brass, Deactivated/Off/Not connected grey |
+| `components/PreviewPane.tsx` | `PreviewPane` | Sticky preview column at ≥1024; below that it moves under the settings behind a "Show preview" toggle (REQ-954). Used by Chat, Contact form, Email and CSAT |
+| `components/channels/StatusStrip.tsx` | `ChannelStatus` | One-line status strip at the top of each Channels tab (REQ-919..923) |
+- **Tabs:** `PageTabs` takes `status` (a testid) and shows "All changes saved" / "Unsaved changes" at the right end of the tab row, driven by `useDirtyCount()` from `UnsavedGuard`.
+- **Save bar:** `SaveBar` sets `scroll-padding-bottom` to its height while visible and scrolls the focused field clear of it, so the bar never covers the row being edited (REQ-910).
+- **Copy:** Chat preview toggle "Offline", Display rules "When the team is offline". Settings description changes per tab. No uppercase overlines; `Label` is block so labels sit above fields (REQ-912/913).
+- **Types:** `Session`; `User.invitedAt`. **Mocks:** `sessions` in `mocks/users.ts`.
+- **Checks:** `scripts/phase18-check.mjs [baseUrl]` covers JRN-206..215 plus a DOM sweep of every route for REQ-913/914/915/917 (overlines, slivers, cards nested 3 deep, leftover terms) and page headers. `scripts/phase18-shots.mjs` saves shots (`OUT=… ALL=1`).
 
 ### Settings (`components/settings`)
 | file | exports | purpose |
 |---|---|---|
-| `components/settings/IntegrationsTab.tsx` | `IntegrationsTab`, `IntegrationTile`, `StatusPill`, `LogoTile`, `Result`, `Credentials`, `STATUS`, `META`, `lastSync` | Health summary + 3/2/1-column tile grid; each tile links to its detail page |
-| `components/settings/IntegrationDetail.tsx` | `IntegrationDetail` | Detail page: header with Test connection, error callout, Connection details, Configuration (model + test prompt, Resend test email), Credentials, unsaved bar |
-| `components/settings/AiTab.tsx` | `AiTab` | Threshold band slider, auto-send matrix, business hours, sentence rules, Auto-refunds (toggle + $0–500 limit, default $75), prompt viewer |
-| `components/settings/UsersTab.tsx` | `UsersTab` | Team header + search, user rows, invite dialog, row actions, deactivate confirm |
+| `components/settings/IntegrationsTab.tsx` | `IntegrationsTab`, `IntegrationTile`, `StatusPill`, `integrationState`, `LogoTile`, `Result`, `Credentials`, `META`, `lastSync` | Summary line + tiles grouped Inbox & store / AI models / Email delivery. Each tile is one link with one status chip, "Checked <relative>", one Manage, and a soft amber/red ring plus reason when it needs attention or errors |
+| `components/settings/IntegrationDetail.tsx` | `IntegrationDetail` | Detail page: header (All integrations · logo · name · status · Test connection), error callout, settings rows for Connection details, Configuration and masked read-only Credentials, unsaved bar |
+| `components/settings/AiTab.tsx` | `AiTab` | AI replies (REQ-811..815, REQ-827): impact strip (AI resolved · Handed to a person · Auto-sent · Auto-refunds), threshold slider with value chip, zones "Hand to a person" / "AI answers" and the live estimate sentence, one AI auto-send switch per channel, Auto-refunds (toggle + $0–500 limit, default $75), read-only system prompt. No Grokbot on this tab |
+| `components/settings/UsersTab.tsx` | `UsersTab` | Summary "N members · N active · N invited" + search, user rows ("Invite sent <relative>" for invites, Resend invite), invite dialog, row actions, deactivate confirm, "What each role can do" card |
 | `components/settings/SaveBar.tsx` | `SaveBar`, `FormSection` | Shared sticky unsaved-changes bar, and the label-left/control-right form section |
 
 ### Chat widget settings (`components/widgetSettings`)
@@ -299,7 +314,7 @@ Each row lists a file in `src/components` (and `src/pages`), its exports and a o
 | `pages/LoginPage.tsx` | `/login` | Sign in, forgot password, invite accept/expired |
 | `pages/DashboardPage.tsx` | `/dashboard` | Range control, KPI strip, overview, CSAT |
 | `pages/InboxPage.tsx` | `/inbox/:ticketId?` | Three-pane inbox |
-| `pages/GuidancePage.tsx` | `/guidance` | Articles / Macros / Import CSV tabs, "+ New article", link to AI & Workflows |
+| `pages/GuidancePage.tsx` | `/guidance` | One library (no tabs). Header: "Import / export" menu (Import CSV…, Export all articles (CSV), Download sample template) and "+ New article". `?tab=import` opens the import dialog over the list; `?tab=macros` or an unknown tab redirects to `/guidance`. Admin-only link to AI & Workflows |
 | `pages/SettingsPage.tsx` | `/settings/:tab` | Account / Users / Integrations / CSAT, old-route redirects, no-access state |
 | `pages/AiPage.tsx` | `/ai/:tab` | AI & Workflows: Brand voice / AI replies / Workflows / Conversation testing |
 | `pages/ChannelsPage.tsx` | `/channels/:tab` | Channels: Chat & form / Email / Installation (+ contact form app-block card) |
@@ -386,31 +401,49 @@ Import from `@/api` (`src/api/index.ts`), which exports one namespace per domain
 | function | method + path | request | response | errors |
 |---|---|---|---|---|
 | `aiApi.getBrandVoice()` | `GET /api/ai/brand-voice` | — | `BrandVoice` | — |
+| `aiApi.VOICE_SAMPLES` | (constant) | — | `VoiceSample[]`: the 3 Voice preview samples (Sizing, Late order, Damaged item) | — |
+| `aiApi.previewVoice(voice, sampleId)` | `POST /api/ai/voice-preview` (client mock) | draft `BrandVoice`, sample id | the sample reply rewritten with the voice (avoid list, opener, tone hints, sign-off) | — |
+| `aiApi.getReplyImpact()` | `GET /api/ai/impact` | — | `ReplyImpact` (resolved %, handed %, auto-sent, auto-refunds count + total) | — |
+| `aiApi.estimateAutoSend(threshold)` | (mock helper) | 0–100 | % of last month's replies at or above the threshold (75% → 78%) | — |
+| `aiApi.listTestCustomers()` | `GET /api/ai/test-customers` | — | `TestCustomer[]` (seeded customers with their latest order) | — |
 | `aiApi.saveBrandVoice(v)` | `PUT /api/ai/brand-voice` | `BrandVoice` (limits in `BRAND_VOICE_LIMITS`: brand name 100, tone / how to respond / phrases 2,000, examples 4,000) | `BrandVoice` with new `updatedAt` | 422 "Keep this under N characters." |
 | `aiApi.testConversation(input)` | `POST /api/ai/test-conversation` | `ConversationTestInput` (`history: TestTurn[]`, `message`, `channel`, `orderNumber?`, `voice?` unsaved draft) | `TestTurn` (`role: 'ai'`, text, `result: SandboxResult`) | — |
 | `aiApi.styleWithVoice(draft, voice, channel)` | (client helper) | — | string: opener phrase, avoided phrases removed, chat ≤ 3 sentences, email signed | — |
 
-### Workflows / process automations (`workflowsApi`, `api/workflows.ts`), Phase 13, MOCKED (resets on reload)
+### Workflows / process automations (`workflowsApi`, `api/workflows.ts`), Phases 13 + 16, MOCKED (resets on reload)
 | function | method + path | request | response | errors |
 |---|---|---|---|---|
 | `workflowsApi.listWorkflows()` | `GET /api/workflows` | — | `Workflow[]` in run-priority order | — |
 | `workflowsApi.getWorkflow(id)` | `GET /api/workflows/:id` | — | `Workflow \| null` | — |
-| `workflowsApi.listTemplates()` | `GET /api/workflow-templates` | — | `{ id, name, description, steps }[]` | — |
-| `workflowsApi.createWorkflow(by, templateId?)` | `POST /api/workflows` | `{ templateId? }` | `Workflow` (status `draft`) | — |
-| `workflowsApi.saveWorkflow(wf, by)` | `PUT /api/workflows/:id` | `Workflow` | `Workflow` | 422 an active workflow with issues |
-| `workflowsApi.setStatus(id, status, by)` | `POST /api/workflows/:id/status` | `{ status }` | `Workflow` | 422 "Fix N issues before turning this on." |
-| `workflowsApi.duplicateWorkflow(id, by)` | `POST /api/workflows/:id/duplicate` | — | `Workflow` (Draft copy) | — |
+| `workflowsApi.createWorkflow(by)` | `POST /api/workflows` | — | `Workflow` (Off, never published) | — |
+| `workflowsApi.saveWorkflow(wf, by)` | `PUT /api/workflows/:id/draft` | `Workflow` | `Workflow` (saves the draft; live keeps the published version) | — |
+| `workflowsApi.publishWorkflow(wf, note, by)` | `POST /api/workflows/:id/publish` | `{ note }` | `Workflow` with a new version | 422 "Fix N issues before publishing." |
+| `workflowsApi.discardDraft(id)` | `POST /api/workflows/:id/discard-draft` | — | `Workflow` back to the live version | — |
+| `workflowsApi.restoreVersion(id, n, by)` | `POST /api/workflows/:id/versions/:n/restore` | — | `Workflow` with a draft equal to vN | — |
+| `workflowsApi.changeSummary(wf, n)` | (helper) | — | "+2 steps, 1 changed" vs the previous version | — |
+| `workflowsApi.hasDraft(wf)` | (helper) | — | the draft differs from the published version | — |
+| `workflowsApi.liveVersion(wf)` | (helper) | — | live version number (0 = never published) | — |
+| `workflowsApi.setupIssues(wf)` | (helper) | — | issues in the published version (blocks turning it on) | — |
+| `workflowsApi.setStatus(id, status, by)` | `POST /api/workflows/:id/status` | `{ status }` | `Workflow` | 422 "Publish this workflow before turning it on." / "Fix N issues before turning this on." |
+| `workflowsApi.duplicateWorkflow(id, by)` | `POST /api/workflows/:id/duplicate` | — | `Workflow` (Off, unpublished copy) | — |
+| `workflowsApi.listRuns(id, days)` | `GET /api/workflows/:id/runs?days=` | — | live runs, newest first (test runs are never recorded) | — |
+| `workflowsApi.runStats(id, days)` | (helper) | — | runs / completed / handed / dropped / failed. List "Runs (7d)" uses the same data | — |
+| `workflowsApi.funnel(id, days)` | (helper) | — | runs reaching each main-path step | — |
+| `workflowsApi.getRun(runId)` | `GET /api/workflow-runs/:id` | — | `WorkflowRun` with a masked timeline and optional `ticketId` | — |
+| `workflowsApi.resolveLive(id)` | (runtime helper) | — | "Run another workflow" target on the widget (live version) | — |
+| `workflowsApi.resolveDraft(id)` | (runtime helper) | — | "Run another workflow" target in Test workflow (working copy) | — |
+| `workflowsApi.workflowName(id)` | (helper) | — | name for step summaries | — |
 | `workflowsApi.renameWorkflow(id, name, by)` | `PATCH /api/workflows/:id` | `{ name }` | `Workflow` | — |
 | `workflowsApi.deleteWorkflow(id)` | `DELETE /api/workflows/:id` | — | `true` | — |
 | `workflowsApi.reorderWorkflows(ids)` | `PUT /api/workflows/order` | `string[]` | `Workflow[]` | — |
 | `workflowsApi.findOrdersByEmail(email)` | `GET /api/shopify/orders?email=` | — | `RunOrder[]` (same seed as the Inbox panel) | — |
 | `workflowsApi.activeOrderTracking()` | (runtime helper) | — | the Active chat "Order status" workflow or null | — |
-| `workflowsApi.ORDER_INTENT_RE` | (runtime helper) | — | RegExp for order-status questions in the widget | — |
+| `viewsApi.aiThreshold()` | (sync helper) | — | saved confidence threshold (%), read by Inbox reasons, Conversation testing and the estimate | — |
 | `workflowsApi.activeWorkflowFor(text)` | (runtime helper) | — | the first Active chat workflow whose trigger matches the text, or null | — |
 | `workflowsApi.activeWorkflowById(id)` | (runtime helper) | — | that workflow if it's Active, else null (widget starters fall back to the AI) | — |
 | `workflowsApi.starterWorkflowChoices()` | `GET /api/workflows?trigger=chat` | — | `{ id, name, active }[]` for the starter "Start a workflow" picker | — |
 
-**Model** (`types/workflows.ts`): `Workflow { trigger: Trigger, steps: Step[], edges: Edge[] }`. List and Canvas are two views of this one graph. `Edge { source, sourceHandle, target }`; the trigger node id is `trigger`. **Step types**: message, ask (text / email / number / buttons, each button is a path), send_code, check_code (paths `ok` / `fail`), find_orders, show_orders, update_address, find_returns, start_return (Loop), condition (paths `yes` / `no`), add_tag, set_field, handover, end. **Variables**: ask sets its `variable`; send_code sets `code`; find_orders sets `orders`, `orders.count`, `orders.unfulfilled`, `order.number`, `order.tracking_url`; start_return sets `rma`; built in: `channel`, `customer.name`, `tries_left`. `lib/workflowGraph.ts` holds validation (`validate`), insert/remove/duplicate/swap and the dagre "Tidy up"; `lib/workflowRuntime.ts` (`startRun`, `replyRun` → `TestRun`) runs Test workflow and the widget. It never shows order details on chat before the code is verified.
+**Model** (`types/workflows.ts`): `Workflow { trigger: Trigger, steps: Step[], edges: Edge[] }`. List and Canvas are two views of this one graph. `Edge { source, sourceHandle, target }`; the trigger node id is `trigger`. **Step types**: message, ask (text / email / number / buttons, each button is a path), send_code, check_code (paths `ok` / `fail`), find_orders, show_orders, update_address, find_returns, start_return (Loop), condition (paths `yes` / `no`), add_tag, set_field, handover, end. Phase 16 adds pick_order (paths `next` / `none`), pick_items, address_form (ZIP validated), upload_photos, consent, check_inventory (`next` = in stock / `out`), cancel_order, create_replacement, issue_refund (`next` / `approval` above the auto-refund limit / `failed`), create_discount, send_email, wait, run_workflow (ends this workflow and continues in another, variables carry over), add_to_list. Shopify and Loop actions have Success / Failed paths. **Versions** (Phase 16): `Workflow.steps/edges/trigger` are the draft, `published` is the live snapshot, `versions[]` hold `{ n, by, at, note, snap }`. The widget only runs `published`. Types: `WorkflowSnapshot`, `WorkflowVersion`, `WorkflowRun`, `RunOutcome`, `RunEvent`. **Variables**: ask sets its `variable`; send_code sets `code`; find_orders sets `orders`, `orders.count`, `orders.unfulfilled`, `order.number`, `order.tracking_url`; start_return sets `rma`; built in: `channel`, `customer.name`, `tries_left`. `lib/workflowGraph.ts` holds validation (`validate`), insert/remove/duplicate/swap and the dagre "Tidy up"; `lib/workflowRuntime.ts` (`startRun`, `replyRun` → `TestRun`) runs Test workflow and the widget. It never shows order details on chat before the code is verified.
 
 ### Channels (`channelsApi`, `api/channels.ts`), MOCKED
 | function | method + path | request | response | errors |
@@ -425,7 +458,9 @@ Import from `@/api` (`src/api/index.ts`), which exports one namespace per domain
 |---|---|---|---|---|
 | `accountApi.getNotificationPrefs(userId)` / `accountApi.saveNotificationPrefs(userId, prefs)` | `GET` / `PUT /api/account/notifications` | `NotificationPrefs` | `NotificationPrefs` | — |
 | `accountApi.changePassword(input)` | `POST /api/account/password` | `ChangePasswordInput` (mock current password `goorin123`) | `{ ok: true }` | 403 "Your current password is incorrect.", 422 |
-| `accountApi.signOutAllDevices()` | `POST /api/account/sign-out-all` | — | `{ sessions: 3 }` | — |
+| `accountApi.signOutAllDevices()` | `POST /api/account/sign-out-all` | — | `{ sessions: 2 }` (ends every session except this browser) | — |
+| `accountApi.listSessions()` | `GET /api/account/sessions` | — | `Session[]` (This browser · Chrome on macOS, Safari on iPhone, Chrome on Windows) | — |
+| `settingsApi.resendInvite(id)` | `POST /api/users/:id/resend-invite` | — | `User` with a fresh `invitedAt` | — |
 
 ### Customer & Shopify tools (`customerToolsApi`, `api/customerTools.ts`), MOCKED
 | function | method + path | request | response | errors |
@@ -461,18 +496,15 @@ Tickets carry `fraud: TicketFraudFlag \| null` and `TicketDetail.fraudAlert` is 
 |---|---|---|---|---|
 | `directoryApi.search(q)` | `GET /api/search?q=` | query | `SearchResults { tickets, customers, articles }` (max 5 each) | — |
 | `directoryApi.listArticles()` | `GET /api/guidance/articles` | — | `GuidanceArticle[]` | — |
-| `directoryApi.listMacros()` | `GET /api/guidance/macros` | — | `Macro[]` | — |
 | `directoryApi.listUsers()` | `GET /api/users` | — | `User[]` | — |
 
-### guidance + macros + sandbox (`guidanceApi`, `api/guidance.ts`)
+### guidance + sandbox (`guidanceApi`, `api/guidance.ts`)
 | function | method + path | request | response | errors |
 |---|---|---|---|---|
 | `guidanceApi.saveArticle(input, actor)` | `POST /api/guidance/articles` (new) · `PUT /api/guidance/articles/:id` | `ArticleInput` | `GuidanceArticle` | 422 "Title is required." / "Article body is required." |
 | `guidanceApi.setArticleActive(id, active)` | `PATCH /api/guidance/articles/:id` | `{ active }` | `GuidanceArticle` | 404 "Article not found" |
 | `guidanceApi.importArticles(rows, actor)` | `POST /api/guidance/articles/import` | `ImportRow[]` | `{ imported, skipped }` | — |
 | (client) Export CSV | `GET /api/guidance/articles/export.csv` | — | CSV file (built client-side by `downloadCsv` for now) | — |
-| `guidanceApi.saveMacro(input)` | `POST /api/guidance/macros` · `PUT /api/guidance/macros/:id` | `MacroInput { name, body }` | `Macro` | 422 "Name is required.", 409 "A macro with this name already exists." |
-| `guidanceApi.deleteMacro(id)` | `DELETE /api/guidance/macros/:id` | — | `{ id }` | — |
 | `guidanceApi.runSandbox(question, orderNumber?)` | `POST /api/guidance/sandbox` | `{ question, orderNumber? }` | `SandboxResult` | — |
 
 ### integrations, AI settings, users (`settingsApi`, `api/settings.ts`)
@@ -485,7 +517,7 @@ Tickets carry `fraud: TicketFraudFlag \| null` and `TicketDetail.fraudAlert` is 
 | `settingsApi.testPrompt(id, model, prompt)` | `POST /api/integrations/:id/prompt` | `{ model, prompt }` | `TestResult` | — |
 | `settingsApi.sendTestEmail(to)` | `POST /api/integrations/resend/test-email` | `{ to }` | `TestResult` | 422 "Enter a valid email address." |
 | `settingsApi.getAiSettings()` | `GET /api/settings/ai` | — | `AiSettings` | — |
-| `settingsApi.saveAiSettings(s)` | `PUT /api/settings/ai` | `AiSettings` | `AiSettings` (threshold feeds the sandbox) | 422 "Closing time must be after opening time." |
+| `settingsApi.saveAiSettings(s)` | `PUT /api/settings/ai` | `AiSettings` | `AiSettings` (threshold feeds the sandbox) | 422 "Enter an amount between $0 and $500." |
 | `settingsApi.inviteUser(email, role)` | `POST /api/users/invite` | `{ email, role }` | `User` (status invited) | 422 "Enter a valid email address.", 409 "A user with this email already exists." |
 | `settingsApi.updateUser(id, patch, actorId)` | `PATCH /api/users/:id` | `{ role?, status? }` | `User` | 403 "You can't change your own account" |
 | `settingsApi.resetPassword(id)` | `POST /api/users/:id/reset-password` | — | `{ email }` | — |
@@ -553,7 +585,6 @@ All of these live in `src/types/index.ts`.
 - `InboxViewId`
 - `IntegrationId` (`outlook`, `shopify`, `claude`, `grokbot`, `resend`)
 - `IntegrationState` (`connected`, `error`, `not_configured`)
-- `RuleCondition`
 - `StorePageType`
 - `SharedWidgetField`
 - `SettingSource` (`desk` | `theme`)
@@ -576,7 +607,6 @@ All of these live in `src/types/index.ts`.
 | `AIAttempt` | id, ticketId, tier, model, confidence, outcome, reason, latencyMs, createdAt |
 | `AIDraft` | id, ticketId, tier, body, confidence, guidanceIds, createdAt |
 | `GuidanceArticle` | id, title, category, tags, body (markdown), active, updatedAt, updatedBy |
-| `Macro` | id, name, shortcut, body, tags, usageCount, updatedAt |
 | `CsatQuestion` | id, type, text, required, options |
 | `CsatSurvey` | questions, sendDelay `{ value, unit }`, channels, lowScoreRecipients |
 | `CsatResponse` | id, ticketId, score, comment, channel, resolver, createdAt |
@@ -591,11 +621,9 @@ All of these live in `src/types/index.ts`.
 | `TicketPatch` / `BulkPatch` / `NewMessage` | ticket mutation DTOs (see section 5) |
 | `IntegrationStatus` | id, name, description, status, lastSyncAt, error, envVar, secretPreview (masked), details, models, model, checklist |
 | `TestResult` | ok, ms, message |
-| `EscalationRule` | id, condition `RuleCondition`, value, target (`grokbot` \| `human`) |
-| `BusinessDay` | day, open, from, to |
-| `AiSettings` | threshold, autoSend `{ email, chat } × { claude, grokbot }`, timezone, hours, rules, prompts |
+| `AiSettings` | threshold, autoSend `{ email, chat } × { claude, grokbot }`, prompts, autoRefund |
 | `SandboxResult` | articles (ranked, scored), draft, confidence, threshold, wouldEscalate, order, orderNotFound |
-| `ArticleInput` / `MacroInput` / `ImportRow` | guidance write DTOs |
+| `ArticleInput` / `ImportRow` | guidance write DTOs |
 | `Offset` | x, y (px) |
 | `WidgetSettings` | branding (7 colors, logo, avatars, font, radius, shadow), launcher, messaging, display, csat, sources |
 | `ThemeEmbedSettings` | enabled, primary, accent, launcherPosition, hideOnMobile |
@@ -713,13 +741,16 @@ On `/widget-demo` the switcher moves so it doesn't cover the launcher.
 ### Workflows (`components/workflows`), Phase 13
 | file | exports | purpose |
 |---|---|---|
-| `components/workflows/WorkflowsTab.tsx` | `WorkflowsTab` | List: stats strip, "+ New workflow" (blank / template), rows (trigger, channel icons, status + switch, runs, completed %, edited, ⋯), duplicate-trigger warning, templates, empty state |
-| `components/workflows/WorkflowEditor.tsx` | `WorkflowEditor` | Name, On/Off (blocked by issues), List / Canvas toggle (List only below 1024), issues list, settings panel (bottom sheet on phones), Test workflow, sticky save bar |
-| `components/workflows/StepList.tsx` | `StepList`, `AddStepMenu` | Numbered step cards with + inserts, branches as side-by-side columns, "Go to / Continue at step N" markers, drag or Move up/down |
+| `components/workflows/WorkflowsTab.tsx` | `WorkflowsTab` | List: 4-cell hairline stats strip, "+ New workflow" (opens a blank Draft), table-like rows (name + trigger, channel icons, runs, completion % with a thin bar, status pill + switch, ⋯), search when there are more than 5, duplicate-trigger warning, empty state. No templates section |
+| `components/workflows/WorkflowEditor.tsx` | `WorkflowEditor` | Name, Published vN / Draft changes chip, On/Off (needs a published version without issues), Publish (note dialog, blocked by issues), Discard draft, Build / Runs / Versions tabs, Show run stats, List / Canvas toggle (List only below 1024), issues list, settings panel (bottom sheet on phones), Test workflow, sticky save bar |
+| `components/workflows/StepList.tsx` | `StepList`, `AddStepMenu` | List view on a dotted surface: Start card for the trigger (phrases, channels, quick reply), step cards with category tiles and variable chips, + inserts, branch label pills over side-by-side columns, "Go to / Continue at step N" markers, drag or Move up/down |
 | `components/workflows/StepCanvas.tsx` | default `StepCanvas` | React Flow canvas: pan, zoom, fit, minimap, connect handles, delete arrows, drop from "Add step", Tidy up |
 | `components/workflows/StepSettings.tsx` | `StepSettings`, `TriggerSettings` | One-line inputs per step type and variable chips |
 | `components/workflows/TestPanel.tsx` | `TestPanel`, `ChatThread`, `MockInbox` | Chat / Contact form / Email switch, chat preview, "Customer inbox (mock)", run log, Reset; tests unsaved changes |
-| `components/workflows/stepMeta.tsx` | `STEP_ICON`, `stepSummary`, `VarText`, `UnknownIcon` | Step icons, one-line summaries, `{{var}}` chips |
+| `components/workflows/WorkflowHistory.tsx` | `RunsTab`, `VersionsTab` | Runs tab: 7/30-day range, stats, step funnel with the biggest drop-off marked, outcome filter, runs table (cards on phones), run detail sheet (full screen on phones) with masked timeline and "Open ticket". Versions tab: list with Live chip, note, change summary, read-only View, "Restore as draft" |
+| `components/workflows/NewStepFields.tsx` | `NewStepFields` | Settings for the Phase 16 step types |
+| `components/workflows/stepMeta.tsx` | `STEP_ICON`, `stepSummary`, `VarText`, `UnknownIcon`, `CategoryTile`, `CATEGORY_STYLE`, `categoryOf`, `StepCategory` | Step icons, muted category tiles (Talk / Verify / Shopify / Loop / Logic / Ticket / End), one-line summaries, `{{var}}` chips |
+| `components/styleguide/Phase15Samples.tsx` | `Phase15Samples` | Styleguide: AI & Workflows section card, stats strip, Use/Avoid chips, insight chips, category tiles |
 
 ## 11. Brand assets
 
@@ -765,7 +796,7 @@ On `/widget-demo` the switcher moves so it doesn't cover the launcher.
 - **Tickets:** 40, `GB-1041`…`GB-1080`.
   - 5 open, 5 ai_handling, 4 grok_handling, **7 needs_human**, 12 resolved, 7 closed.
   - Email and chat.
-- **Other records:** 20 customers with Shopify orders, 15 guidance articles (14 active), 8 macros, 3 users (Ava Admin, Sam Agent, Priya invited).
+- **Other records:** 20 customers with Shopify orders, 15 guidance articles (14 active), 3 users (Ava Admin, Sam Agent, Priya invited).
 - **Metrics:** 180 days of daily metrics (90 selectable, plus 90 days of history so the 90d range has a prior period).
 - **CSAT:**
   - 14 hand-written commented responses, 4 of them scored ≤2.
@@ -783,7 +814,7 @@ On `/widget-demo` the switcher moves so it doesn't cover the launcher.
 
 ## Fix round (iterations 15–16)
 
-- **Workflows:** editor Back uses the unsaved-changes guard; "+" inserts exactly where clicked in List and Canvas (edge "+" buttons rewire both ends); variable picker uses a must-set dataflow over every upstream path, and uses of unset variables are issues; routing rules reorder by drag or Move up/down; stats include "Handed to a person"; row menu has Test, Rename dialog and "Delete <name>?" confirm; Test panel starts idle and the first customer message (or the quick reply) is the trigger, matched by `matchesTrigger` (shared with the widget runtime); hat-size "I don't know" shows the measuring tip and re-asks; Return template ends with `#LR-<n>` and a "Download return label" link; widget shows order cards.
+- **Workflows:** editor Back uses the unsaved-changes guard; "+" inserts exactly where clicked in List and Canvas (edge "+" buttons rewire both ends); variable picker uses a must-set dataflow over every upstream path, and uses of unset variables are issues; stats include "Handed to a person"; row menu has Test, Rename dialog and "Delete <name>?" confirm; Test panel starts idle and the first customer message (or the quick reply) is the trigger, matched by `matchesTrigger` (shared with the widget runtime); hat-size "I don't know" shows the measuring tip and re-asks; Return template ends with `#LR-<n>` and a "Download return label" link; widget shows order cards.
 - **Inbox:** one fluid column (`clamp(720px, 88%, 1280px)`, gutters 24/32/48px) shared by header, thread and draft dock; header meta = identity · divider · 28px controls, degraded by available width; draft composer card holds its actions; `shadow-glow-ai` (tokens) is used only on "Why you're here"; the sidebar keeps the user's collapse choice on every page; the summary docks at ≥1600px and is a rail + overlay drawer at 1024–1599.
 - **Customer panel:** `DetailParts.tsx` (Section accordion, KV grid, Identity, StatsGrid) is shared by Summary, Details and the phone sheet.
 - **Copy:** the UI says "AI" instead of "Claude"; "Claude" remains only in configuration (Settings → Integrations, AI replies model tiers/threshold copy, Grokbot system prompt) and docs.
@@ -799,3 +830,22 @@ On `/widget-demo` the switcher moves so it doesn't cover the launcher.
 - **Styleguide:** `components/styleguide/Phase14Samples.tsx` (`Phase14Samples`): frosted panel, launcher, starter chips, AI and customer messages, thumbs.
 - **Font:** defaults to Goorin sans so the preview matches /widget-demo. "Inherit from store theme" is an explicit opt-in.
 - **Check:** `scripts/phase14-check.mjs` covers JRN-168..176, including the frosted-panel contrast sample.
+
+
+## Phase 15: AI & Workflows design pass (MOCKED)
+
+- **Pattern:** every /ai/* tab has a one-line intro under the tabs and uses `AiCard` (24px padding, 15px sentence-case title) and `StatStrip`, one sticky save bar style, "AI" wording and no heavy beige fills.
+- **Routing removed (REQ-805):** `/ai/routing` redirects to `/ai/workflows`. There are no escalation rules, business hours or assignment settings. AI handover is driven by the confidence threshold. "Hand over to a person" steps and the Inbox Team selector keep using Teams.
+- **Brand voice:** settings column plus a sticky Voice preview. `BrandVoice.signOff` (max 200 characters) is new. Use and Avoid are chip inputs stored one phrase per line.
+- **AI replies (REQ-827):** no Grokbot on this tab. Zones read "Hand to a person" / "AI answers", there is one AI auto-send switch per channel, and the decisions below the threshold read "Would hand to a person".
+- **Workflows:** no templates in the UI. "+ New workflow" opens a blank Draft. Start a return, Change shipping address, Wholesale inquiry and Hat size finder are seeded as Off workflows (`wf-return`, `wf-address`, `wf-wholesale`, `wf-size`). The editor has an inline title, status pill + switch, an Issues chip, a dotted list surface and a settings panel at ≥1280 (a sheet at 1024–1279).
+- **Launcher:** `WidgetSettings.launcher.buttonColor` (`'white' | 'panel'`, default White). It is set under Launcher → Button colour, and the preview updates live.
+- **Types:** `VoiceSample` (`{ id, label, customer, draft }`), `ReplyImpact`, `TestCustomer` (`{ id, name, email, orderNumber }`).
+- **Styleguide:** `components/styleguide/Phase15Samples.tsx`.
+- **Check:** `scripts/phase15-check.mjs` covers JRN-177..183.
+
+### Phase 16: Workflows build-out (MOCKED)
+- 8 seeded workflows in `mocks/workflows.ts` (Order tracking v3, Start a return, Change shipping address, Cancel an order, Damaged item claim v2, Wholesale inquiry, Hat size finder, Friday Drops & restock alerts Off / needs setup), plus `workflowRuns` (deterministic run history) and `MAIN_PATH` per workflow for the funnel. Run `run-damaged-gb1076` links to ticket GB-1076, which shows the event line "Damaged item claim handed over: refund above $75 limit".
+- **Checks:** `scripts/phase16-check.mjs [baseUrl]` covers JRN-184..193; `scripts/phase16-shots.mjs` saves to `/app/memory/shots/phase16/`.
+
+- **Macros removed (REQ-856):** Guidance has Articles · Import CSV (articles only), and `?tab=macros` redirects to Articles. The Inbox composer (desktop and phone) has no macro search bar, Macros button, picker or variable filling. Its toolbar is Bold, Italic, Link and Attach. "Ask AI to draft" and the AI draft card are how you get a prepared reply.

@@ -45,9 +45,10 @@ export function LauncherSection({ draft, update, errors, setUploadError }: Props
           </div>
         )}
       </div>
+      <Segmented label="Button colour" testId="ws-button-colour" value={l.buttonColor ?? 'white'} onChange={(v) => update((d) => { d.launcher.buttonColor = v; if (v === 'white') d.launcher.backgroundColor = '#FFFFFF' })} options={[{ id: 'white', label: 'White' }, { id: 'panel', label: 'Panel colour' }]} />
       <div className="grid gap-5 xl:grid-cols-2">
         <ColorField id="iconColor" label="Icon color" value={l.iconColor} onChange={(v) => update((d) => { d.launcher.iconColor = v })} />
-        <ColorField id="launcherBg" label="Background color" value={l.backgroundColor} onChange={(v) => update((d) => { d.launcher.backgroundColor = v })} contrast={{ against: l.iconColor, label: 'Icon on launcher', fgIsThis: false }} />
+        {l.buttonColor !== 'panel' && <ColorField id="launcherBg" label="Background color" value={l.backgroundColor} onChange={(v) => update((d) => { d.launcher.backgroundColor = v })} contrast={{ against: l.iconColor, label: 'Icon on launcher', fgIsThis: false }} />}
         <ColorField id="badgeColor" label="Unread badge color" value={l.badgeColor} onChange={(v) => update((d) => { d.launcher.badgeColor = v })} />
       </div>
       <div className="flex flex-wrap items-end gap-6">

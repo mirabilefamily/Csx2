@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from '@/components/ui/alert-dialog'
 
@@ -8,15 +8,20 @@ interface Guard {
 }
 
 const Ctx = createContext<Guard | null>(null)
+const DirtyCount = createContext(0)
+
+export const useDirtyCount = () => useContext(DirtyCount)
 
 // App-wide "Discard unsaved changes?" guard for editors and settings forms.
 export function UnsavedGuardProvider({ children }: { children: ReactNode }) {
   const dirty = useRef(new Set<string>())
   const navigate = useNavigate()
   const [pending, setPending] = useState<(() => void) | null>(null)
+  const [count, setCount] = useState(0)
   const setDirty = useCallback((key: string, d: boolean) => {
     if (d) dirty.current.add(key)
     else dirty.current.delete(key)
+    setCount(dirty.current.size)
   }, [])
   const confirmLeave = useCallback((proceed: () => void) => {
     if (dirty.current.size) setPending(() => proceed)
@@ -67,9 +72,10 @@ export function UnsavedGuardProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
+  const value = useMemo(() => ({ setDirty, confirmLeave }), [setDirty, confirmLeave])
   return (
-    <Ctx.Provider value={{ setDirty, confirmLeave }}>
-      {children}
+    <Ctx.Provider value={value}>
+      <DirtyCount.Provider value={count}>{children}</DirtyCount.Provider>
       <AlertDialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
         <AlertDialogContent data-testid="unsaved-dialog">
           <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
@@ -80,6 +86,7 @@ export function UnsavedGuardProvider({ children }: { children: ReactNode }) {
               data-testid="unsaved-discard"
               onClick={() => {
                 dirty.current.clear()
+                setCount(0)
                 pending?.()
                 setPending(null)
               }}

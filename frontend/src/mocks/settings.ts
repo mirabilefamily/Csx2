@@ -36,20 +36,10 @@ export const integrations: IntegrationStatus[] = [
   },
 ]
 
-const day = (d: string, open: boolean, from = '09:00', to = '18:00') => ({ day: d, open, from, to })
-
 export const aiSettings: AiSettings = {
   threshold: 75,
   autoRefund: { enabled: true, limit: 75 },
-  assignment: 'round_robin',
   autoSend: { email: { claude: true, grokbot: false }, chat: { claude: true, grokbot: true } },
-  timezone: 'America/Los_Angeles',
-  hours: [day('Monday', true), day('Tuesday', true), day('Wednesday', true), day('Thursday', true), day('Friday', true), day('Saturday', true, '10:00', '16:00'), day('Sunday', false, '10:00', '16:00')],
-  rules: [
-    { id: 'r-1', condition: 'refund_over', value: '250', target: 'human' },
-    { id: 'r-2', condition: 'keyword', value: 'wholesale', target: 'human' },
-    { id: 'r-3', condition: 'sentiment', value: 'negative', target: 'grokbot' },
-  ],
   prompts: {
     claude: 'You are the first-line support assistant for Goorin Bros., hat makers since 1895.\nAnswer warmly and briefly, using only the guidance articles provided.\nNever promise refunds over $250 or custom work. Escalate when unsure.',
     grokbot: 'You are the second-tier support assistant for Goorin Bros.\nYou receive tickets Claude could not resolve. Use order data from Shopify to investigate.\nIf a human decision is needed, summarize the case for the agent and draft a reply for approval.',

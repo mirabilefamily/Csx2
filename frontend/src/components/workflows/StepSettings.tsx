@@ -3,8 +3,9 @@ import type { AskKind, ConditionOp, Step, StepConfig, Trigger, Workflow, Workflo
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { STEP_LABEL, variablesBefore } from '@/lib/workflowGraph'
+import { STEP_LABEL, stepNumbers, variablesBefore } from '@/lib/workflowGraph'
 import { STEP_ICON } from './stepMeta'
+import { NewStepFields } from './NewStepFields'
 
 type W = Pick<Workflow, 'steps' | 'edges' | 'trigger'>
 const CH: [WorkflowChannel, string][] = [['chat', 'Chat widget'], ['form', 'Contact form'], ['email', 'Email']]
@@ -51,7 +52,7 @@ export function StepSettings({ wf, step, onChange, onClose, onDelete }: { wf: W;
   )
   return (
     <div className="space-y-4" data-testid="step-settings">
-      <div className="flex items-center gap-2"><I className="h-4 w-4 text-ink-muted" aria-hidden /><h3 className="flex-1 text-[15px] font-semibold text-ink">{STEP_LABEL[step.type]}</h3><Button size="icon-sm" variant="ghost" aria-label="Close step settings" onClick={onClose} data-testid="step-settings-close"><X aria-hidden /></Button></div>
+      <div className="sticky -top-4 z-10 -mx-4 -mt-4 flex items-center gap-2 border-b border-border bg-surface px-4 py-3"><I className="h-4 w-4 text-ink-muted" aria-hidden /><h3 className="flex-1 truncate text-[15px] font-semibold text-ink" data-testid="step-settings-title">Step {stepNumbers(wf).get(step.id)} · {STEP_LABEL[step.type]}</h3><Button size="icon-sm" variant="ghost" aria-label="Close step settings" onClick={onClose} data-testid="step-settings-close"><X aria-hidden /></Button></div>
       {step.type === 'message' && text('Message')}
       {step.type === 'ask' && (
         <>
@@ -74,7 +75,7 @@ export function StepSettings({ wf, step, onChange, onClose, onDelete }: { wf: W;
           )}
         </>
       )}
-      {step.type === 'send_code' && <>{text('Message after sending')}<p className="rounded-lg bg-surface-sunken p-3 text-xs text-ink-muted">Email from Goorin Bros. &lt;support@goorin.com&gt;, subject "Your Goorin verification code", random 6-digit code. Resending invalidates the old code. MOCKED.</p></>}
+      {step.type === 'send_code' && <>{text('Message after sending')}<p className="rounded-lg bg-surface-sunken p-3 text-xs text-ink-muted">Email from Goorin Bros. &lt;support@goorin.com&gt;, subject "Your Goorin verification code", random 6-digit code. Resending invalidates the old code.</p></>}
       {step.type === 'check_code' && (
         <>
           <Field label="Attempts before handing over"><Input type="number" min={1} max={5} className="h-9 w-24" value={c.attempts ?? 3} onChange={(e) => set({ attempts: Number(e.target.value) || 1 })} data-testid="step-attempts" /></Field>
@@ -110,8 +111,9 @@ export function StepSettings({ wf, step, onChange, onClose, onDelete }: { wf: W;
         </>
       )}
       {step.type === 'end' && <label className="flex min-h-8 items-center gap-2 text-sm text-ink"><input type="checkbox" className="h-4 w-4 accent-tobacco-600" checked={!!c.csat} onChange={(e) => set({ csat: e.target.checked })} data-testid="step-csat" />Ask the CSAT question</label>}
-      {['update_address', 'find_returns', 'start_return'].includes(step.type) && <p className="rounded-lg bg-surface-sunken p-3 text-xs text-ink-muted">MOCKED {step.type.startsWith('start') || step.type.includes('returns') ? 'Loop' : 'Shopify'} action. No settings.</p>}
-      <Button size="sm" variant="ghost" className="text-red-700" onClick={onDelete} data-testid="step-settings-delete"><Trash2 aria-hidden /> Delete step</Button>
+      <NewStepFields step={step} c={c} set={set} text={text} />
+      {['update_address', 'find_returns', 'start_return'].includes(step.type) && <p className="rounded-lg bg-surface-sunken p-3 text-xs text-ink-muted">Runs in {step.type.startsWith('start') || step.type.includes('returns') ? 'Loop' : 'Shopify'}. No settings.</p>}
+      <div className="mt-6 border-t border-border pt-4"><Button size="sm" variant="ghost" className="text-red-700 hover:bg-red-50" onClick={onDelete} data-testid="step-settings-delete"><Trash2 aria-hidden /> Delete step</Button></div>
     </div>
   )
 }

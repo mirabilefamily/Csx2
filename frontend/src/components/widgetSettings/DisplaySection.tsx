@@ -45,7 +45,7 @@ export function DisplaySection({ draft, update }: { draft: WidgetSettings; updat
         <SourceBadge source={draft.sources.hideOnMobile} />
         <ToggleRow label="Hide on mobile" checked={d.hideOnMobile} onChange={(v) => update((x) => { x.display.hideOnMobile = v; x.sources.hideOnMobile = 'desk' })} testId="ws-hide-mobile" />
       </div>
-      <Segmented label="Outside business hours" testId="ws-outside-hours" value={d.outsideHours} onChange={(v) => update((x) => { x.display.outsideHours = v })} options={[{ id: 'keep_ai', label: 'Keep AI on' }, { id: 'offline_form', label: 'Show offline form' }, { id: 'hide', label: 'Hide widget' }]} />
+      <Segmented label="When the team is offline" testId="ws-outside-hours" value={d.outsideHours} onChange={(v) => update((x) => { x.display.outsideHours = v })} options={[{ id: 'keep_ai', label: 'Keep AI on' }, { id: 'offline_form', label: 'Show offline form' }, { id: 'hide', label: 'Hide widget' }]} />
       <div className="space-y-3 rounded-lg bg-surface-sunken p-4">
         <p className="text-sm font-medium text-ink">What the AI receives</p>
         <ToggleRow label="Logged-in customer" hint="Name, email and order history from Shopify" checked={d.customerContext.loggedInCustomer} onChange={(v) => update((x) => { x.display.customerContext.loggedInCustomer = v })} testId="ws-ctx-customer" />

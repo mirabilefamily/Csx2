@@ -138,9 +138,9 @@ export function InboxViewsPanel(p: Props) {
       <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto px-2 py-3">
         <div className="space-y-0.5" data-testid="views-default">{INBOX_VIEWS.filter((v) => v.group === 'views').map(row)}</div>
         <Group title="Saved views" testId="views-saved">
-          <p className="px-2.5 pt-1 text-[11px] font-medium uppercase tracking-wide text-ink-subtle">Shared</p>
+          <p className="px-2.5 pt-1 text-[11px] font-medium text-ink-subtle">Shared</p>
           <div data-testid="views-shared">{saved('shared')}</div>
-          <p className="px-2.5 pt-2 text-[11px] font-medium uppercase tracking-wide text-ink-subtle">Private</p>
+          <p className="px-2.5 pt-2 text-[11px] font-medium text-ink-subtle">Private</p>
           <div data-testid="views-private">{saved('private')}</div>
         </Group>
         <Group title="More" testId="views-more" defaultOpen={['closed', 'spam', 'trash'].includes(p.activeView) && !p.activeSaved}>{INBOX_VIEWS.filter((v) => v.group !== 'views').map(row)}</Group>

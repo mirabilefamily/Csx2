@@ -138,8 +138,8 @@ function PreviewStage({ settings, opts, nonce }: { settings: WidgetSettings; opt
 function AfterHours({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
     <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-ink-muted">
-      Outside business hours
-      <Switch checked={value} onCheckedChange={onChange} aria-label="Outside business hours" data-testid="preview-outside-hours" />
+      Offline
+      <Switch checked={value} onCheckedChange={onChange} aria-label="Team offline" data-testid="preview-outside-hours" />
     </label>
   )
 }

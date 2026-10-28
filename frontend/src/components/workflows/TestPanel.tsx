@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Inbox, RotateCcw, Send, X } from 'lucide-react'
 import type { TestRun, Workflow, WorkflowChannel } from '@/types'
-import { workflowsApi } from '@/api'
+import { viewsApi, workflowsApi } from '@/api'
 import { startRun, replyRun } from '@/lib/workflowRuntime'
 import { matchesTrigger } from '@/lib/workflowGraph'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ import { PillTabs } from '@/components/dashboard/Panel'
 import { usd } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-const deps = { findOrders: workflowsApi.findOrdersByEmail }
+const deps = { findOrders: workflowsApi.findOrdersByEmail, resolve: workflowsApi.resolveDraft, get refundLimit() { return viewsApi.autoRefundLimit() } }
 type W = Pick<Workflow, 'id' | 'steps' | 'edges'>
 
 export function ChatThread({ run, onReply, testId, idle }: { run: TestRun; onReply: (t: string) => void; testId: string; idle?: { hint: string; quickReply?: string } }) {
@@ -26,6 +26,7 @@ export function ChatThread({ run, onReply, testId, idle }: { run: TestRun; onRep
         {run.chat.map((m) => (
           <div key={m.id} className={cn('flex', m.from === 'customer' ? 'justify-end' : 'justify-start')} data-testid={`run-msg-${m.from}`}>
             <div className={cn('max-w-[85%] rounded-2xl px-3 py-2 text-[13px]', m.from === 'customer' ? 'bg-tobacco-700 text-white' : 'bg-surface-muted text-ink')}>
+              {m.photos ? <span className="mb-1 flex gap-1" data-testid="run-photos">{Array.from({ length: m.photos }, (_, i) => <span key={i} className="h-10 w-10 rounded-md bg-white/30 ring-1 ring-white/40" aria-hidden />)}</span> : null}
               <p className="whitespace-pre-wrap">{m.text}</p>
               {m.link && <a href={m.link.url} target="_blank" rel="noreferrer" className="mt-1 inline-block font-semibold text-tobacco-700 underline" data-testid="run-link">{m.link.label}</a>}
               {m.orders && (
@@ -41,6 +42,7 @@ export function ChatThread({ run, onReply, testId, idle }: { run: TestRun; onRep
             </div>
           </div>
         ))}
+        {typeof run.vars.switchedTo === 'string' && <p className="text-center text-xs font-medium text-tobacco-700" data-testid="test-switched">Switched to {run.vars.switchedTo}</p>}
         {run.ended && <p className="text-center text-xs text-ink-muted" data-testid="run-ended">Run {run.ended}</p>}
         <div ref={end} />
       </div>
@@ -68,7 +70,7 @@ export function MockInbox({ run, testId = 'mock-inbox' }: { run: TestRun; testId
 }
 
 // Test workflow panel (REQ-750..755): tests the unsaved editor state.
-export function TestPanel({ wf, onCurrent, onClose }: { wf: W & Pick<Workflow, 'trigger'>; onCurrent: (id: string | null) => void; onClose: () => void }) {
+export function TestPanel({ wf, onCurrent, onClose, label = 'Testing draft' }: { wf: W & Pick<Workflow, 'trigger'>; onCurrent: (id: string | null) => void; onClose: () => void; label?: string }) {
   const [channel, setChannel] = useState<WorkflowChannel>('chat')
   const [sender, setSender] = useState('margaret.okonkwo@example.com')
   const blank = (ch: WorkflowChannel): TestRun => ({ workflowId: wf.id, channel: ch, vars: {}, current: null, waitingFor: null, attempts: 0, chat: [], inbox: [], log: [], ended: null })
@@ -85,7 +87,7 @@ export function TestPanel({ wf, onCurrent, onClose }: { wf: W & Pick<Workflow, '
   return (
     <aside className="flex h-full min-h-0 w-full flex-col border-l border-border bg-surface" aria-label="Test workflow" data-testid="test-panel">
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <h3 className="flex-1 text-[15px] font-semibold text-ink">Test workflow</h3>
+        <h3 className="flex-1 text-[15px] font-semibold text-ink">Test workflow <span className="ml-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900" data-testid="test-version">{label}</span></h3>
         <Button size="sm" variant="outline" onClick={() => reset()} data-testid="test-reset"><RotateCcw aria-hidden /> Reset</Button>
         <Button size="icon-sm" variant="ghost" aria-label="Close test panel" onClick={onClose} data-testid="test-close"><X aria-hidden /></Button>
       </div>

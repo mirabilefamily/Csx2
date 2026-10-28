@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
-import { widgetApi, workflowsApi } from '@/api'
+import { viewsApi, widgetApi, workflowsApi } from '@/api'
 import { replyRun, startRun } from '@/lib/workflowRuntime'
 import type { CsatQuestion, StorePageType, TestRun, WidgetCustomer, WidgetSettings, WidgetState, Workflow } from '@/types'
 import { ShadowRoot } from './ShadowRoot'
@@ -243,7 +243,7 @@ function WidgetApp({ settings: s, mode = 'live', forcedState, pageType = 'other'
     const msg = retry ?? { id: uid(), author: 'customer' as const, text, at: Date.now() }
     setMessages((ms) => (retry ? ms.map((m) => (m.id === msg.id ? { ...m, failed: false } : m)) : [...ms, msg]))
     // Active "Order tracking" workflow runs order-status questions (REQ-757). MOCKED.
-    const deps = { findOrders: workflowsApi.findOrdersByEmail, handoverText: s.messaging.handoffMessage }
+    const deps = { findOrders: workflowsApi.findOrdersByEmail, handoverText: s.messaging.handoffMessage, resolve: workflowsApi.resolveLive, refundLimit: viewsApi.autoRefundLimit() }
     let next: TestRun | null = null
     let seen = 0
     if (!fresh && wfRun && !wfRun.ended && wfRef.current) { next = replyRun(wfRef.current, wfRun, msg.text, deps); seen = wfRun.chat.length + 1 }
@@ -322,7 +322,7 @@ function WidgetApp({ settings: s, mode = 'live', forcedState, pageType = 'other'
     '--gw-radius': `${s.branding.radius}px`,
     '--gw-shadow': SHADOWS[s.branding.shadow],
     '--gw-font': s.branding.font === 'inter' ? "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif" : inheritFont,
-    '--gw-launcher-bg': s.launcher.backgroundColor,
+    '--gw-launcher-bg': s.launcher.buttonColor === 'panel' ? s.branding.panelColor : s.launcher.backgroundColor,
     '--gw-launcher-fg': s.launcher.iconColor,
     '--gw-badge': s.launcher.badgeColor,
   } as CSSProperties

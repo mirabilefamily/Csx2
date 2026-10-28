@@ -1,4 +1,4 @@
-import type { GuidanceArticle, Macro, SearchResults, User } from '@/types'
+import type { GuidanceArticle, SearchResults, User } from '@/types'
 import { request } from './client'
 import { db } from './db'
 
@@ -31,11 +31,6 @@ export function search(query: string): Promise<SearchResults> {
 // GET /api/guidance/articles
 export function listArticles(): Promise<GuidanceArticle[]> {
   return request(() => db.guidanceArticles, { empty: () => [] })
-}
-
-// GET /api/guidance/macros
-export function listMacros(): Promise<Macro[]> {
-  return request(() => db.macros, { empty: () => [] })
 }
 
 // GET /api/users

@@ -90,7 +90,7 @@ function Board({ wf, onInsert, onChange, selected, current, issueIds, onSelect }
       <aside className="w-48 shrink-0 space-y-3 overflow-y-auto border-r border-border bg-surface p-3" aria-label="Add step" data-testid="canvas-palette">
         <p className="text-[13px] font-semibold text-ink">Add step</p>
         {STEP_GROUPS.map(([g, types]) => (
-          <div key={g}><p className="mb-1 text-[11px] font-medium uppercase tracking-[0.1em] text-ink-subtle">{g}</p>
+          <div key={g}><p className="mb-1 text-[11px] font-medium text-ink-subtle">{g}</p>
             {types.map((t) => { const I = STEP_ICON[t]; return <div key={t} draggable onDragStart={(e) => { e.dataTransfer.setData('application/goorin-step', t); e.dataTransfer.effectAllowed = 'move' }} className="mb-1 flex cursor-grab items-center gap-2 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs text-ink hover:bg-surface-sunken" data-testid={`palette-${t}`}><I className="h-4 w-4 text-ink-muted" aria-hidden />{STEP_LABEL[t]}</div> })}
           </div>
         ))}

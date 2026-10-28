@@ -9,6 +9,7 @@ export const brandVoice: BrandVoice = {
   phrasesToUse: 'Happy to help\nYour hat is in good hands\nWe\'ll make it right',
   phrasesToAvoid: 'Unfortunately\nPer our policy\nAs previously stated',
   examples: 'Hi Grace, happy to help. Your fedora shipped this morning with UPS, and it should be with you by Friday. Here\'s the tracking link. If it doesn\'t fit just right, exchanges are always free.',
+  signOff: 'Warmly,\nThe Goorin Bros. hat shop',
   updatedAt: daysAgo(4),
 }
 

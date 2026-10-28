@@ -1,7 +1,9 @@
-import type { ChangePasswordInput, NotificationPrefs } from '@/types'
+import type { ChangePasswordInput, NotificationPrefs, Session } from '@/types'
 import { ApiError, request } from './client'
 import { db } from './db'
-import { DEFAULT_NOTIFICATION_PREFS } from '@/mocks'
+import { DEFAULT_NOTIFICATION_PREFS, sessions } from '@/mocks'
+
+let sessionList: Session[] = structuredClone(sessions)
 
 // GET /api/account/notifications
 export function getNotificationPrefs(userId: string): Promise<NotificationPrefs> {
@@ -23,7 +25,16 @@ export function changePassword(input: ChangePasswordInput): Promise<{ ok: true }
   })
 }
 
-// POST /api/account/sign-out-all
+// GET /api/account/sessions
+export function listSessions(): Promise<Session[]> {
+  return request(() => sessionList.map((s) => ({ ...s })))
+}
+
+// POST /api/account/sign-out-all: ends every session except this browser.
 export function signOutAllDevices(): Promise<{ sessions: number }> {
-  return request(() => ({ sessions: 3 }))
+  return request(() => {
+    const n = sessionList.filter((s) => !s.current).length
+    sessionList = sessionList.filter((s) => s.current)
+    return { sessions: n }
+  })
 }

@@ -40,9 +40,9 @@ export function ViewsDropdown({ active, counts, saved = [], activeSaved }: Props
           <div key={v.id}>
             {v.group !== 'views' && INBOX_VIEWS[i - 1]?.group === 'views' && (
               <>
-                {saved.length > 0 && <p className="px-2 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wide text-ink-subtle">Saved views</p>}
+                {saved.length > 0 && <p className="px-2 pb-1 pt-2 text-[11px] font-medium text-ink-subtle">Saved views</p>}
                 {saved.map((s) => <SelectItem key={s.id} value={`saved:${s.id}`} className="data-[state=checked]:bg-tobacco-50 data-[state=checked]:font-semibold" data-testid={`views-dropdown-saved-${s.id}`}>{s.name} · {s.scope === 'shared' ? 'Shared' : 'Private'}</SelectItem>)}
-                <p className="px-2 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wide text-ink-subtle">More</p>
+                <p className="px-2 pb-1 pt-2 text-[11px] font-medium text-ink-subtle">More</p>
               </>
             )}
             <SelectItem value={v.id} className="data-[state=checked]:bg-tobacco-50 data-[state=checked]:font-semibold" data-testid={`views-dropdown-${v.id}`}><span className="flex w-full min-w-[150px] items-center gap-3">{v.label}<ViewCount n={counts?.[v.id] ?? 0} active={active === v.id && !activeSaved} amber={v.id === 'needs_you'} /></span></SelectItem>
@@ -76,7 +76,7 @@ export function ViewsChips({ active, counts, saved = [], activeSaved, onViewsCha
           <div className="space-y-4 p-5">
             <SheetTitle className="text-base font-semibold text-ink">Views</SheetTitle>
             <ul className="space-y-0.5">{INBOX_VIEWS.map((v) => <li key={v.id}><button type="button" onClick={() => pick(v.id)} aria-current={!activeSaved && active === v.id ? 'page' : undefined} className={cn(viewRowCls(!activeSaved && active === v.id), 'w-full')} data-testid={`views-sheet-${v.id}`}><span className="truncate">{v.label}</span><ViewCount n={counts?.[v.id]} active={!activeSaved && active === v.id} amber={v.id === 'needs_you'} /></button></li>)}</ul>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-ink-subtle">Saved views</p>
+            <p className="text-[11px] font-medium text-ink-subtle">Saved views</p>
             <ul className="space-y-0.5">{saved.map((s) => <li key={s.id} className="flex items-center gap-0.5"><button type="button" onClick={() => pick(`saved:${s.id}`)} aria-current={activeSaved === s.id ? 'page' : undefined} className={viewRowCls(activeSaved === s.id)} data-testid={`views-sheet-saved-${s.id}`}><span className="truncate">{s.name}</span><span className="ml-auto text-xs text-ink-muted">{s.scope === 'shared' ? 'Shared' : 'Private'}</span></button>{onViewsChange && <SavedViewMenu v={s} onChange={onViewsChange} />}</li>)}</ul>
           </div>
         </SheetContent>

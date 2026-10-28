@@ -1,4 +1,4 @@
-import type { ArticleInput, GuidanceArticle, ImportRow, Macro, MacroInput, SandboxResult, SessionUser } from '@/types'
+import type { ArticleInput, GuidanceArticle, ImportRow, SandboxResult, SessionUser } from '@/types'
 import { ApiError, request } from './client'
 import { db } from './db'
 
@@ -12,8 +12,8 @@ export function saveArticle(input: ArticleInput, actor: SessionUser): Promise<Gu
     const existing = db.guidanceArticles.find((a) => a.id === input.id)
     const version = (existing?.version ?? 0) + 1
     const at = now()
-    const article: GuidanceArticle = { ...input, id: existing?.id ?? `ga-${Date.now()}`, title: input.title.trim(), updatedAt: at, updatedBy: actor.name, version, history: [{ version, editor: actor.name, at }, ...(existing?.history ?? [])].slice(0, 5) }
-    db.guidanceArticles = existing ? db.guidanceArticles.map((a) => (a.id === article.id ? article : a)) : [article, ...db.guidanceArticles]
+    const article: GuidanceArticle = { ...input, id: existing?.id ?? `ga-${Date.now()}`, title: input.title.trim(), updatedAt: at, updatedBy: actor.name, version, aiUses30d: existing?.aiUses30d ?? 0, history: [{ version, editor: actor.name, at }, ...(existing?.history ?? [])].slice(0, 5) }
+    db.guidanceArticles = [article, ...db.guidanceArticles.filter((a) => a.id !== article.id)]
     return article
   })
 }
@@ -44,33 +44,11 @@ export function importArticles(rows: ImportRow[], actor: SessionUser): Promise<{
         updatedAt: now(),
         updatedBy: actor.name,
         version: 1,
+        aiUses30d: 0,
         history: [{ version: 1, editor: actor.name, at: now() }],
       }),
     )
     return { imported: valid.length, skipped: rows.length - valid.length }
-  })
-}
-
-// PUT /api/guidance/macros/:id  ·  POST /api/guidance/macros
-export function saveMacro(input: MacroInput): Promise<Macro> {
-  return request(() => {
-    const name = input.name.trim()
-    if (!name) throw new ApiError('Name is required.', 422)
-    if (db.macros.some((m) => m.name.toLowerCase() === name.toLowerCase() && m.id !== input.id)) throw new ApiError('A macro with this name already exists.', 409)
-    const existing = db.macros.find((m) => m.id === input.id)
-    const macro: Macro = existing
-      ? { ...existing, name, body: input.body, updatedAt: now() }
-      : { id: `mc-${Date.now()}`, name, body: input.body, shortcut: `/${name.toLowerCase().split(/\s+/)[0]}`, tags: [], usageCount: 0, updatedAt: now() }
-    db.macros = existing ? db.macros.map((m) => (m.id === macro.id ? macro : m)) : [...db.macros, macro]
-    return macro
-  })
-}
-
-// DELETE /api/guidance/macros/:id
-export function deleteMacro(id: string): Promise<{ id: string }> {
-  return request(() => {
-    db.macros = db.macros.filter((m) => m.id !== id)
-    return { id }
   })
 }
 

@@ -22,7 +22,10 @@ export interface User {
   role: Role
   status: UserStatus
   lastLoginAt: string | null
+  invitedAt?: string | null
 }
+
+export interface Session { id: string; device: string; lastActiveAt: string; current: boolean }
 
 export interface LineItem {
   sku: string
@@ -187,17 +190,8 @@ export interface GuidanceArticle {
   updatedAt: string
   updatedBy: string
   version: number
+  aiUses30d: number
   history: { version: number; editor: string; at: string }[]
-}
-
-export interface Macro {
-  id: string
-  name: string
-  shortcut: string
-  body: string
-  tags: string[]
-  usageCount: number
-  updatedAt: string
 }
 
 export type CsatQuestionType = 'rating' | 'text' | 'choice'
@@ -467,21 +461,11 @@ export interface IntegrationStatus {
 
 export interface TestResult { ok: boolean; ms: number; message: string }
 
-export type RuleCondition = 'keyword' | 'refund_over' | 'sentiment' | 'order_total_over'
-
-export interface EscalationRule { id: string; condition: RuleCondition; value: string; target: 'grokbot' | 'human' }
-
-export interface BusinessDay { day: string; open: boolean; from: string; to: string }
-
 export interface AiSettings {
   threshold: number
   autoSend: { email: { claude: boolean; grokbot: boolean }; chat: { claude: boolean; grokbot: boolean } }
-  timezone: string
-  hours: BusinessDay[]
-  rules: EscalationRule[]
   prompts: { claude: string; grokbot: string }
   autoRefund: AutoRefundSettings
-  assignment: 'round_robin' | 'manual'
 }
 
 export interface SandboxResult {
@@ -494,8 +478,7 @@ export interface SandboxResult {
   orderNotFound: string | null
 }
 
-export type ArticleInput = Omit<GuidanceArticle, 'id' | 'updatedAt' | 'updatedBy' | 'version' | 'history'> & { id?: string }
-export type MacroInput = Pick<Macro, 'name' | 'body'> & { id?: string }
+export type ArticleInput = Omit<GuidanceArticle, 'id' | 'updatedAt' | 'updatedBy' | 'version' | 'history' | 'aiUses30d'> & { id?: string }
 export interface ImportRow { title?: string; body?: string; category?: string; tags?: string; active?: string }
 
 // ---- Customer chat widget (phase 4) ----
@@ -554,6 +537,7 @@ export interface WidgetSettings {
     customIconUrl: string | null
     iconColor: string
     backgroundColor: string
+    buttonColor?: 'white' | 'panel'
     style: 'circle' | 'pill'
     label: string
     size: 's' | 'm' | 'l'
@@ -653,9 +637,13 @@ export interface BrandVoice {
   phrasesToUse: string
   phrasesToAvoid: string
   examples: string
+  signOff: string
   updatedAt: string
 }
-export const BRAND_VOICE_LIMITS = { brandName: 100, tone: 2000, howToRespond: 2000, phrasesToUse: 2000, phrasesToAvoid: 2000, examples: 4000 } as const
+export const BRAND_VOICE_LIMITS = { brandName: 100, tone: 2000, howToRespond: 2000, phrasesToUse: 2000, phrasesToAvoid: 2000, examples: 4000, signOff: 200 } as const
+export interface VoiceSample { id: 'sizing' | 'late' | 'damaged'; label: string; customer: string; draft: string }
+export interface ReplyImpact { resolvedPct: number; handedPct: number; autoSent: number; autoRefunds: number; autoRefundTotal: number }
+export interface TestCustomer { id: string; name: string; email: string; orderNumber: string | null }
 
 export interface TestTurn { role: 'customer' | 'ai'; text: string; result?: SandboxResult }
 export interface ConversationTestInput { history: TestTurn[]; message: string; channel: 'email' | 'chat'; orderNumber?: string; voice?: BrandVoice }

@@ -180,7 +180,7 @@ export function OrderActionDialog({ kind, o, ticketId, customerId, onClose, onCh
     <Dialog open={!!kind} onOpenChange={(v) => !v && close()}>
       <DialogContent className="max-w-lg max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:overflow-y-auto max-sm:rounded-none" data-testid={`order-dialog-${kind}`}>
         <DialogTitle className="text-base font-semibold text-ink">{kind && TITLE[kind]}{o && kind !== 'create' && ` ${o.number}`}</DialogTitle>
-        <DialogDescription className="mt-1 text-sm text-ink-muted">Shopify actions are mocked in this prototype.</DialogDescription>
+        <DialogDescription className="mt-1 text-sm text-ink-muted">Changes apply to the order in Shopify.</DialogDescription>
         <div className="mt-4">
           {done ? <Done text={done} onClose={close} /> : kind === 'refund' && o ? (
             <RefundForm o={o} ticketId={ticketId} onDone={finish} />

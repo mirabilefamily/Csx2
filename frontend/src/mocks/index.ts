@@ -1,9 +1,9 @@
 // Seed dataset. Only /src/api may import from here.
-export { users, invites } from './users'
+export { users, invites, sessions } from './users'
 export { customers } from './customers'
 export { tickets } from './tickets'
 export { messages, aiAttempts, aiDrafts } from './conversations'
-export { guidanceArticles, macros } from './guidance'
+export { guidanceArticles } from './guidance'
 export { dailyMetrics, METRIC_HISTORY_DAYS } from './metrics'
 export { csatSurvey, csatResponses } from './csat'
 export { integrations, aiSettings } from './settings'

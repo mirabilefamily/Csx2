@@ -92,7 +92,17 @@ Admin (support lead), Agent (support rep), Customer (later phases), Backend deve
 - Phase 13 AI & Workflows: workflowsApi (MOCKED), Order tracking (Active) + 4 templates, List + React Flow Canvas editor on one model, validation, Test panel with mock inbox/code flow, Routing tab, widget runtime on /widget-demo.
 - Checks: tsc, build, audit, phone-sweep, width-check, phase8/9/11/12/13, check-readme all pass.
 
+## Phases 14–18 (Sep 2026) — DONE
+- Phase 14 Channels: chat-only widget preview (no storefront), deterministic open preview states, outside-hours control.
+- REQ-805: Routing removed from AI & Workflows (/ai/routing → /ai/workflows). REQ-827: no Grokbot on AI replies / Conversation testing (below threshold → "Hand to a person"). REQ-856: macros removed from Guidance and the Inbox composer. Channels icon = MessagesSquare.
+- Phase 15 AI & Workflows design pass + polish (shared AiCard, one SaveBar, threshold 75 single source, auto-refund limit shared with Inbox/Dashboard).
+- Phase 17 Guidance: no tabs, Import/export menu, category rail, filters/sort, clean excerpts, AI-uses count, 2-column editor, 3-step CSV import.
+- Phase 18 Channels + Settings + consistency: StatusChip, PreviewPane ("Show preview" under 1024), Channels status strips, Email preview, Installation steps, per-tab Settings descriptions, Account eye + sessions, Users summary/resend/roles card, grouped integration tiles with rings, CSAT copy, "All changes saved" in the tab row, block labels, no overlines. phase18-check (JRN-206..215 + DOM sweep) ALL PASS.
+- Phase 16 Workflows build-out: 8 seeded workflows (7 On, Friday Drops & restock Off / needs setup), 14 new step types with Success/Failed paths, draft → publish with notes, versions with restore, live widget runs only the published version, Runs tab (stats, funnel, runs table, run detail, GB-1076 link + Inbox event line), run stats on List. phase16-check (JRN-184..193) ALL PASS.
+
 ## Backlog
 - P1: Map Phase 13 strictly to REQ-717..759 / JRN-156..166
 - P1: Free move (not swap) reorder in List view; inline rename instead of prompt
 - P2: Order cards in widget runtime; verify Channels chat preview runtime
+- P0 next: Phase 16 follow-ups (multi-item pick with quantity, run stats on Canvas, real photo picker in the widget)
+- P1: Script the unsaved-changes guard for Email, Contact form and CSAT (Q-866); confirm the Launcher "Button colour: White / Panel colour" setting

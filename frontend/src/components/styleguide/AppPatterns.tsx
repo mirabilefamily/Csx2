@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, Inbox, LayoutDashboard } from 'lucide-react'
+import { BookOpen, Inbox, LayoutDashboard, MessagesSquare } from 'lucide-react'
 import type { DashboardSummary, FraudAlert, KpiMetric } from '@/types'
 import { FraudAlertRow, RefundPipeline, RiskBadge } from '@/components/dashboard/FraudBits'
 import { settingsApi } from '@/api'
@@ -64,6 +64,7 @@ const ITEMS = [
   { label: 'Default', Icon: LayoutDashboard, active: false, hover: false },
   { label: 'Hover', Icon: BookOpen, active: false, hover: true },
   { label: 'Active', Icon: Inbox, active: true, hover: false },
+  { label: 'Channels', Icon: MessagesSquare, active: false, hover: false },
 ]
 
 function Bar() {
@@ -151,8 +152,8 @@ export function SettingsSamples() {
       </Specimen>
       <Specimen label="Settings form section · label + help left, controls right (stacks below 1024px)">
         <div className="rounded-2xl bg-surface px-6 shadow-card ring-1 ring-black/[0.04]">
-          <FormSection title="Business hours" description="Outside these hours AI replies mention when the team is back.">
-            <div className="max-w-xs"><Label htmlFor="sg-tz" className="text-xs text-ink-muted">Timezone</Label><Input id="sg-tz" className="mt-1" defaultValue="America/Los_Angeles" /></div>
+          <FormSection title="Confidence threshold" description="The AI only answers on its own when it's at least this confident.">
+            <div className="max-w-xs"><Label htmlFor="sg-threshold" className="text-xs text-ink-muted">Threshold (%)</Label><Input id="sg-threshold" type="number" className="mt-1" defaultValue={75} /></div>
           </FormSection>
         </div>
       </Specimen>

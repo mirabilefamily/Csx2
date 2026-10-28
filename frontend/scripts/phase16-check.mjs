@@ -1,0 +1,150 @@
+// Phase 16 journeys JRN-184..193 (workflows build-out). node scripts/phase16-check.mjs [baseUrl]
+import { chromium } from 'playwright-core'
+const BASE = process.argv[2] ?? 'http://localhost:4173'
+const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] })
+const errs = []
+let fails = 0
+const log = (...a) => console.log(...a)
+const expect = (label, ok, got) => { if (!ok) fails++; log(`  ${ok ? 'ok ' : 'BAD'} ${label}${got !== undefined ? ` → ${got}` : ''}`) }
+const step = async (n, fn) => { log(n); try { await fn() } catch (e) { fails++; log(`FAIL ${n}: ${e.message.split('\n')[0]}`) } }
+const page = async (w = 1440, h = 900, mobile = false) => { const p = await (await b.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile })).newPage(); p.on('pageerror', (e) => errs.push(e.message)); await p.goto(`${BASE}/login`); await p.fill('input[type=email]', 'ava@goorin.com'); await p.fill('input[type=password]', 'goorin123'); await p.getByRole('button', { name: 'Sign in' }).click(); await p.waitForURL('**/dashboard'); return p }
+const settle = (p, ms = 500) => p.waitForTimeout(ms)
+const spa = async (p, u) => { await p.evaluate((x) => { history.pushState({}, '', x); dispatchEvent(new PopStateEvent('popstate')) }, u); await settle(p, 1200); if (await p.locator('[data-testid="unsaved-discard"]').count()) { await p.click('[data-testid="unsaved-discard"]'); await settle(p, 300); await p.evaluate((x) => { history.pushState({}, '', x); dispatchEvent(new PopStateEvent('popstate')) }, u); await settle(p, 1200) } }
+const t = (p, s) => p.locator(s).first().innerText({ timeout: 5000 }).then((x) => x.replace(/\s+/g, ' ').trim()).catch(() => 'MISSING')
+
+// Test panel helpers
+const say = async (p, text) => { await p.fill('[data-testid="test-chat-input"]', text); await p.click('[data-testid="test-chat-send"]'); await settle(p, 250) }
+const tap = async (p, name) => { await p.locator('[data-testid="test-chat"] button', { hasText: name }).last().click(); await settle(p, 250) }
+const lastBot = (p) => p.locator('[data-testid="test-chat"] [data-testid="run-msg-bot"]').last().innerText()
+const verifyAs = async (p, email) => { await say(p, email); const body = await t(p, '[data-testid="mock-inbox-body"]'); await say(p, /\d{6}/.exec(body)?.[0] ?? '000000') }
+const runLog = async (p) => (await p.locator('[data-testid="run-log"] li').evaluateAll((els) => els.map((e) => e.textContent))).join(' | ')
+const openTest = async (p, id) => { await spa(p, `/ai/workflows/${id}`); await p.click('[data-testid="editor-test"]'); await p.waitForSelector('[data-testid="test-panel"]') }
+const reset = async (p) => { await p.click('[data-testid="test-reset"]'); await settle(p, 300) }
+
+const p = await page()
+await step('JRN-184 list', async () => {
+  await spa(p, '/ai/workflows'); await p.waitForSelector('[data-testid="workflows-rows"]')
+  const names = await p.locator('[data-testid^="workflow-open-"]').allInnerTexts()
+  expect('8 workflows', (await p.locator('[data-testid^="workflow-row-"]').count()) === 8, names.length)
+  expect('no templates', (await p.locator('text=/Templates|Start from a template/').count()) === 0)
+  for (const id of ['wf-order-tracking', 'wf-return', 'wf-address', 'wf-cancel', 'wf-damaged', 'wf-wholesale', 'wf-size']) expect(`${id} On`, (await t(p, `[data-testid="workflow-status-${id}"]`)) === 'On')
+  expect('restock Off + Needs setup', (await t(p, '[data-testid="workflow-status-wf-restock"]')) === 'Off' && (await p.locator('[data-testid="workflow-setup-wf-restock"]').count()) === 1)
+  expect('restock switch disabled', await p.isDisabled('[data-testid="workflow-toggle-wf-restock"]'), await p.getAttribute('[data-testid="workflow-status-cell-wf-restock"]', 'title'))
+  const r7 = parseInt(/\d+/.exec(await t(p, '[data-testid="workflow-runs-wf-damaged"]'))?.[0] ?? 'NaN', 10)
+  await spa(p, '/ai/workflows/wf-damaged?tab=runs'); await p.waitForSelector('[data-testid="runs-stats"]')
+  expect('Q-89 list runs = Runs tab 7d', Number(await t(p, '[data-testid="runs-stat-runs"]')) === r7, r7)
+  await spa(p, '/ai/workflows/wf-restock'); await settle(p)
+  expect('restock editor shows issue', (await t(p, '[data-testid="editor-status-lock"]')) === 'Fix 1 issue before turning this on.', await t(p, '[data-testid="editor-status-lock"]'))
+})
+await step('JRN-185 order tracking unchanged', async () => {
+  await openTest(p, 'wf-order-tracking'); await say(p, 'where is my order'); await verifyAs(p, 'margaret.okonkwo@example.com')
+  expect('orders shown', (await p.locator('[data-testid="run-orders"]').count()) > 0)
+})
+await step('JRN-186 return + wrong code + damaged switch', async () => {
+  await openTest(p, 'wf-return'); await say(p, 'I want to start a return'); await say(p, 'margaret.okonkwo@example.com'); await say(p, '111111')
+  expect('wrong code tries left', /tries? left/.test(await lastBot(p)), await lastBot(p))
+  const code = /\d{6}/.exec(await t(p, '[data-testid="mock-inbox-body"]'))[0]; await say(p, code)
+  expect('delivered orders offered', (await p.locator('[data-testid="test-chat"] button', { hasText: '#GB20398' }).count()) === 1)
+  await tap(p, '#GB20398'); await tap(p, 'Hampton Wool Fedora'); await tap(p, 'Too small'); await tap(p, 'Original payment')
+  const bot = await p.locator('[data-testid="test-chat"] [data-testid="run-msg-bot"]').allInnerTexts()
+  expect('return started + label', bot.some((x) => /Your return #LR-\d+ is started/.test(x)) && (await p.locator('[data-testid="run-link"]', { hasText: 'Download return label' }).count()) > 0)
+  expect('confirmation email', (await t(p, '[data-testid="mock-inbox-subject"]')).startsWith('Your Goorin return #LR-'), await t(p, '[data-testid="mock-inbox-subject"]'))
+  await reset(p); await say(p, 'start a return'); await verifyAs(p, 'margaret.okonkwo@example.com'); await tap(p, '#GB20398'); await tap(p, 'Hampton Wool Fedora'); await tap(p, 'Arrived damaged')
+  expect('switched to Damaged', (await t(p, '[data-testid="test-switched"]')) === 'Switched to Damaged item claim')
+  expect('no re-verify, asks for order', /Which order was damaged/.test(await lastBot(p)), await lastBot(p))
+  await p.click('[data-testid="test-channel-email"]').catch(() => p.getByRole('tab', { name: 'Email' }).click()); await settle(p, 500)
+  expect('email skips verification', !(await runLog(p)).includes('Sent code email'), (await runLog(p)).slice(0, 120))
+  await p.click('[data-testid="test-close"]')
+})
+await step('JRN-187 address', async () => {
+  await openTest(p, 'wf-address'); await say(p, 'I need to change my address'); await verifyAs(p, 'imogen.clarke@example.co.uk'); await tap(p, '#GB20388')
+  await say(p, 'Main Street, London'); expect('ZIP error', /ZIP/.test(await lastBot(p)), await lastBot(p))
+  await say(p, '12 Main Street, Brooklyn, NY 11201'); expect('updated', /will now ship to 12 Main Street/.test((await p.locator('[data-testid="run-msg-bot"]').allInnerTexts()).join(' ')))
+  await reset(p); await say(p, 'change my address'); await verifyAs(p, 'margaret.okonkwo@example.com'); await tap(p, '#GB20398')
+  expect('shipped → hand over', /already shipped/.test((await p.locator('[data-testid="run-msg-bot"]').allInnerTexts()).join(' ')) && (await t(p, '[data-testid="run-ended"]')).includes('handed'), await t(p, '[data-testid="run-ended"]'))
+  await p.click('[data-testid="test-close"]')
+})
+await step('JRN-188 cancel', async () => {
+  await openTest(p, 'wf-cancel'); await say(p, 'can I cancel my order'); await verifyAs(p, 'imogen.clarke@example.co.uk'); await tap(p, '#GB20388'); await tap(p, 'Yes, cancel it')
+  expect('cancelled + refund', /is cancelled\. \$148\.00 will go back/.test((await p.locator('[data-testid="run-msg-bot"]').allInnerTexts()).join(' ')))
+  await reset(p); await say(p, 'cancel my order'); await verifyAs(p, 'imogen.clarke@example.co.uk'); await tap(p, '#GB20388'); await tap(p, 'Keep my order')
+  expect('keep', /stays as it is/.test(await p.locator('[data-testid="run-msg-bot"]').allInnerTexts().then((x) => x.join(' '))))
+  await reset(p); await say(p, 'cancel my order'); await verifyAs(p, 'margaret.okonkwo@example.com'); await tap(p, '#GB20398')
+  expect('fulfilled → Start a return', (await t(p, '[data-testid="test-switched"]')) === 'Switched to Start a return (Loop)')
+  await p.click('[data-testid="test-close"]')
+})
+await step('JRN-189 damaged', async () => {
+  await openTest(p, 'wf-damaged'); await say(p, 'my hat arrived damaged'); await verifyAs(p, 'margaret.okonkwo@example.com'); await tap(p, '#GB20398'); await tap(p, 'Hampton Wool Fedora')
+  await tap(p, 'Continue'); expect('photo required', /Add at least 1 photo/.test(await lastBot(p)), await lastBot(p))
+  await tap(p, 'Attach 2 photos'); expect('2 photo previews', (await p.locator('[data-testid="run-photos"] span').count()) === 2)
+  await tap(p, 'Continue'); await tap(p, 'Refund me')
+  const lg = await runLog(p); expect('> $75 handed to Returns with note', lg.includes('Handed to Returns') && lg.includes('Refund $148.00 above $75 limit, photos attached'), lg.split(' | ').slice(-2).join(' | '))
+  await reset(p); await say(p, 'it arrived damaged'); await verifyAs(p, 'theo.ramirez@example.com'); await tap(p, '#GB20302'); await p.locator('[data-testid="test-chat"] button').first().click(); await settle(p, 250); await tap(p, 'Attach 1 photo'); await tap(p, 'Continue'); await tap(p, 'Refund me')
+  expect('≤ $75 refunded', /is on its way back/.test(await p.locator('[data-testid="run-msg-bot"]').allInnerTexts().then((x) => x.join(' '))), await lastBot(p))
+  await reset(p); await say(p, 'arrived damaged'); await verifyAs(p, 'margaret.okonkwo@example.com'); await tap(p, '#GB20398'); await tap(p, 'Hampton Wool Fedora'); await tap(p, 'Attach 1 photo'); await tap(p, 'Continue'); await tap(p, 'Send a replacement')
+  expect('replacement', /Your replacement #D\d+/.test(await p.locator('[data-testid="run-msg-bot"]').allInnerTexts().then((x) => x.join(' '))))
+  await p.click('[data-testid="test-close"]')
+})
+await step('JRN-190 wholesale + size + restock', async () => {
+  await openTest(p, 'wf-wholesale'); await say(p, 'do you do wholesale'); await say(p, 'Bell & Brim'); await say(p, 'not a url')
+  expect('url validation', /valid store URL/.test(await lastBot(p))); await say(p, 'bellandbrim.com'); await say(p, 'Austin, TX'); await tap(p, '50–200'); await say(p, 'marcus@bellandbrim.example.com')
+  const lg = await runLog(p); expect('wholesale tag + Wholesale team', lg.includes('Tagged “wholesale”') && lg.includes('Handed to Wholesale') && (await t(p, '[data-testid="mock-inbox-subject"]')) === 'Thanks for your wholesale inquiry', lg.split(' | ').slice(-1)[0])
+  await p.click('[data-testid="test-close"]')
+  await openTest(p, 'wf-size'); await say(p, 'what size am i'); await say(p, '57'); expect('57 → M', /Size M fits/.test(await p.locator('[data-testid="run-msg-bot"]').allInnerTexts().then((x) => x.join(' '))))
+  await reset(p); await say(p, 'what size'); await say(p, '23.6 in'); expect('23.6 in → XL', /Size XL fits/.test(await p.locator('[data-testid="run-msg-bot"]').allInnerTexts().then((x) => x.join(' '))))
+  await reset(p); await say(p, 'what size'); await tap(p, "I don't know"); expect('help tip', /soft tape/.test(await p.locator('[data-testid="run-msg-bot"]').allInnerTexts().then((x) => x.join(' '))))
+  await p.click('[data-testid="test-close"]')
+  await spa(p, '/ai/workflows/wf-restock'); expect('restock issue chip', (await p.locator('text=/Choose an email list/').count()) > 0 || (await t(p, '[data-testid="editor-status-lock"]')).includes('Fix 1 issue'))
+})
+await step('JRN-192 draft / publish / versions', async () => {
+  await spa(p, '/ai/workflows/wf-size'); expect('Published v1', (await t(p, '[data-testid="editor-version"]')) === 'Published v1')
+  await p.click('[data-testid="step-open-hs-m"]'); await settle(p, 300); await p.fill('[data-testid="step-text"]', 'Size M is your fit.'); await settle(p, 300)
+  expect('draft chip', (await t(p, '[data-testid="editor-version"]')) === 'Draft changes')
+  await p.click('[data-testid="editor-save"]'); await settle(p, 900)
+  expect('saved still draft', (await t(p, '[data-testid="editor-version"]')) === 'Draft changes')
+  await p.click('[data-testid="editor-test"]'); await say(p, 'what size am i'); await say(p, '57')
+  expect('test runs draft', /Size M is your fit/.test(await lastBot(p)) && (await t(p, '[data-testid="test-version"]')) === 'Testing draft'); await p.click('[data-testid="test-close"]')
+  const liveText = await p.evaluate(async () => { const m = await import('/src/api/workflows.ts').catch(() => null); return m ? m.activeWorkflowById('wf-size')?.steps.find((s) => s.id === 'hs-m')?.config.text : 'n/a' })
+  log('  live hs-m text while draft:', liveText)
+  await p.click('[data-testid="editor-publish"]'); await p.fill('[data-testid="publish-note"]', 'Shorter M copy'); await p.click('[data-testid="publish-confirm"]'); await settle(p, 900)
+  expect('Published v2', (await t(p, '[data-testid="editor-version"]')) === 'Published v2')
+  await p.click('[data-testid="editor-tabs-versions"]').catch(() => p.getByRole('tab', { name: 'Versions' }).click()); await settle(p)
+  expect('v2 live + note', (await p.locator('[data-testid="version-live-2"]').count()) === 1 && (await t(p, '[data-testid="version-note-2"]')) === 'Shorter M copy' && (await t(p, '[data-testid="version-summary-2"]')) === '1 changed', await t(p, '[data-testid="version-summary-2"]'))
+  await p.click('[data-testid="version-restore-1"]'); await p.click('[data-testid="restore-confirm"]'); await settle(p, 900)
+  expect('restore → draft', (await t(p, '[data-testid="editor-version"]')) === 'Draft changes')
+  await p.click('[data-testid="editor-discard-draft"]'); await settle(p, 700); expect('discard → v2', (await t(p, '[data-testid="editor-version"]')) === 'Published v2')
+  await p.click('[data-testid="step-open-hs-m"]'); await settle(p, 300); await p.fill('[data-testid="step-text"]', ''); await settle(p, 200); await p.click('[data-testid="editor-publish-bar"]'); await settle(p, 400)
+  expect('publish blocked with issues', (await p.locator('[data-testid="publish-dialog"]').count()) === 0 && (await p.locator('text=/before publishing/').count()) > 0)
+  await p.click('[data-testid="editor-discard"]').catch(() => {}); await settle(p, 300)
+})
+await step('JRN-193 runs + GB-1076', async () => {
+  await spa(p, '/ai/workflows/wf-damaged?tab=runs'); await p.waitForSelector('[data-testid="runs-funnel"]')
+  expect('funnel worst step marked', (await p.locator('[data-testid^="funnel-step-"][data-worst]').count()) === 1)
+  await p.click('[data-testid="runs-range-30"]').catch(() => p.getByRole('tab', { name: '30 days' }).click()); await settle(p, 600)
+  const r30 = Number(await t(p, '[data-testid="runs-stat-runs"]')); expect('30 days more runs', r30 > 13, r30)
+  await p.click('[data-testid="runs-range-7"]').catch(() => p.getByRole('tab', { name: '7 days' }).click()); await settle(p, 600)
+  await p.click('[data-testid="run-row-run-damaged-gb1076"]'); await p.waitForSelector('[data-testid="run-timeline"]')
+  const tl = await t(p, '[data-testid="run-timeline"]')
+  expect('timeline masked', tl.includes('m•••@example.com') && tl.includes('Code ••••••') && !/\d{6}/.test(tl) && tl.includes('Refund $148.00 above $75 limit'), tl.slice(0, 140))
+  await p.click('[data-testid="run-open-ticket"]'); await settle(p, 1500)
+  expect('opens GB-1076', p.url().includes('/inbox/GB-1076'))
+  expect('inbox event line', (await p.locator('text=Damaged item claim handed over: refund above $75 limit').count()) > 0)
+  await spa(p, '/ai/workflows/wf-damaged'); await p.click('[data-testid="editor-run-stats"]'); await settle(p, 300)
+  expect('run stats badges', (await p.locator('[data-testid^="step-stat-"]').count()) > 3)
+})
+await step('JRN-191 live widget uses published version', async () => {
+  await spa(p, '/widget-demo'); await settle(p, 1000)
+  const launcher = p.locator('[data-testid="widget-launcher"]').first(); if (await launcher.count()) await launcher.click(); await settle(p, 600)
+  const starter = p.locator('button', { hasText: 'Can I cancel / edit my order?' }).first()
+  if (await starter.count()) { await starter.click(); await settle(p, 1200); expect('starter → Cancel workflow asks for email', (await p.locator('text=What email did you use for your order?').count()) > 0) } else expect('starter present', false)
+})
+await step('JRN-193 phone', async () => {
+  const q = await page(390, 844, true)
+  for (const u of ['/ai/workflows', '/ai/workflows/wf-damaged', '/ai/workflows/wf-damaged?tab=runs', '/ai/workflows/wf-order-tracking?tab=versions']) { await spa(q, u); expect(`390 ${u} no overflow`, (await q.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 0) }
+  await spa(q, '/ai/workflows/wf-damaged?tab=runs'); await q.click('[data-testid="run-row-run-damaged-gb1076"]'); await settle(q, 800)
+  const box = await q.locator('[data-testid="run-detail"]').boundingBox(); expect('run detail full screen', box && box.width >= 389, box?.width)
+})
+log('page errors:', errs.filter((e) => !/WebSocket/.test(e)).length, errs.filter((e) => !/WebSocket/.test(e)).slice(0, 3))
+log(fails ? `FAILURES: ${fails}` : 'ALL PASS')
+await b.close()
+process.exit(fails ? 1 : 0)

@@ -21,7 +21,7 @@ export function validate(s: CsatSurvey) {
   const errors: Record<string, QuestionErrors> = {}
   s.questions.forEach((q) => {
     const e: QuestionErrors = {}
-    if (!q.label.trim()) e.label = 'Question text is required.'
+    if (!q.label.trim()) e.label = 'Add the question text.'
     if (q.type === 'choice' && (q.options ?? []).filter((o) => o.trim()).length < 2) e.options = 'Add at least 2 options.'
     if (e.label || e.options) errors[q.id] = e
   })

@@ -10,7 +10,7 @@ import { Input, Label, Textarea } from '@/components/ui/input'
 import { Switch } from '@/components/ui/overlay'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/States'
-import { SaveState } from '@/components/PageTabs'
+import { PreviewPane } from '@/components/PreviewPane'
 import { SaveBar } from '@/components/settings/SaveBar'
 import { cn } from '@/lib/utils'
 
@@ -48,7 +48,7 @@ function FormPreview({ s }: { s: ContactFormSettings }) {
   return (
     <div className="rounded-2xl bg-[#F4EFE8] p-6 ring-1 ring-black/[0.04] max-sm:p-3" data-testid="cf-preview">
       <div className="mx-auto max-w-[440px] rounded-xl bg-white p-6 shadow-card">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">goorin.com/pages/contact</p>
+        <p className="text-xs text-ink-muted">goorin.com/pages/contact</p>
         <h3 className="mt-2 text-xl font-semibold text-ink" data-testid="cf-preview-heading">{s.heading || 'Contact us'}</h3>
         {s.intro && <p className="mt-1 text-sm text-ink-muted">{s.intro}</p>}
         <div className="mt-5 space-y-3.5">
@@ -90,7 +90,6 @@ function Loaded({ initial }: { initial: ContactFormSettings }) {
   return (
     <div className="grid gap-8 pb-24 lg:grid-cols-[minmax(0,640px)_minmax(0,440px)] lg:justify-between" data-testid="contact-form-editor">
       <div className="min-w-0 space-y-4">
-        <div className="flex justify-end"><SaveState dirty={dirty} testId="cf-save-state" /></div>
         {(
           <section className={cn(CARD, 'space-y-5')} data-testid="cf-appearance">
             <div className="max-w-[480px]"><Label htmlFor="cf-heading">Heading</Label><Input id="cf-heading" className="mt-1.5" value={draft.heading} onChange={(e) => setDraft({ ...draft, heading: e.target.value })} data-testid="cf-heading" /></div>
@@ -107,10 +106,10 @@ function Loaded({ initial }: { initial: ContactFormSettings }) {
           </section>
         )}
       </div>
-      <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start" aria-label="Live form preview">
-        <p className="mb-3 text-[15px] font-semibold text-ink">Preview</p>
+      <PreviewPane label="Live form preview" testId="cf-preview-pane">
+        <p className="mb-3 text-[15px] font-semibold text-ink max-lg:hidden">Preview</p>
         <FormPreview s={draft} />
-      </aside>
+      </PreviewPane>
       {dirty && (
         <SaveBar>
           <Button variant="ghost" size="sm" onClick={() => setDraft(saved)} data-testid="cf-discard">Discard</Button>

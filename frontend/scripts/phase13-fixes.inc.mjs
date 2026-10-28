@@ -31,22 +31,11 @@ export async function fixChecks({ p, log, step, txt, settle, spaGo, shot }) {
     log('  issue flagged:', (await p.locator('[data-testid="editor-issues"] li').allTextContents()).filter((t) => /order_count|before/i.test(t)).join(' | '))
     await p.click('[data-testid="editor-back"]'); await discardIfAsked()
   })
-  await step('FIX 4 routing', async () => {
-    await go('/ai/routing'); await p.waitForSelector('[data-testid="escalation-rules"]')
-    const val = (i) => p.locator(`[data-testid="rule-${i}"] input`).first().inputValue()
-    const v0 = await val(0), v1 = await val(1)
-    await p.click('[data-testid="rule-down-0"]'); log('FIX 4 move down:', (await val(0)) === v1 && (await val(1)) === v0)
-    await p.click('[data-testid="rule-up-1"]'); log('  move up:', (await val(0)) === v0)
-    await p.dragAndDrop('[data-testid="rule-grip-0"]', '[data-testid="rule-1"]'); log('  drag reorder:', (await val(0)) === v1)
-    for (const w of [1280, 1440]) { await p.setViewportSize({ width: w, height: 900 }); await settle(); const h = await p.locator('[data-testid="rule-0"]').evaluate((e) => e.getBoundingClientRect().height); log(`  row height @${w}: ${h}px (one line ≤ 56)`) }
-    await shot('routing-rules-1280.png'); await p.setViewportSize({ width: 1024, height: 900 }); await settle()
-    log('  @1024 wraps, overflow:', await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)); await p.setViewportSize({ width: 1440, height: 900 })
-  })
   await step('FIX 5/11 stats + dup copy', async () => {
     await go('/ai/workflows'); if (!(await p.locator('[data-testid="workflows-stats"]').count())) await go('/ai/workflows'); await p.waitForSelector('[data-testid="workflows-stats"]')
     log('FIX 5 stats:', await txt('[data-testid="workflows-stats"]'))
     log('FIX 10 subtitle:', await p.locator('text=How the AI sounds, what it can do on its own, and when it hands over to your team.').count())
-    await p.click('[data-testid="template-use-tpl-size"]'); await p.waitForSelector('[data-testid="workflow-editor"]')
+    await p.click('[data-testid="workflow-open-wf-size"]'); await p.waitForSelector('[data-testid="workflow-editor"]')
     const id = p.url().split('/').pop()
     await p.click('[data-testid="editor-back"]'); await discardIfAsked()
     log('  dup copy check uses id', id)
@@ -57,7 +46,7 @@ export async function fixChecks({ p, log, step, txt, settle, spaGo, shot }) {
     log('FIX 6 rename dialog:', await p.locator('[data-testid="rename-dialog"]').count())
     await p.fill('[data-testid="rename-input"]', 'Order tracking (chat)'); await p.click('[data-testid="rename-save"]'); await settle()
     const nm = async () => (await p.locator('[data-testid="workflow-open-wf-order-tracking"]').first().innerText()).split('\n')[0]
-    const inPlace = await nm(); await go('/ai/routing'); await go('/ai/workflows'); await p.waitForSelector('[data-testid="workflows-rows"]')
+    const inPlace = await nm(); await go('/ai/voice'); await go('/ai/workflows'); await p.waitForSelector('[data-testid="workflows-rows"]')
     log('  renamed row in place:', inPlace, '| after revisit:', await nm(), '| url', p.url(), '| toast:', await txt('[data-sonner-toast]'), '| dialog open:', await p.locator('[data-testid="rename-dialog"]').count())
     const last = await p.locator('[data-testid^="workflow-row-"]').last().getAttribute('data-testid'); const lid = last.replace('workflow-row-', '')
     await p.click(`[data-testid="workflow-menu-${lid}"]`); await p.click(`[data-testid="workflow-delete-${lid}"]`); await settle()
@@ -86,7 +75,7 @@ export async function fixChecks({ p, log, step, txt, settle, spaGo, shot }) {
     await p.click('[data-testid="editor-back"]'); await discardIfAsked()
   })
   await step('FIX 9 hat size', async () => {
-    await go('/ai/workflows'); await p.click('[data-testid="template-use-tpl-size"]'); await p.waitForSelector('[data-testid="workflow-editor"]')
+    await go('/ai/workflows'); await p.click('[data-testid="workflow-open-wf-size"]'); await p.waitForSelector('[data-testid="workflow-editor"]')
     await p.click('[data-testid="editor-test"]'); await settle()
     await p.fill('[data-testid="test-chat-input"]', 'what size hat am I'); await p.press('[data-testid="test-chat-input"]', 'Enter'); await settle()
     await p.click('[data-testid="run-button-i-don-t-know"]'); await settle()
@@ -100,12 +89,13 @@ export async function fixChecks({ p, log, step, txt, settle, spaGo, shot }) {
     await p.click('[data-testid="editor-back"]'); await discardIfAsked()
   })
   await step('FIX 14 return template', async () => {
-    await go('/ai/workflows'); await p.click('[data-testid="template-use-tpl-return"]'); await p.waitForSelector('[data-testid="workflow-editor"]')
+    await go('/ai/workflows'); await p.click('[data-testid="workflow-open-wf-return"]'); await p.waitForSelector('[data-testid="workflow-editor"]')
     log('FIX 14 return ending:', (await p.locator('[data-testid^="step-summary-"]').allInnerTexts()).filter((t) => /LR|rma|label/i.test(t)).join(' | '))
     await p.click('[data-testid="editor-test"]'); await settle()
     const say = async (t) => { await p.fill('[data-testid="test-chat-input"]', t); await p.press('[data-testid="test-chat-input"]', 'Enter'); await settle() }
     await say('start a return'); await say('margaret.okonkwo@example.com'); await say((await txt('[data-testid="mock-inbox-body"]')).match(/\d{6}/)?.[0] ?? '')
-    await say('#GB20398 Hampton Wool Fedora'); await p.click('[data-testid^="run-button-doesn"]'); await settle()
+    const tap = async (n) => { await p.locator('[data-testid="test-chat"] button', { hasText: n }).last().click(); await settle() }
+    await tap('#GB20398'); await tap('Hampton Wool Fedora'); await tap('Too small'); await tap('Original payment')
     log('  run end:', (await p.locator('[data-testid="test-chat"] [data-testid="run-msg-bot"]').allInnerTexts()).slice(-1)[0]?.replace(/\s+/g, ' '), '| link:', await txt('[data-testid="run-link"]'))
     await p.click('[data-testid="editor-back"]'); await discardIfAsked()
   })

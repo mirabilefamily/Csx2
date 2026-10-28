@@ -16,10 +16,32 @@ import { EmptyState, ErrorState } from '@/components/States'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useIsPhone } from '@/hooks/useIsPhone'
+import { StatusChip } from '@/components/StatusChip'
 
-const STATUS_CLS = { active: 'bg-green-50 text-green-700', invited: 'bg-brass-50 text-brass-700', deactivated: 'bg-surface-muted text-ink-muted' }
+const STATUS_LABEL = { active: 'Active', invited: 'Invited', deactivated: 'Deactivated' } as const
 const ROLE_CLS = { admin: 'bg-tobacco-50 text-tobacco-700', agent: 'bg-slate-50 text-slate-700' }
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase() || '?'
+const lastLogin = (u: User) => (u.status === 'invited' ? `Invite sent ${u.invitedAt ? timeAgo(u.invitedAt) : 'recently'}` : u.lastLoginAt ? timeAgo(u.lastLoginAt) : 'Never')
+
+function RolesCard() {
+  const rows: [string, string][] = [
+    ['Admin', 'Every page, including AI & Workflows, Channels and Settings.'],
+    ['Agent', 'Dashboard, Inbox and Guidance.'],
+  ]
+  return (
+    <section className="rounded-2xl bg-surface p-6 shadow-card ring-1 ring-black/[0.04] max-sm:px-4" data-testid="users-roles">
+      <h2 className="text-[15px] font-semibold text-ink">What each role can do</h2>
+      <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+        {rows.map(([r, d]) => (
+          <div key={r} data-testid={`users-role-${r.toLowerCase()}`}>
+            <dt className="text-sm font-semibold text-ink">{r}</dt>
+            <dd className="mt-0.5 text-sm text-ink-muted">{d}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
+}
 
 function InviteDialog({ open, onOpenChange, onInvited }: { open: boolean; onOpenChange: (o: boolean) => void; onInvited: (u: User) => void }) {
   const [email, setEmail] = useState('')
@@ -65,12 +87,13 @@ function InviteDialog({ open, onOpenChange, onInvited }: { open: boolean; onOpen
   )
 }
 
-function RowActions({ u, self, patch, onDeactivate }: { u: User; self: boolean; patch: (u: User, p: Partial<Pick<User, 'role' | 'status'>>, msg: string) => void; onDeactivate: () => void }) {
+function RowActions({ u, self, patch, onDeactivate, onResent }: { u: User; self: boolean; patch: (u: User, p: Partial<Pick<User, 'role' | 'status'>>, msg: string) => void; onDeactivate: () => void; onResent: (u: User) => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild><Button size="icon-sm" variant="ghost" aria-label={`Actions for ${u.name}`} data-testid={`user-actions-${u.email}`}><MoreHorizontal aria-hidden /></Button></DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {self && <DropdownMenuLabel data-testid="self-protect-note">You can't change your own account</DropdownMenuLabel>}
+        {u.status === 'invited' && <DropdownMenuItem onSelect={async () => { const r = await settingsApi.resendInvite(u.id).catch(() => null); if (r) { onResent(r); toast.success(`Invite resent to ${r.email}`) } else toast.error("Couldn't resend the invite. Try again.") }} data-testid="user-resend-invite">Resend invite</DropdownMenuItem>}
         <DropdownMenuItem disabled={self} onSelect={() => patch(u, { role: u.role === 'admin' ? 'agent' : 'admin' }, 'Role updated')} data-testid="user-change-role">Make {u.role === 'admin' ? 'Agent' : 'Admin'}</DropdownMenuItem>
         <DropdownMenuItem onSelect={async () => { const r = await settingsApi.resetPassword(u.id).catch(() => null); if (r) toast.success(`Password reset email sent to ${r.email}`); else toast.error("Couldn't send the reset email. Try again.") }} data-testid="user-reset-password">Reset password</DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -117,14 +140,15 @@ export function UsersTab() {
       toast.error((e as Error).message)
     }
   }
+  const count = (st: User['status']) => users.filter((u) => u.status === st).length
+  const resent = (n: User) => setUsers((list) => list.map((x) => (x.id === n.id ? n : x)))
   const needle = q.trim().toLowerCase()
   const shown = needle ? users.filter((u) => u.name.toLowerCase().includes(needle) || u.email.toLowerCase().includes(needle)) : users
 
   return (
     <div className="space-y-4" data-testid="users-tab">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-[15px] font-semibold text-ink">Team</h2>
-        <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium tabular-nums text-ink-muted" data-testid="users-count">{loading ? '–' : `${users.length} ${users.length === 1 ? 'member' : 'members'}`}</span>
+        <p className="text-sm text-ink-muted" data-testid="users-count">{loading ? '–' : `${users.length} ${users.length === 1 ? 'member' : 'members'} · ${count('active')} active · ${count('invited')} invited`}</p>
         <div className="relative ml-auto w-full sm:w-64">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle" aria-hidden />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or email" aria-label="Search users" className="h-9 pl-9 pr-8" data-testid="users-search" />
@@ -149,11 +173,11 @@ export function UsersTab() {
                       <p className="truncate text-sm text-ink-muted">{u.email}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                         <span className={cn('rounded-full px-2 py-0.5 font-medium capitalize', ROLE_CLS[u.role])} data-testid={`user-role-${u.email}`}>{u.role}</span>
-                        <span className={cn('rounded-full px-2 py-0.5 font-medium capitalize', STATUS_CLS[u.status])} data-testid={`user-status-${u.email}`}>{u.status}</span>
-                        <span className="text-ink-muted">Last login {u.lastLoginAt ? timeAgo(u.lastLoginAt) : 'Never'}</span>
+                        <StatusChip label={STATUS_LABEL[u.status]} testId={`user-status-${u.email}`} />
+                        <span className="text-ink-muted" data-testid={`user-last-login-${u.email}`}>{u.status === 'invited' ? lastLogin(u) : `Last login ${lastLogin(u)}`}</span>
                       </div>
                     </div>
-                    <RowActions u={u} self={self} patch={patch} onDeactivate={() => setDeactivate(u)} />
+                    <RowActions u={u} self={self} patch={patch} onDeactivate={() => setDeactivate(u)} onResent={resent} />
                   </li>
                 )
               })}
@@ -177,9 +201,9 @@ export function UsersTab() {
                           </div>
                         </TableCell>
                         <TableCell><span className={cn('rounded-full px-2 py-0.5 text-xs font-medium capitalize', ROLE_CLS[u.role])} data-testid={`user-role-${u.email}`}>{u.role}</span></TableCell>
-                        <TableCell><span className={cn('rounded-full px-2 py-0.5 text-xs font-medium capitalize', STATUS_CLS[u.status])} data-testid={`user-status-${u.email}`}>{u.status}</span></TableCell>
-                        <TableCell className="whitespace-nowrap text-ink-muted">{u.lastLoginAt ? timeAgo(u.lastLoginAt) : 'Never'}</TableCell>
-                        <TableCell className="pr-5 text-right"><RowActions u={u} self={self} patch={patch} onDeactivate={() => setDeactivate(u)} /></TableCell>
+                        <TableCell><StatusChip label={STATUS_LABEL[u.status]} testId={`user-status-${u.email}`} /></TableCell>
+                        <TableCell className="whitespace-nowrap text-ink-muted" data-testid={`user-last-login-${u.email}`}>{lastLogin(u)}</TableCell>
+                        <TableCell className="pr-5 text-right"><RowActions u={u} self={self} patch={patch} onDeactivate={() => setDeactivate(u)} onResent={resent} /></TableCell>
                       </TableRow>
                     )
                   })}
@@ -188,6 +212,7 @@ export function UsersTab() {
             </div>
           )}
       </div>
+      <RolesCard />
       <InviteDialog open={inviting} onOpenChange={setInviting} onInvited={(u) => setUsers((l) => [...l, u])} />
       <AlertDialog open={!!deactivate} onOpenChange={(o) => !o && setDeactivate(null)}>
         <AlertDialogContent data-testid="deactivate-dialog">

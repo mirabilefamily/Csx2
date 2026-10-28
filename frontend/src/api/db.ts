@@ -1,4 +1,4 @@
-import type { AIAttempt, AIDraft, Customer, FraudAlert, GuidanceArticle, LoopReturn, Macro, Message, RefundRecord, Ticket, User, Workflow } from '@/types'
+import type { AIAttempt, AIDraft, Customer, FraudAlert, GuidanceArticle, LoopReturn, Message, RefundRecord, Ticket, User, Workflow } from '@/types'
 import * as seed from '@/mocks'
 
 export const CSAT_QUESTIONS_KEY = 'goorin.csatQuestions'
@@ -22,7 +22,6 @@ export const db = {
   aiAttempts: structuredClone(seed.aiAttempts) as AIAttempt[],
   aiDrafts: structuredClone(seed.aiDrafts) as AIDraft[],
   guidanceArticles: structuredClone(seed.guidanceArticles) as GuidanceArticle[],
-  macros: structuredClone(seed.macros) as Macro[],
   dailyMetrics: seed.dailyMetrics,
   csatSurvey: { ...structuredClone(seed.csatSurvey), questions: storedCsatQuestions() ?? structuredClone(seed.csatSurvey.questions) },
   csatResponses: seed.csatResponses,

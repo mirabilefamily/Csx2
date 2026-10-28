@@ -2,6 +2,7 @@ import type { AIAttempt, AIDraft, Message, Ticket } from '@/types'
 import { ESCALATION_LABELS, RESOLVER_LABELS } from '@/lib/labels'
 import { tickets, ticketBodies } from './tickets'
 import { users } from './users'
+import { aiSettings } from './settings'
 import { minutesAfter, mulberry32 } from './time'
 
 interface Script { claude: string; grokbot: string; agent: string; note: string; thanks: string; guidance: string[] }
@@ -127,8 +128,8 @@ for (const t of tickets) {
     attempt('claude', pick(0.86, 0.96), 'answered', null)
   } else {
     const c = pick(0.42, 0.66)
-    attempt('claude', c, 'escalated', `Confidence ${c.toFixed(2)} below 0.70 threshold`)
-    push('system', 'System', `AI confidence ${c.toFixed(2)} is below the 0.70 threshold. Handed to Grokbot.`, 3)
+    attempt('claude', c, 'escalated', `Confidence ${c.toFixed(2)} below ${(aiSettings.threshold / 100).toFixed(2)} threshold`)
+    push('system', 'System', `AI confidence ${c.toFixed(2)} is below the ${(aiSettings.threshold / 100).toFixed(2)} threshold. Handed to Grokbot.`, 3)
     if (t.status === 'grok_handling') {
       attempt('grokbot', pick(0.6, 0.78), 'in_progress', null)
       continue
@@ -139,6 +140,7 @@ for (const t of tickets) {
       const reason = t.escalationReason ? ESCALATION_LABELS[t.escalationReason] : 'Needs a human decision'
       attempt('grokbot', pick(0.48, 0.68), 'escalated', reason)
       push('system', 'System', `Escalated to a human: ${reason}.`, 2)
+      if (t.id === 'GB-1076') push('system', 'System', 'Damaged item claim handed over: refund above $75 limit', 1)
       if (t.assignee || t.id === 'GB-1076') push('agent', t.assignee ? agentName : 'Sam Okafor', s.note, 20, true)
       if (t.status === 'needs_human') continue
       push('agent', agentName, s.agent, 35)

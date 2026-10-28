@@ -63,6 +63,8 @@ const findOrder = (id: string) => {
 }
 export const refundable = (o: ShopifyOrder) => Math.round((o.total - (o.refundedAmount ?? 0)) * 100) / 100
 export const autoRefundLimit = () => db.aiSettings.autoRefund.limit
+// Saved confidence threshold (single source for Inbox, testing and the estimate).
+export const aiThreshold = () => db.aiSettings.threshold
 export { TAG_COLORS } from '@/mocks/tickets'
 
 // PATCH /api/tickets/:id/fields (MOCKED)

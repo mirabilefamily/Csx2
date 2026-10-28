@@ -11,7 +11,7 @@ let hiders = 0
 const subs = new Set<() => void>()
 const notify = () => subs.forEach((l) => l())
 
-// Full-screen phone editors (article/macro editor, CSV import) hide the tab bar while open.
+// Full-screen phone editors (article editor, CSV import) hide the tab bar while open.
 export function useHideBottomTabBar(active: boolean) {
   useEffect(() => {
     if (!active) return

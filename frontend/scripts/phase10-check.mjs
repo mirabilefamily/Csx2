@@ -85,9 +85,7 @@ await step('handover cases', async () => {
 await step('composer + ai', async () => {
   await go('/inbox/GB-1076')
   log('send disabled empty:', await p.locator('[data-testid="composer-send"]').isDisabled())
-  log('suggested macros:', await p.locator('[data-testid^="suggested-macro-"]').count())
-  await p.click('[data-testid="composer-macro-search"]')
-  log('macro picker:', await has(p, '[data-testid="macro-search"]'))
+  log('REQ-856 macro search bar:', await p.locator('[data-testid="composer-macro-search"]').count(), '| toolbar:', (await p.locator('[data-testid="composer"] button[aria-label], [data-testid="composer-link"]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')))).join(','))
   await p.keyboard.press('Escape')
   await p.keyboard.press(process.platform === 'darwin' ? 'Meta+g' : 'Control+g')
   await p.waitForSelector('[data-testid="ask-ai-panel"]', { timeout: 3000 })

@@ -1,0 +1,21 @@
+{
+ "iteration": 19, "phase": "15+17", "passed": 8, "failed": 0, "retest_needed": false,
+ "bugs": [],
+ "action_items": [],
+ "notes": [
+  "No backend in this app (frontend mock prototype) — backend lane not applicable; 8 browser checks cover the 8 criteria.",
+  "improvement: Brand voice bottom unsaved bar overlapped the last row of 'Use' phrase chips in one mid-transition screenshot at 1440x900; worth confirming bottom padding reserves space for the bar.",
+  "note: Guidance library check toggles seeded Gift cards/Holiday articles because the criterion requires it; it is in-memory mock state that resets on reload.",
+  "note: Conversation testing follow-up for delivered #GB20398 answers 'already delivered by UPS' — differs from first reply and addresses timing, accepted."
+ ],
+ "checks": [
+  {"criterion":"Routing removed (REQ-805)","name":"p17-routing-removed","lane":"browser","status":"passed","evidence":"/ai/routing -> /ai/workflows; tabs Brand voice/AI replies/Workflows/Conversation testing, no Routing; no escalation/business-hours/assignment text; global search 'Routing' -> 'No results for \"Routing\"'"},
+  {"criterion":"Brand voice page","name":"p17-brand-voice-page","lane":"browser","status":"passed","evidence":"bv-rail position sticky; Use count '4 phrases · max 12'; no duplicate heading; adding chip shows Unsaved changes bar with Discard/Save; Save clears dirty and keeps chip"},
+  {"criterion":"AI replies without Grokbot (REQ-827)","name":"p17-ai-replies-no-grokbot","lane":"browser","status":"passed","evidence":"No 'Grokbot'; 'Hand to a person'/'AI answers' copy; 2 switches (Email, Chat); threshold 75; Conversation testing: 'Confidence 62% vs the 75% threshold' -> 'Would hand to a person'"},
+  {"criterion":"Workflows list + editor polish","name":"p17-workflows-list-editor","lane":"browser","status":"passed","evidence":"No Templates, one switch per row, no status badge, channel icon titles (Chat, Email, Contact form); editor-name is INPUT, status pill, step-settings with title+close; 'Hand over to a person' 138px single line; no MOCKED"},
+  {"criterion":"Conversation testing follow-ups","name":"p17-conversation-testing-followup","lane":"browser","status":"passed","evidence":"Reply1 'I found your order #GB20398 (delivered...)' vs follow-up 'Good news: #GB20398 was already delivered by UPS...'; customer left / AI right consistently; Run all scenarios table rendered with %"},
+  {"criterion":"Macros removed everywhere (REQ-856) + Channels icon","name":"p17-macros-removed-channels-icon","lane":"browser","status":"passed","evidence":"Channels svg 'lucide-messages-square'; /guidance?tab=macros -> list, no macro text; composer labels Bold|Italic|Link|Attach; '/' opens no picker; shortcut help has no macro"},
+  {"criterion":"Guidance library","name":"p15-guidance-library","lane":"browser","status":"passed","evidence":"Summary '15 articles · 14 active · 1 off'; rail counts match; A–Z & Most used sorted; 'duties' finds Shipping times...; 'zzqx' No articles match + Clear filters -> 15 rows; Measuring excerpt; toggles toast 'Article turned off'/'Article activated' with counts; Agent: AI link hidden; /guidance?tab=xyz -> list"},
+  {"criterion":"Guidance editor + import","name":"p15-guidance-editor-import","lane":"browser","status":"passed","evidence":"Split default; toolbar Bold/Italic/Heading/Bulleted/Numbered/Link inserts markdown; status labels; New category… option; tags dedupe/remove; validation errors; Article saved -> first in list, v1->v2; Discard unsaved changes? dialog; import .txt error, unmapped Title error + disabled, 'Imported 2 articles' + '1 row skipped (missing title)'; ?tab=import opens dialog; 390 no horizontal scroll"}
+ ]
+}

@@ -12,7 +12,7 @@ export function SurveyPreview({ survey }: { survey: CsatSurvey }) {
   const channels = [survey.channels.email && 'Email', survey.channels.inlineChat && 'Inline chat'].filter(Boolean).join(' & ')
   return (
     <div className="space-y-3" data-testid="survey-preview">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Live preview</p>
+      <p className="text-[15px] font-semibold text-ink max-lg:hidden">Preview</p>
       <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
         <div className="bg-tobacco-700 px-5 py-4">
           <p className="text-sm font-semibold text-brass-100">Goorin Bros.</p>

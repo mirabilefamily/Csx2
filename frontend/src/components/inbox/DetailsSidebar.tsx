@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { MoreHorizontal, Pencil, RefreshCw, Search, Star } from 'lucide-react'
 import type { CsatResponse, LoopReturn, ShopifyOrder, TicketDetail, TicketPatch } from '@/types'
-import { customerToolsApi } from '@/api'
+import { customerToolsApi, viewsApi } from '@/api'
 import type { InventoryResult } from '@/api/customerTools'
 import { useApi } from '@/hooks/useApi'
 import { AuthorBadge } from '@/components/AuthorBadge'
@@ -87,8 +87,7 @@ const REASON = { answered: 'Replied to the customer', escalated: 'Handed to the 
 // Plain-language reason with percentages, never raw 0.65 scores.
 function plainReason(a: TicketDetail['attempts'][number]) {
   const next = a.tier === 'claude' ? 'Grokbot' : 'your team'
-  const m = a.reason?.match(/below ([\d.]+) threshold/i)
-  if (m) return `Below the ${Math.round(parseFloat(m[1]) * 100)}% threshold, handed to ${next}`
+  if (/below [\d.]+ threshold/i.test(a.reason ?? '')) return `Below the ${viewsApi.aiThreshold()}% threshold, handed to ${next}`
   if (a.outcome === 'escalated') return a.reason ? `${a.reason}, handed to ${next}` : `Handed to ${next}`
   return (a.reason ?? REASON[a.outcome]).replace(/\b0\.(\d{2})\b/g, (_, d) => `${Number(d)}%`)
 }

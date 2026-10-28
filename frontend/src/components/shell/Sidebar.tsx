@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { BookOpen, Inbox, LayoutDashboard, PanelLeftClose, PanelLeftOpen, RadioTower, Settings, Sparkles, type LucideIcon } from 'lucide-react'
+import { BookOpen, Inbox, LayoutDashboard, MessagesSquare, PanelLeftClose, PanelLeftOpen, Settings, Sparkles, type LucideIcon } from 'lucide-react'
 import { useUnsavedGuard } from '@/components/UnsavedGuard'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/overlay'
 import { Wordmark } from '@/components/Wordmark'
@@ -16,7 +16,7 @@ const MAIN: NavItem[] = [
 const KNOWLEDGE: NavItem[] = [
   { to: '/ai', label: 'AI & Workflows', Icon: Sparkles, id: 'ai', admin: true },
   { to: '/guidance', label: 'Guidance', Icon: BookOpen, id: 'guidance' },
-  { to: '/channels', label: 'Channels', Icon: RadioTower, id: 'channels', admin: true },
+  { to: '/channels', label: 'Channels', Icon: MessagesSquare, id: 'channels', admin: true },
 ]
 export const SETTINGS: NavItem = { to: '/settings', label: 'Settings', Icon: Settings, id: 'settings', admin: true }
 export const NAV: NavItem[] = [...MAIN, ...KNOWLEDGE]

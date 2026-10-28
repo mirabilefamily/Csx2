@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
-import { CircleDot, Eye, Filter, Home, MessageSquareText, Palette, Star, type LucideIcon } from 'lucide-react'
+import { CircleDot, Filter, Home, MessageSquareText, Palette, Star, type LucideIcon } from 'lucide-react'
 import { ConversationSection, HomeSection } from './HomeSection'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { SheetCloseButton } from '@/components/ui/sheet'
+import { PreviewPane } from '@/components/PreviewPane'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { toast } from 'sonner'
 import { csatApi, widgetApi } from '@/api'
@@ -13,7 +12,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/States'
 import { useUnsavedGuard } from '@/components/UnsavedGuard'
 import { SaveBar } from '@/components/settings/SaveBar'
-import { SaveState } from '@/components/PageTabs'
 import { mergeEffective } from '@/lib/widgetRules'
 import { Section } from './fields'
 import { sectionSummary } from './summaries'
@@ -41,7 +39,6 @@ function Loaded({ saved: initial, theme, view, group }: { saved: WidgetSettings;
   const [draft, setDraft] = useState(initial)
   const [uploadErrors, setUploadErrors] = useState<WidgetErrors>({})
   const isPhone = useIsPhone()
-  const [previewOpen, setPreviewOpen] = useState(false)
   const [open, setOpen] = useState<Set<string>>(() => new Set(['branding']))
   const [opts, setOpts] = useState<PreviewOptions>({ page: 'product', device: 'desktop', state: 'home', outsideHours: false })
   const [saving, setSaving] = useState(false)
@@ -90,7 +87,7 @@ function Loaded({ saved: initial, theme, view, group }: { saved: WidgetSettings;
   if (view === 'install')
     return (
       <div className="pb-24" data-testid="widget-install">
-        <div id="install" className="rounded-2xl bg-surface p-6 shadow-card ring-1 ring-black/[0.04] max-sm:px-4" data-testid="widget-settings-form">
+        <div id="install" className="space-y-6" data-testid="widget-settings-form">
           <InstallSection draft={draft} theme={theme} update={update} />
         </div>
         {saveBar}
@@ -100,7 +97,6 @@ function Loaded({ saved: initial, theme, view, group }: { saved: WidgetSettings;
   return (
     <div className="grid gap-8 pb-24 lg:grid-cols-[minmax(0,640px)_minmax(0,440px)] lg:justify-between" data-testid="widget-settings">
       <div className="min-w-0 space-y-3 [&_input:not([type=checkbox]):not([type=number]):not([type=color])]:max-w-[480px] [&_select]:max-w-[280px] [&_textarea]:max-w-[480px]" data-testid="widget-settings-form">
-        <div className="flex justify-end"><SaveState dirty={dirty} testId="ws-save-state" /></div>
         {SECTIONS.filter(([id]) => !group || (GROUPS[group] as readonly string[]).includes(id)).map(([id, title, desc, Icon]) => (
           <Section key={id} id={id} title={title} description={desc} Icon={Icon} summary={sectionSummary(id, draft, theme)} open={open.has(id)} onToggle={() => toggle(id)}>
             {id === 'branding' && <BrandingSection draft={draft} update={update} uploadErrors={uploadErrors} setUploadError={setUploadError} />}
@@ -112,26 +108,9 @@ function Loaded({ saved: initial, theme, view, group }: { saved: WidgetSettings;
           </Section>
         ))}
       </div>
-      {isPhone ? (
-        <>
-          <Button className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-4 z-30 rounded-full shadow-popover" onClick={() => { setOpts({ ...opts, device: 'mobile' }); setPreviewOpen(true) }} data-testid="widget-preview-open">
-            <Eye aria-hidden /> Preview
-          </Button>
-          <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-            <DialogContent className="max-sm:top-0 max-sm:h-[100dvh] max-sm:max-h-none max-sm:rounded-none max-sm:p-3 max-sm:pt-[max(0.75rem,env(safe-area-inset-top))]" aria-describedby={undefined} data-testid="widget-preview-sheet">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <DialogTitle className="text-[15px] font-semibold text-ink">Live preview</DialogTitle>
-                <SheetCloseButton label="Close preview" />
-              </div>
-              <WidgetPreview settings={preview} opts={opts} onChange={setOpts} />
-            </DialogContent>
-          </Dialog>
-        </>
-      ) : (
-      <aside className="min-w-0 lg:sticky lg:top-6 lg:h-[calc(100vh-48px)] lg:self-start" aria-label="Live preview" data-testid="channels-preview">
-        <WidgetPreview settings={preview} opts={opts} onChange={setOpts} title="Preview" />
-      </aside>
-      )}
+      <PreviewPane label="Live preview" testId="channels-preview" toggleTestId="widget-preview-open" className="lg:h-[calc(100vh-48px)]">
+        <WidgetPreview settings={preview} opts={isPhone ? { ...opts, device: 'mobile' } : opts} onChange={setOpts} title="Preview" />
+      </PreviewPane>
       {saveBar}
     </div>
   )

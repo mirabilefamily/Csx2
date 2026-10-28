@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { AI_STATE_LABEL, aiState, shortId } from '@/lib/inboxViews'
 import { AiRepliedBanner, SlaChip } from './TicketBanners'
 import { useIsPhone, useVisualViewportHeight } from '@/hooks/useIsPhone'
-import type { Macro, Priority, TicketDetail, User } from '@/types'
+import type { Priority, TicketDetail, User } from '@/types'
 import { inboxApi, loopApi } from '@/api'
 import { useApi } from '@/hooks/useApi'
 import { useAuth } from '@/components/auth/AuthContext'
@@ -37,7 +37,6 @@ export interface ConversationHandle {
 interface Props {
   ticketId: string
   users: User[]
-  macros: Macro[]
   onBack: () => void
   crumb?: string
   onStep?: (dir: 1 | -1) => void
@@ -54,7 +53,7 @@ const COLLAPSE_KEY = 'goorin.inbox.panelCollapsed'
 const COL = 'mx-auto box-content max-w-[clamp(720px,88%,1280px)] px-6 xl:px-8 min-[1600px]:px-12 max-sm:px-4'
 const GUTTER = '[scrollbar-gutter:stable_both-edges]'
 
-export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketId, users, macros, onBack, crumb, onStep, canStep, onAsk }, ref) => {
+export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketId, users, onBack, crumb, onStep, canStep, onAsk }, ref) => {
   const { user } = useAuth()
   const { tickets, upsert } = useShellData()
   const { data, loading, error, reload } = useApi(() => inboxApi.getTicketDetail(ticketId), [ticketId])
@@ -155,7 +154,6 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
     'order.tracking_url': order?.trackingUrl ?? '(tracking link to follow)',
     'agent.first_name': user?.name.split(' ')[0] ?? 'The Goorin team',
   }
-  const fill = (s: string) => s.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (m, k: string) => vars[k] ?? m)
   const reasoning = [...new Set(detail.attempts.flatMap((a) => a.guidanceIds ?? []).map((g) => detail.guidanceTitles[g]).filter(Boolean))].map((t) => `Used guidance: ${t}`)
   const update = (patch: Parameters<typeof inboxApi.updateTicket>[1]) => user && run(() => inboxApi.updateTicket(ticketId, patch, user))
   const aside = async (where: 'spam' | 'trash' | null) => {
@@ -336,8 +334,6 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
         ) : (
           <Composer
             ref={composer}
-            macros={macros}
-            fill={fill}
             onDraftChange={setEditingDraft}
             to={ticket.customer.email}
             onResolve={() => update({ status: 'resolved' })}
