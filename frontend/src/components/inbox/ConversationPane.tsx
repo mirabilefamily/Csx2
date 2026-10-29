@@ -52,7 +52,7 @@ const SECS_KEY = 'goorin.inbox.panelSections'
 const VIEW_KEY = 'goorin.inbox.panelView'
 
 // One centred 760px column shared by header, thread and draft dock so their edges line up.
-const COL = 'mx-auto box-content max-w-[760px] px-6 xl:px-8 max-sm:px-4'
+const COL = 'thread-col'
 
 // Consecutive system events collapse into one quiet line (REQ-1039).
 const mergeEvents = (list: Message[]) => mergeHandoffs(list).reduce<Message[]>((acc, m) => {
@@ -290,7 +290,7 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
       <Button size="sm" onClick={takeOver} data-testid="ai-banner-take-over">Take over</Button>
     </div>
   ) : draft && !writeOwn ? (
-    <div className={inline ? undefined : cn('shrink-0 overflow-hidden border-t border-border bg-background py-4 max-sm:pb-[calc(12px+env(safe-area-inset-bottom))] max-sm:pt-3', GUTTER)} data-testid="draft-dock"><div className={inline ? undefined : COL}>
+    <div className={inline ? undefined : 'thread-pad shrink-0 overflow-hidden border-t border-border bg-background py-4 max-sm:pb-[calc(12px+env(safe-area-inset-bottom))] max-sm:pt-3'} data-testid="draft-dock"><div className={inline ? undefined : COL}>
     <DraftCard
       draft={draft}
       titles={detail.guidanceTitles}
@@ -346,7 +346,7 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
   const panelW = vw < 1600 ? 'w-[340px]' : 'w-[360px]'
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 bg-white max-sm:fixed max-sm:inset-x-0 max-sm:top-0 max-sm:z-40 max-sm:pt-[env(safe-area-inset-top)]" style={isPhone ? { height: vvh ?? '100dvh' } : undefined} data-testid="conversation">
-      <section aria-label="Conversation" className="flex min-w-0 flex-1 flex-col">
+      <section aria-label="Conversation" className="thread-host flex min-w-0 flex-1 flex-col">
         <header className={cn('shrink-0 overflow-hidden border-b border-[#F0ECE6] bg-white', GUTTER)} data-testid={isPhone ? 'conversation-phone-header' : 'conversation-header'}>
           <div ref={headRef} className="flex items-center gap-2.5 px-5 py-3.5 max-sm:h-14 max-sm:gap-2 max-sm:px-2 max-sm:py-0" data-testid="conversation-header-inner">
             <Button variant="ghost" size={isPhone ? 'icon' : 'icon-sm'} className="md:hidden" onClick={onBack} aria-label="Back to inbox" data-testid="conversation-back"><ArrowLeft aria-hidden /></Button>
@@ -381,7 +381,7 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
         {detail.fraudAlert && <FraudBanner a={detail.fraudAlert} />}
         <AiRepliedBanner d={{ ...detail, ticket }} />
         <div className="relative flex min-h-0 flex-1 flex-col" data-testid="thread-wrap">
-        <div ref={thread} onScroll={onThreadScroll} className={cn('min-h-0 flex-1 overflow-y-auto bg-white py-8 max-sm:py-4', GUTTER)} data-testid="thread-scroll">
+        <div ref={thread} onScroll={onThreadScroll} className="thread-pad min-h-0 flex-1 overflow-y-auto bg-white py-8 max-sm:py-4" data-testid="thread-scroll">
           <div ref={setColEl} className={COL} data-testid="thread-column">
           <HandoverSummary key={ticket.status} d={{ ...detail, ticket }} />
           <ol className="-my-2 max-sm:-my-1.5" aria-label="Messages" data-testid="message-thread">

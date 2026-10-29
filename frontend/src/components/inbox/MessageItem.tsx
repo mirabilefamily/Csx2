@@ -52,7 +52,7 @@ export function MessageItem({ m, reasoning }: { m: Message; channel?: 'email' | 
   return (
     <li data-testid={`message-${m.id}`} data-author={m.authorType} data-internal={m.isInternal || undefined} className={cn('flex gap-2.5 py-2', !customer && 'justify-end')}>
       {customer && <Avatar m={m} />}
-      <div className={cn('min-w-0 max-w-[80%] rounded-2xl border border-[#EEE9E1] px-3.5 py-3', tint)} data-testid="message-block">
+      <div className={cn('min-w-0 max-w-[86%] rounded-2xl border border-[#EEE9E1] px-3.5 py-3', tint)} data-testid="message-block">
         <p className="flex flex-wrap items-center gap-x-2 text-[13px]" data-testid="message-meta">
           {!customer && (ai
             ? <Sparkles className="h-3.5 w-3.5 text-[#4A6382]" aria-hidden />
@@ -63,7 +63,7 @@ export function MessageItem({ m, reasoning }: { m: Message; channel?: 'email' | 
         </p>
         {m.format === 'html'
           ? <div className={cn('mt-1 text-[14px] leading-[1.6] text-ink', richText)} dangerouslySetInnerHTML={{ __html: m.body }} />
-          : <p className="mt-1 whitespace-pre-wrap text-[14px] leading-[1.6] text-ink">{m.body}</p>}
+          : <p className="mt-1 max-w-[84ch] whitespace-pre-wrap text-[14px] leading-[1.6] text-ink">{m.body}</p>}
         {ai && <Reasoning m={m} reasoning={reasoning} />}
         {m.approvedBy && <p className="mt-1.5 text-xs text-ink-muted" data-testid="approved-by">Approved by {m.approvedBy}</p>}
       </div>
