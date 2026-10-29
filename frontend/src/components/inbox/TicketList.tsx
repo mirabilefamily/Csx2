@@ -29,6 +29,7 @@ interface Props {
   selectable?: boolean
   rowActions?: (t: Ticket) => React.ReactNode
   variant?: 'default' | 'needs' | 'ai'
+  full?: boolean
   onTakeOver?: (t: Ticket) => void
   footer?: React.ReactNode
   status?: React.ReactNode
@@ -66,7 +67,7 @@ export function TicketList(p: Props) {
     body = (
       <ul aria-label={`${p.title} tickets`} data-testid="ticket-list">
         {p.tickets.map((t) => (
-          <TicketRow key={t.id} t={t} anySelected={p.selected.length > 0} selectable={p.selectable !== false} active={t.id === p.activeId} checked={p.selected.includes(t.id)} onCheck={(c) => p.onSelect(c ? [...p.selected, t.id] : p.selected.filter((x) => x !== t.id))} actions={p.rowActions?.(t)} variant={p.variant} users={p.users} onTakeOver={p.onTakeOver} />
+          <TicketRow key={t.id} t={t} anySelected={p.selected.length > 0} selectable={p.selectable !== false} active={t.id === p.activeId} checked={p.selected.includes(t.id)} onCheck={(c) => p.onSelect(c ? [...p.selected, t.id] : p.selected.filter((x) => x !== t.id))} actions={p.rowActions?.(t)} variant={p.variant} full={p.full} users={p.users} onTakeOver={p.onTakeOver} />
         ))}
       </ul>
     )

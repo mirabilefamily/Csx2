@@ -1,5 +1,4 @@
 import { FlaskConical } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
 import { setDemoState, type DemoState } from '@/api'
 import { useDemoState } from '@/hooks/useApi'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/overlay'
@@ -15,30 +14,28 @@ const OPTIONS: { id: DemoState; label: string; hint: string }[] = [
 
 export const demoToolsEnabled = import.meta.env.DEV || import.meta.env.VITE_DEMO_TOOLS === 'true'
 
-// On /widget-demo the switcher docks inside the demo controls panel so it never covers the widget launcher.
+// Only the inline switcher in /widget-demo's controls remains; elsewhere use ?demo=loading|empty|error|live.
 export function DemoStateSwitcher({ inline = false }: { inline?: boolean }) {
   const state = useDemoState()
   const titleFont = useTitleFont()
-  const { pathname } = useLocation()
-  if (!demoToolsEnabled || (!inline && pathname === '/widget-demo')) return null
+  if (!demoToolsEnabled || !inline) return null
   const current = OPTIONS.find((o) => o.id === state)!
-  const inConversation = /^\/inbox\/.+/.test(pathname)
   return (
-    <div className={inline ? '' : cn('fixed bottom-[136px] left-5 z-40 max-sm:left-auto', inConversation ? 'max-sm:bottom-auto max-sm:right-2 max-sm:top-[calc(4.25rem+env(safe-area-inset-top))]' : 'max-sm:bottom-[calc(4.5rem+env(safe-area-inset-bottom))] max-sm:right-3')}>
+    <div>
       <Popover>
         <PopoverTrigger
           data-testid="demo-state-trigger"
           aria-label={`Demo state: ${current.label}`}
           className={cn(
-            inline ? 'inline-flex h-9 items-center gap-2 rounded-full border bg-surface px-3.5 text-xs font-medium text-ink shadow-popover' : 'inline-flex h-8 w-8 items-center justify-center rounded-full border bg-surface text-ink shadow-popover max-sm:h-11 max-sm:w-11',
+            'inline-flex h-9 items-center gap-2 rounded-full border bg-surface px-3.5 text-xs font-medium text-ink shadow-popover',
             'transition-colors transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
             state === 'live' ? 'border-border-strong' : 'border-amber-500 ring-2 ring-amber-100',
           )}
         >
           <FlaskConical className="h-3.5 w-3.5 text-brass-700" aria-hidden />
-          {inline && <><span>Demo state:</span> <span className="font-semibold">{current.label}</span></>}
+          <><span>Demo state:</span> <span className="font-semibold">{current.label}</span></>
         </PopoverTrigger>
-        <PopoverContent side={inline ? 'bottom' : 'top'} className="w-64 p-2" data-testid="demo-state-panel">
+        <PopoverContent side="bottom" className="w-64 p-2" data-testid="demo-state-panel">
           <p className="px-2 pb-2 pt-1 text-xs font-medium text-ink-muted" id="demo-state-label">
             Demo state (applies to every API call)
           </p>

@@ -1,7 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, RequireAuth, useAuth } from '@/components/auth/AuthContext'
 import { AppShell } from '@/components/shell/AppShell'
-import { DemoStateSwitcher } from '@/components/DemoStateSwitcher'
 import { Toaster } from '@/components/ui/sonner'
 import { UnsavedGuardProvider } from '@/components/UnsavedGuard'
 import { TooltipProvider } from '@/components/ui/overlay'
@@ -62,7 +61,6 @@ export default function App() {
             </Route>
             <Route path="*" element={<NotFoundRoute />} />
           </Routes>
-          <DemoStateSwitcher />
           <Toaster />
           </UnsavedGuardProvider>
         </BrowserRouter>

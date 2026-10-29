@@ -113,3 +113,10 @@ Admin (support lead), Agent (support rep), Customer (later phases), Backend deve
 - Thread: 760px column, chat-style messages without boxes, AI tint #FAF7F2 + Why?, note tint #FFF8E6, merged events, compact handoff brief, AI draft as the only card, composer toolbar on focus
 - Customer panel 360px (Customer | Ask AI), closed by default and remembered, ] toggles; docked at 1280 and up, overlay at 1024-1279, bottom sheet on phone
 - Backlog: older phase check scripts that look for removed Inbox elements (stats line, pagination, stepper, views rail) need updating
+
+## Phase 22 — Inbox folder column (Sep 2026, speed mode)
+- No Inbox sidebar auto-collapse (normal goorin.sidebar.collapsed). Folder column: Inbox + search + collapse, New ticket (N), Folders with counts, collapsible Shared/Private views with + New view; strip at <1280 or when collapsed
+- Below 1680 the ticket replaces the list (breadcrumb Folder > Customer > Subject, prev/next + J/K); 1680+ list stays beside. Full-width rows show assignee avatar + status dot
+- Thread: customer left, AI (#F4F7FB) / team / note (#FFF8E6) right, Show reasoning, Handed over by AI lines, Handover summary block; composer To line + Email/Chat/Internal note picker
+- Customer panel open by default at 1280+: Ticket details, Customer, Past tickets (+ Timeline sheet), Shopify, Purchase summary, Orders, Loop returns
+- Order Edit/Duplicate/Refund, Create order, Shopify Add tags and timeline filter are placeholder toasts

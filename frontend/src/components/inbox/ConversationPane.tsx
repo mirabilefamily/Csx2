@@ -2,8 +2,8 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Link2, MessageCircleReply, MoreHorizontal, RotateCcw, SearchX, Sparkles, Tag, UserPlus, UserRound, X } from 'lucide-react'
-import { WhyBrief } from './WhyBrief'
-import { SummaryPanel } from './SummaryPanel'
+import { HandoverSummary } from './HandoverSummary'
+import { CustomerSections } from './CustomerSections'
 import { AskGoorinAI } from './AskGoorinAI'
 import { TEAMS } from '@/api/inbox'
 import type { Message, TeamId } from '@/types'
@@ -21,11 +21,11 @@ import { EmptyState, ErrorState } from '@/components/States'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button, buttonVariants, focusRing } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/overlay'
 import { cn } from '@/lib/utils'
 import { MessageItem } from './MessageItem'
 import { DraftCard } from './DraftCard'
 import { Composer, type ComposerHandle, type ComposerMode } from './Composer'
-import { DetailsSidebar } from './DetailsSidebar'
 import { FraudBanner } from './FraudBanner'
 
 export interface ConversationHandle {
@@ -47,19 +47,29 @@ interface Props {
 
 const SNOOZE: [string, number][] = [['Later today', 4], ['Tomorrow', 24], ['Next week', 168]]
 const PRIORITIES: [Priority, string][] = [['low', 'Low'], ['normal', 'Normal'], ['high', 'High'], ['urgent', 'Urgent']]
-const FULL_KEY = 'goorin.inbox.fullDetails'
 const CUST_KEY = 'goorin.inbox.customerPanel'
 
 // One centred 760px column shared by header, thread and draft dock so their edges line up.
 const COL = 'mx-auto box-content max-w-[760px] px-6 xl:px-8 max-sm:px-4'
 
 // Consecutive system events collapse into one quiet line (REQ-1039).
-const mergeEvents = (list: Message[]) => list.reduce<Message[]>((acc, m) => {
+const mergeEvents = (list: Message[]) => mergeHandoffs(list).reduce<Message[]>((acc, m) => {
   const prev = acc[acc.length - 1]
   if (m.authorType === 'system' && prev?.authorType === 'system') acc[acc.length - 1] = { ...prev, body: `${prev.body} · ${m.body}` }
   else acc.push(m)
   return acc
 }, [])
+// Every handoff event collapses into one line at the last handoff's position.
+function mergeHandoffs(list: Message[]) {
+  const hand = list.filter((m) => m.authorType === 'system' && /hand(ed)? (to|over)|escalat/i.test(m.body))
+  if (!hand.length) return list
+  const all = hand.map((m) => m.body).join(' ')
+  const conf = all.match(/confidence (\d+%) \(below (\d+%)\)/)
+  const why = all.match(/Escalated to a human: ([^.·]+)/)
+  const body = ['AI handed over to a person', conf && `confidence ${conf[1]} (below ${conf[2]})`, why && `${why[1].trim()} claim`].filter(Boolean).join(' · ')
+  const last = hand[hand.length - 1]
+  return list.filter((m) => !hand.includes(m) || m === last).map((m) => (m === last ? { ...m, body } : m))
+}
 const GUTTER = '[scrollbar-gutter:stable_both-edges]'
 
 export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketId, users, onBack, crumb, onStep, canStep, onAsk }, ref) => {
@@ -69,9 +79,8 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
   const [detail, setDetail] = useState<TicketDetail | null | undefined>()
   const customerId = detail?.customer?.id
   const loop = useApi(() => (customerId ? loopApi.getCustomerReturns(customerId) : Promise.resolve([])), [customerId])
-  const [full, setFull] = useState(() => sessionStorage.getItem(FULL_KEY) === '1')
-  // Customer panel is closed by default; the choice is remembered (REQ-1044).
-  const [cust, setCust] = useState(() => localStorage.getItem(CUST_KEY) === '1')
+  // Customer panel opens by default at ≥1280 and remembers a close (REQ-1072).
+  const [cust, setCust] = useState(() => window.innerWidth >= 1280 && localStorage.getItem(CUST_KEY) !== '0')
   const [custTab, setCustTab] = useState<'customer' | 'ask'>('customer')
   const toggleCust = useCallback((v?: boolean) => setCust((c) => { const n = v ?? !c; localStorage.setItem(CUST_KEY, n ? '1' : '0'); return n }), [])
   const [vw, setVw] = useState(() => window.innerWidth)
@@ -222,9 +231,14 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
       {isPhone ? (
         <SelectTrigger className="h-11 w-full gap-2 text-xs" aria-label="Assignee" data-testid="header-assignee"><SelectValue /></SelectTrigger>
       ) : (
-        <SelectTrigger className={cn('h-8 w-8 justify-center rounded-full border p-0 text-[11px] font-semibold [&>svg]:hidden', owner ? 'border-transparent bg-[#EFE7DC] text-ink' : 'border-dashed border-border text-ink-muted')} aria-label={owner ? `Assigned to ${owner.name}` : 'Unassigned — assign'} title={owner ? owner.name : 'Unassigned'} data-testid="header-assignee">
-          {owner ? initials : <span className="flex"><UserPlus className="h-3.5 w-3.5" aria-hidden /></span>}
-        </SelectTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <SelectTrigger className={cn('h-8 w-8 justify-center rounded-full border-transparent p-0 hover:ring-2 hover:ring-border [&>svg:last-child]:hidden', !owner && 'text-ink-muted')} aria-label={owner ? `Assigned to ${owner.name}` : 'Unassigned — assign'} data-testid="header-assignee">
+              {owner ? <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#EFE7DC] text-[11px] font-semibold text-ink">{initials}</span> : <span className="flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-border"><UserPlus className="h-3.5 w-3.5" aria-hidden /></span>}
+            </SelectTrigger>
+          </TooltipTrigger>
+          <TooltipContent data-testid="header-assignee-name">{owner ? `Assigned to ${owner.name}` : 'Unassigned'}</TooltipContent>
+        </Tooltip>
       )}
       <SelectContent position="item-aligned">
         <SelectItem value="unassigned" data-testid="header-assignee-unassigned">Unassigned</SelectItem>
@@ -252,8 +266,6 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
         {(Object.entries(TEAMS) as [TeamId, string][]).map(([id, l]) => <DropdownMenuRadioItem key={id} value={id} data-testid={`header-team-${id}`}>{l}</DropdownMenuRadioItem>)}
       </DropdownMenuRadioGroup>
       <DropdownMenuSeparator />
-      {onStep && <DropdownMenuItem disabled={!canStep?.prev} onSelect={() => onStep(-1)} data-testid="ticket-prev"><ChevronLeft className="mr-2 h-4 w-4" aria-hidden />Previous ticket<span className="ml-auto pl-3 text-xs text-ink-muted">K</span></DropdownMenuItem>}
-      {onStep && <DropdownMenuItem disabled={!canStep?.next} onSelect={() => onStep(1)} data-testid="ticket-next"><ChevronRight className="mr-2 h-4 w-4" aria-hidden />Next ticket<span className="ml-auto pl-3 text-xs text-ink-muted">J</span></DropdownMenuItem>}
       <DropdownMenuItem onSelect={copyLink} data-testid="ticket-copy-link"><Link2 className="mr-2 h-4 w-4" aria-hidden />Copy link</DropdownMenuItem>
       <DropdownMenuItem onSelect={() => { toggleCust(true); setCustTab('ask') }} data-testid="ticket-ask-ai"><Sparkles className="mr-2 h-4 w-4" aria-hidden />Ask Goorin AI</DropdownMenuItem>
       <DropdownMenuSeparator />
@@ -276,7 +288,6 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
   const hidden = !showAll && msgs.length > 5 ? msgs.slice(0, msgs.length - 4).filter((m: Message) => m.authorType !== 'customer' || m !== msgs[0]).length : 0
   const visible = hidden ? [msgs[0], ...msgs.slice(msgs.length - 4)] : msgs
   const onSend = (html: string, isInternal: boolean, draftId?: string) => (user ? run(() => inboxApi.sendMessage(ticketId, { html, isInternal, draftId }, user), isInternal ? 'Note added' : 'Reply sent') : Promise.resolve(false))
-  const toggleFull = () => setFull((f) => { sessionStorage.setItem(FULL_KEY, f ? '0' : '1'); return !f })
 
   const inline = !isPhone
   const replyArea = aiBusy ? (
@@ -305,7 +316,8 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
       ref={composer}
       inline={inline}
       onDraftChange={setEditingDraft}
-      to={ticket.customer.email}
+      to={`${ticket.customer.name} (${ticket.customer.email})`}
+      channel={ticket.channel === 'chat' ? 'chat' : 'email'}
       onResolve={() => update({ status: 'resolved' })}
       onHandBack={(html, draftId) => (user ? run(() => inboxApi.handBack(ticketId, user, { html, draftId }), 'Sent and handed back to AI') : Promise.resolve(false))}
       onSend={onSend}
@@ -329,10 +341,7 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
       </div>
       {custTab === 'customer' ? (
         <div className="min-h-0 flex-1 overflow-y-auto" data-testid="customer-panel-body">
-          <SummaryPanel d={{ ...detail, ticket }} returns={loop.data} />
-          <div id="full-details" className="border-t border-border" data-testid="full-details">
-            <DetailsSidebar hideCard d={{ ...detail, ticket }} loop={{ data: loop.data, error: loop.error, reload: loop.reload }} onClose={() => toggleCust(false)} onPatch={(p) => update(p)} allTags={[...new Set((tickets ?? []).flatMap((t) => t.tags))]} onOrdersChanged={async () => { const d = await inboxApi.getTicketDetail(ticketId); if (d) setDetail(d) }} />
-          </div>
+          <CustomerSections d={{ ...detail, ticket }} returns={loop.data} loopError={loop.error} onLoopRetry={loop.reload} users={users} allTags={[...new Set([...(tickets ?? []).flatMap((t) => t.tags), 'vip', 'follow-up'])]} onPatch={(p) => update(p)} />
         </div>
       ) : (
         <div className="min-h-0 flex-1" data-testid="customer-panel-ask"><AskGoorinAI inline open onOpenChange={() => {}} ticketId={ticketId} onInsert={(t) => { setWriteOwn(true); setTimeout(() => composer.current?.insertText(t), 0) }} /></div>
@@ -345,22 +354,26 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
         <header className={cn('shrink-0 overflow-hidden border-b border-border bg-white', GUTTER)} data-testid={isPhone ? 'conversation-phone-header' : 'conversation-header'}>
           <div ref={headRef} className="flex items-center gap-3 px-6 py-3.5 max-sm:h-14 max-sm:gap-2 max-sm:px-2 max-sm:py-0" data-testid="conversation-header-inner">
             <Button variant="ghost" size={isPhone ? 'icon' : 'icon-sm'} className="md:hidden" onClick={onBack} aria-label="Back to inbox" data-testid="conversation-back"><ArrowLeft aria-hidden /></Button>
-            <div className="min-w-0 flex-1">
-              <h2 className="truncate text-[15px] font-semibold leading-5 text-ink max-sm:text-sm" title={ticket.subject} data-testid="conversation-subject">{ticket.subject}</h2>
-              <p className="mt-0.5 truncate text-[13px] text-ink-muted max-sm:text-xs" data-testid="conversation-meta">
-                <span title={ticket.customer.name} data-testid="conversation-customer">{ticket.customer.name}</span>
-                <span aria-hidden> · </span><span data-testid="conversation-channel">{ticket.channel === 'email' ? ticket.customer.email : 'Chat'}</span>
-                {ticket.orderNumber && <><span aria-hidden> · </span><span data-testid="conversation-order">#{ticket.orderNumber.replace(/^#/, '')}</span></>}
-                <span className="sr-only" title={ticket.id} data-testid="conversation-short-id">{shortId(ticket.id)}</span>
-                {ticket.snoozedUntil && <><span aria-hidden> · </span><span className="text-amber-800" data-testid="snoozed-until">Snoozed until {new Date(ticket.snoozedUntil).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span></>}
-              </p>
-              {crumb && <span className="sr-only" data-testid="breadcrumb-view">{crumb}</span>}
-            </div>
-            <div className="flex shrink-0 items-center gap-1.5" data-testid="conversation-actions">
+            <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-1.5 text-[13px]" data-testid="ticket-breadcrumb">
+              <button type="button" onClick={onBack} className={cn('shrink-0 rounded font-medium text-ink-muted transition-colors hover:text-ink max-md:hidden', focusRing)} data-testid="breadcrumb-folder">{crumb ?? 'Inbox'}</button>
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-ink-muted/60 max-md:hidden" aria-hidden />
+              <span className="min-w-0 max-w-[150px] shrink-[2] truncate text-ink-muted max-md:hidden" title={ticket.customer.name} data-testid="conversation-customer">{ticket.customer.name}</span>
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-ink-muted/60 max-md:hidden" aria-hidden />
+              <h2 className="min-w-[96px] flex-1 truncate text-[15px] font-semibold text-ink max-sm:min-w-0 max-sm:text-sm" title={ticket.subject} data-testid="conversation-subject">{ticket.subject}</h2>
+              <span className="sr-only" data-testid="conversation-short-id">{shortId(ticket.id)}</span>
+              {ticket.snoozedUntil && <span className="shrink-0 rounded-full bg-amber-50 px-2 text-xs leading-5 text-amber-800 max-lg:hidden" data-testid="snoozed-until">Snoozed</span>}
+            </nav>
+            <div className="ml-auto flex shrink-0 items-center gap-1" data-testid="conversation-actions">
               {!isPhone && <span data-testid="meta-assignee">{assignee}</span>}
               {!isPhone && resolve}
-              <Button variant="ghost" size="icon-sm" className={cn('h-8 w-8', cust && 'bg-surface-muted text-ink')} aria-label="Customer info" aria-pressed={cust} title="Customer info  ]" onClick={() => toggleCust()} data-testid="customer-toggle"><UserRound aria-hidden /></Button>
+              {(!cust || isPhone) && <Button variant="ghost" size="icon-sm" className="h-8 w-8" aria-label="Show customer info" aria-pressed={cust} title="Customer info  ]" onClick={() => toggleCust()} data-testid="customer-toggle"><UserRound aria-hidden /></Button>}
               {more}
+              {onStep && !isPhone && (
+                <span className="flex items-center" data-testid="ticket-stepper">
+                  <Button variant="ghost" size="icon-sm" aria-label="Previous ticket (K)" title="Previous  K" disabled={!canStep?.prev} onClick={() => onStep(-1)} data-testid="ticket-prev"><ChevronLeft aria-hidden /></Button>
+                  <Button variant="ghost" size="icon-sm" aria-label="Next ticket (J)" title="Next  J" disabled={!canStep?.next} onClick={() => onStep(1)} data-testid="ticket-next"><ChevronRight aria-hidden /></Button>
+                </span>
+              )}
             </div>
           </div>
         </header>
@@ -375,7 +388,7 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
         <div className="relative flex min-h-0 flex-1 flex-col" data-testid="thread-wrap">
         <div ref={thread} onScroll={onThreadScroll} className={cn('min-h-0 flex-1 overflow-y-auto bg-white py-8 max-sm:py-4', GUTTER)} data-testid="thread-scroll">
           <div ref={setColEl} className={COL} data-testid="thread-column">
-          <WhyBrief key={ticket.status} d={{ ...detail, ticket }} />
+          <HandoverSummary key={ticket.status} d={{ ...detail, ticket }} />
           <ol className="-my-2 max-sm:-my-1.5" aria-label="Messages" data-testid="message-thread">
             {visible.map((m, i) => (
               <li key={m.id} className="contents">

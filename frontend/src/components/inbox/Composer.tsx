@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { Button, buttonVariants, focusRing } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/overlay'
 import { Input } from '@/components/ui/input'
-import { demoToolsEnabled } from '@/components/DemoStateSwitcher'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { richText } from './MessageItem'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +29,7 @@ interface Props {
   onHandBack?: (html: string, draftId?: string) => Promise<boolean>
   extra?: React.ReactNode
   to: string
+  channel?: 'email' | 'chat'
   onDraftChange: (draftId: string | null) => void
   inline?: boolean
 }
@@ -63,8 +64,9 @@ function LinkButton({ editor }: { editor: Editor }) {
   )
 }
 
-export const Composer = forwardRef<ComposerHandle, Props>(({ onSend, onResolve, onHandBack, extra, onDraftChange, to, inline }, ref) => {
+export const Composer = forwardRef<ComposerHandle, Props>(({ onSend, onResolve, onHandBack, extra, onDraftChange, to, inline, channel = 'email' }, ref) => {
   const [mode, setMode] = useState<ComposerMode>('reply')
+  const [ch, setCh] = useState<'email' | 'chat'>(channel)
   const [saved, setSaved] = useState<'idle' | 'saving' | 'saved'>('idle')
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [sending, setSending] = useState(false)
@@ -76,7 +78,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ onSend, onResolve, 
     extensions: [
       StarterKit.configure({ heading: false, codeBlock: false, blockquote: false, horizontalRule: false, code: false }),
       Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' } }),
-      Placeholder.configure({ placeholder: () => (modeRef.current === 'note' ? 'Add an internal note for the team…' : 'Write a reply, or press r.') }),
+      Placeholder.configure({ placeholder: () => (modeRef.current === 'note' ? 'Add an internal note for the team…' : 'Reply, or press R') }),
     ],
     editorProps: {
       attributes: { class: cn('min-h-[88px] max-sm:min-h-[56px] max-h-56 overflow-y-auto px-3 py-2 text-sm text-ink focus:outline-none', richText), role: 'textbox', 'aria-multiline': 'true', 'aria-label': 'Message composer', 'data-testid': 'composer-editor' },
@@ -141,18 +143,18 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ onSend, onResolve, 
   const note = mode === 'note'
 
   return (
-    <div className={inline ? 'pt-1' : cn('border-t border-border bg-white px-4 pt-3 md:px-6', demoToolsEnabled ? 'pb-16 max-sm:pb-[calc(12px+env(safe-area-inset-bottom))]' : 'pb-3')}>
+    <div className={inline ? 'pt-1' : 'border-t border-border bg-white px-4 pb-3 pt-3 md:px-6 max-sm:pb-[calc(12px+env(safe-area-inset-bottom))]'}>
       <div className={cn('group relative rounded-xl border transition-colors focus-within:border-ink/25', note ? 'border-amber-300 bg-[#FFF8E6]' : 'border-border bg-white')} data-testid="composer" data-mode={mode}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 pt-1.5">
-          <div role="tablist" aria-label="Composer mode" className="inline-flex rounded-md border border-border p-0.5">
-            {(['reply', 'note'] as const).map((m) => (
-              <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)} data-testid={`composer-mode-${m}`}
-                className={cn('inline-flex h-7 items-center rounded px-2.5 text-[13px] font-medium transition-colors max-sm:h-11', mode === m ? 'bg-surface-muted text-ink' : 'text-ink-muted hover:text-ink', focusRing)}>
-                {m === 'reply' ? 'Reply' : 'Note'}
-              </button>
-            ))}
-          </div>
-          <span className="min-w-0 truncate text-xs text-ink-muted" data-testid="composer-goes-to">{note ? 'Only your team sees this' : <>To: <span className="font-medium text-ink">{to}</span></>}</span>
+          <span className="min-w-0 flex-1 truncate text-xs text-ink-muted" data-testid="composer-goes-to">{note ? 'Internal note · only your team sees this' : <>To: <span className="font-medium text-ink">{to}</span></>}</span>
+          <Select value={note ? 'note' : ch} onValueChange={(v) => { if (v === 'note') setMode('note'); else { setCh(v as 'email' | 'chat'); setMode('reply') } }}>
+            <SelectTrigger className="h-7 w-auto shrink-0 gap-1.5 rounded-md border-transparent bg-surface-muted px-2.5 text-xs font-medium" aria-label="Reply channel" data-testid="composer-channel"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="email" data-testid="composer-channel-email">Email</SelectItem>
+              <SelectItem value="chat" data-testid="composer-channel-chat">Chat</SelectItem>
+              <SelectItem value="note" data-testid="composer-channel-note">Internal note</SelectItem>
+            </SelectContent>
+          </Select>
           <span className="ml-auto text-xs text-ink-muted" role="status" data-testid="composer-draft-state">{saved === 'saving' ? 'Saving draft…' : saved === 'saved' ? 'Draft saved' : ''}</span>
         </div>
         <EditorContent editor={editor} />

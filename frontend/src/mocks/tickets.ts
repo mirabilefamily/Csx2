@@ -123,6 +123,8 @@ export const ticketSeeds: TicketSeed[] = [
     "Buying a fedora for my wife as a surprise. How do I figure out her size without asking her?"],
 ]
 
+const SNOOZED = [1073, 1067]
+
 export const tickets: Ticket[] = ticketSeeds.map(
   ([num, subject, customerId, channel, status, priority, tags, assignee, resolvedBy, age, upd, body, reason, orderNumber]) => {
     const c = customers.find((x) => x.id === customerId)!
@@ -143,7 +145,7 @@ export const tickets: Ticket[] = ticketSeeds.map(
       orderNumber: orderNumber ?? null,
       setAside: SET_ASIDE[num] ?? null,
       team: TEAM[num] ?? null,
-      snoozedUntil: null,
+      snoozedUntil: SNOOZED.includes(num) ? new Date(Date.now() + 20 * 36e5).toISOString() : null,
     }
   },
 )

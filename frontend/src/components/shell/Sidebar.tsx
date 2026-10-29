@@ -115,7 +115,7 @@ const SIDEBAR_KEY = 'goorin.sidebar.collapsed'
 
 export function Sidebar() {
   const { user } = useAuth()
-  // The user's expanded/collapsed choice applies on every page, Inbox included.
+  // One expanded/collapsed choice for every page, Inbox included (REQ-1059).
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024 || localStorage.getItem(SIDEBAR_KEY) === '1')
 
   useEffect(() => {
