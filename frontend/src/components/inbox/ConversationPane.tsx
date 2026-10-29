@@ -196,7 +196,7 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
       const t = await inboxApi.setAside(ticketId, where, user)
       upsert([t])
       if (where) {
-        toast.success(`Moved to ${where === 'spam' ? 'Spam' : 'Trash'}`, { action: { label: 'Undo', onClick: () => void inboxApi.setAside(ticketId, null, user).then((r) => upsert([r])) } })
+        toast.success(`1 ticket moved to ${where === 'spam' ? 'Spam' : 'Trash'}`, { duration: 8000, action: { label: 'Undo', onClick: () => void inboxApi.setAside(ticketId, null, user).then((r) => upsert([r])) } })
         onBack()
       } else {
         setDetail(await inboxApi.getTicketDetail(ticketId))
@@ -262,9 +262,9 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
       <DropdownMenuItem onSelect={copyLink} data-testid="ticket-copy-link"><Link2 className="mr-2 h-4 w-4" aria-hidden />Copy link</DropdownMenuItem>
       <DropdownMenuItem onSelect={() => { toggleCust(true); setCustTab('ask') }} data-testid="ticket-ask-ai"><Sparkles className="mr-2 h-4 w-4" aria-hidden />Ask Goorin AI</DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem onSelect={() => aside('spam')} data-testid="ticket-move-spam">Move to spam</DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => aside('trash')} data-testid="ticket-move-trash">Move to trash</DropdownMenuItem>
       <DropdownMenuItem disabled data-testid="ticket-merge">Merge… <span className="ml-auto pl-3 text-xs text-ink-muted">Coming soon</span></DropdownMenuItem>
+      {ticket.setAside !== 'spam' && <DropdownMenuItem onSelect={() => aside('spam')} data-testid="ticket-move-spam">Mark as spam</DropdownMenuItem>}
+      {ticket.setAside !== 'trash' && <><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => aside('trash')} className="text-red-700 data-[highlighted]:bg-red-50" data-testid="ticket-move-trash">Delete</DropdownMenuItem></>}
     </>
   )
   const more = (

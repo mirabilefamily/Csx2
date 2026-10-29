@@ -77,10 +77,10 @@ export function TicketList(p: Props) {
           return (
             <Fragment key={t.id}>
               {head && (
-                <li role="presentation" className="group/gh sticky top-0 z-10 flex items-center gap-2.5 bg-white/90 px-5 pb-1.5 pt-3 text-[11px] font-medium text-ink-muted backdrop-blur-sm max-sm:px-3" data-testid={`list-group-${g.toLowerCase()}`}>
+                <li role="presentation" className="group/gh sticky top-0 z-10 mx-2 flex items-center gap-2.5 bg-white/90 px-3 pb-1.5 pt-3 text-xs font-medium text-ink-muted backdrop-blur-sm max-sm:mx-0" data-testid={`list-group-${g.toLowerCase()}`}>
                   {p.selectable !== false && (
                     <span className="flex w-4 justify-center">
-                      <input type="checkbox" checked={allG} onChange={(e) => p.onSelect(e.target.checked ? [...new Set([...p.selected, ...ids])] : p.selected.filter((x) => !ids.includes(x)))} aria-label={`Select all ${g}`} className={cn('h-3.5 w-3.5 cursor-pointer accent-tobacco-600 transition-opacity duration-150 focus-visible:opacity-100', p.selected.length ? 'opacity-100' : 'opacity-0 group-hover/gh:opacity-100')} data-testid={`select-group-${g.toLowerCase()}`} />
+                      <input type="checkbox" checked={allG} onChange={(e) => p.onSelect(e.target.checked ? [...new Set([...p.selected, ...ids])] : p.selected.filter((x) => !ids.includes(x)))} aria-label={`Select all ${g}`} className={cn('h-4 w-4 cursor-pointer accent-tobacco-600 transition-opacity duration-150 focus-visible:opacity-100', allG ? 'opacity-100' : p.selected.length ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover/gh:opacity-100')} data-testid={`select-group-${g.toLowerCase()}`} />
                     </span>
                   )}
                   <span>{g}{g !== 'Earlier' && <span className="tabular-nums"> · {n}</span>}</span>

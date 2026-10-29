@@ -53,7 +53,35 @@ function applyPatch(t: Ticket, patch: TicketPatch | BulkPatch, actor: SessionUse
     t.tags = [...t.tags, patch.addTag]
     system(t.id, `${actor.name} added tag ${patch.addTag}`)
   }
+  if ('removeTag' in patch && patch.removeTag && t.tags.includes(patch.removeTag)) {
+    t.tags = t.tags.filter((x) => x !== patch.removeTag)
+    system(t.id, `${actor.name} removed tag ${patch.removeTag}`)
+  }
+  if ('unread' in patch && patch.unread !== undefined) t.unread = patch.unread
+  if ('setAside' in patch && patch.setAside !== undefined && patch.setAside !== t.setAside) {
+    t.setAside = patch.setAside
+    system(t.id, patch.setAside ? `${actor.name} moved the ticket to ${patch.setAside === 'spam' ? 'Spam' : 'Trash'}` : `${actor.name} restored the ticket`)
+  }
   t.updatedAt = now()
+}
+
+// POST /api/tickets/restore  (bulk Undo: puts the snapshot fields back)
+export function restoreTickets(prev: Ticket[]): Promise<Ticket[]> {
+  return request(() => prev.flatMap((p) => {
+    const t = db.tickets.find((x) => x.id === p.id)
+    if (!t) return []
+    Object.assign(t, { status: p.status, assignee: p.assignee, tags: [...p.tags], priority: p.priority, unread: p.unread, setAside: p.setAside ?? null, resolvedBy: p.resolvedBy })
+    return [t]
+  }))
+}
+
+// DELETE /api/tickets  { ids }  (only from Trash or Spam)
+export function deleteForeverMany(ids: string[]): Promise<{ ids: string[] }> {
+  return request(() => {
+    db.tickets = db.tickets.filter((t) => !(ids.includes(t.id) && t.setAside))
+    db.messages = db.messages.filter((m) => !ids.includes(m.ticketId))
+    return { ids }
+  })
 }
 
 function mustDetail(id: string) {

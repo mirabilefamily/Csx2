@@ -23,7 +23,7 @@ export function TicketRow({ t, active, checked, onCheck, selectable = true, acti
   const { search } = useLocation()
   const showCheck = selectable && (anySelected || checked)
   const overdue = variant !== 'ai' && waiting(t).tone === 'breached'
-  const unread = !!t.draftReady || overdue
+  const unread = t.unread ?? (!!t.draftReady || overdue)
   return (
     <li className={cn('group relative mx-2 flex items-center gap-2.5 rounded-xl px-3 py-2.5 transition-[background-color,box-shadow] duration-150 max-sm:mx-0 max-sm:rounded-none max-sm:py-3', full ? 'min-h-[64px]' : 'max-sm:min-h-[64px]', active ? 'bg-white shadow-[0_1px_2px_rgb(0_0_0/.05),0_4px_14px_rgb(0_0_0/.07)]' : checked ? 'bg-[#F7F4EF]' : 'hover:bg-[#FAF8F5]')} data-testid={`ticket-row-${t.id}`}>
       <span className="relative flex h-4 w-4 shrink-0 items-center justify-center self-start mt-[3px] max-sm:h-6 max-sm:w-6">

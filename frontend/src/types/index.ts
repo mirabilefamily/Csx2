@@ -139,6 +139,7 @@ export interface Ticket {
   fraud?: TicketFraudFlag | null
   setAside?: 'spam' | 'trash' | null
   draftReady?: boolean
+  unread?: boolean
   handoverReason?: string | null
   aiConfidence?: number | null
 }
@@ -411,6 +412,10 @@ export interface BulkPatch {
   status?: TicketStatus
   assignee?: string | null
   addTag?: string
+  removeTag?: string
+  priority?: Priority
+  unread?: boolean
+  setAside?: 'spam' | 'trash' | null
 }
 
 export interface NewMessage {

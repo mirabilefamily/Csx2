@@ -81,8 +81,9 @@ export function FolderColumn({ active, counts, onSelect, onNew, phone, overlay, 
           const on = active === f.id
           return (
             <li key={f.id}>
-              <button type="button" aria-current={on ? 'page' : undefined} onClick={() => onSelect(f.id)} className={rowCls(on, phone)} data-testid={`${t}-${f.id}`}>
-                <f.icon strokeWidth={1.75} className={cn('shrink-0', phone ? 'h-5 w-5' : 'h-4 w-4', on ? 'text-ink' : 'text-ink-muted')} aria-hidden />
+              {f.id === 'spam' && <span className="mx-2.5 my-2 block h-px bg-[#ECE7DF]" aria-hidden data-testid={`${t}-secondary-divider`} />}
+              <button type="button" aria-current={on ? 'page' : undefined} onClick={() => onSelect(f.id)} className={cn(rowCls(on, phone), f.secondary && !on && 'text-ink-muted')} data-testid={`${t}-${f.id}`}>
+                <f.icon strokeWidth={1.75} className={cn('shrink-0', phone ? 'h-5 w-5' : 'h-4 w-4', on ? 'text-ink' : f.secondary ? 'text-ink-muted/70' : 'text-ink-muted')} aria-hidden />
                 <span className="min-w-0 flex-1 truncate">{f.label}</span>
                 <Count id={f.id} n={counts?.[f.id]} on={on} phone={phone} />
                 {phone && <ChevronRight className="h-4 w-4 text-ink-muted" aria-hidden />}
@@ -116,6 +117,7 @@ export function FolderStrip({ active, counts, onSelect, onNew, onExpand, classNa
         const n = counts?.[f.id] ?? 0
         return (
           <span key={f.id} className="contents">
+            {f.id === 'spam' && <span className="my-1 h-px w-6 bg-border" aria-hidden />}
             {tip(`${f.label}${f.count !== 'none' && n ? ` · ${n}` : ''}`, (
               <button type="button" aria-label={f.label} aria-current={on ? 'page' : undefined} onClick={() => onSelect(f.id)} className={cn('relative flex h-9 w-9 items-center justify-center rounded-lg transition-[background-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', on ? 'bg-white text-ink shadow-[0_1px_2px_rgb(0_0_0/.06),0_2px_8px_rgb(0_0_0/.05)]' : 'text-ink-muted hover:bg-white/60 hover:text-ink')} data-testid={`folder-strip-${f.id}`}>
                 <f.icon className="h-4 w-4" strokeWidth={1.75} aria-hidden />

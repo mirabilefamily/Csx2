@@ -3,10 +3,11 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import { toast } from 'sonner'
 import { ArrowLeft, ArrowUpDown, Search } from 'lucide-react'
 import { NewTicketDialog } from '@/components/inbox/NewTicketDialog'
-import { BulkBar } from '@/components/inbox/BulkBar'
+import { SelectionBar, type BarMode } from '@/components/inbox/SelectionBar'
 import { FolderColumn, FolderStrip } from '@/components/inbox/FolderColumn'
-import { byGroup, folderById, folderCounts, folderEmpty, type FolderId } from '@/lib/inboxFolders'
-import type { BulkPatch, User } from '@/types'
+import { byGroup, folderById, folderCounts, folderEmpty, isUnread, type FolderId } from '@/lib/inboxFolders'
+import type { BulkPatch, Priority, User } from '@/types'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { directoryApi, inboxApi } from '@/api'
 import { useApi } from '@/hooks/useApi'
 import { useAuth } from '@/components/auth/AuthContext'
@@ -28,6 +29,9 @@ import { cn } from '@/lib/utils'
 const EXTRA_TAGS = ['vip', 'follow-up', 'priority-shipping']
 const FOLD_KEY = 'goorin.inbox.foldersCollapsed'
 const plural = (n: number) => `${n} ticket${n === 1 ? '' : 's'}`
+const PRIORITY_LABEL: Record<Priority, string> = { urgent: 'Urgent', high: 'High', normal: 'Normal', low: 'Low' }
+type Confirm = 'delete' | 'forever' | 'merge'
+const csvCell = (v: string) => `"${v.replace(/"/g, '""')}"`
 
 function isTyping(e: KeyboardEvent) {
   const el = e.target as HTMLElement | null
@@ -97,6 +101,9 @@ export default function InboxPage() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a' && !isTyping(e) && (!isPhone || selectMode) && list.length) { e.preventDefault(); setSelected(list.map((t) => t.id)); return }
       if (e.key === 'Escape' && selected.length && !isTyping(e)) { setSelected([]); return }
       if (e.metaKey || e.ctrlKey || e.altKey || isTyping(e)) return
+      if (selected.length && (e.key === '#' || e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); setConfirm(mode === 'trash' ? 'forever' : 'delete'); return }
+      if (selected.length && e.key === 'e' && (mode === 'normal' || mode === 'done')) { e.preventDefault(); primaryAction(); return }
+      if (selected.length && e.key === 'u' && (mode === 'normal' || mode === 'done')) { e.preventDefault(); toggleRead(); return }
       if (e.key === 'N') { e.preventDefault(); setCreating(true); return }
       const idx = list.findIndex((t) => t.id === ticketId)
       if ((e.key === 'j' || e.key === 'ArrowRight') && list.length) open(list[Math.min(list.length - 1, idx + 1)].id)
@@ -113,15 +120,50 @@ export default function InboxPage() {
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  const bulk = async (patch: BulkPatch, message: string) => {
-    if (!user) return
+  const mode: BarMode = saved ? 'normal' : folder.id === 'trash' ? 'trash' : folder.id === 'spam' ? 'spam' : folder.id === 'done' ? 'done' : 'normal'
+  const [confirm, setConfirm] = useState<Confirm | null>(null)
+  const sel = list.filter((t) => selected.includes(t.id))
+  const n = sel.length
+  // Every bulk action snapshots the selection so its toast can Undo (REQ: bulk toasts).
+  const bulk = async (patch: BulkPatch, message: string, clear = false) => {
+    if (!user || !n) return
+    const prev = sel.map((t) => ({ ...t, tags: [...t.tags] }))
     try {
-      upsert(await inboxApi.bulkUpdate(selected, patch, user))
-      toast.success(message)
-      if (patch.status) setSelected([])
+      upsert(await inboxApi.bulkUpdate(prev.map((t) => t.id), patch, user))
+      if (clear) setSelected([])
+      toast.success(message, { duration: 8000, action: { label: 'Undo', onClick: () => void inboxApi.restoreTickets(prev).then((r) => { upsert(r); toast.success(`Restored ${plural(r.length)}`) }) } })
     } catch {
       toast.error("Couldn't update tickets. Try again.")
     }
+  }
+  const primaryAction = () => {
+    if (mode === 'trash') return bulk({ setAside: null }, `Restored ${plural(n)}`, true)
+    if (mode === 'spam') return bulk({ setAside: null }, `${plural(n)} marked as not spam`, true)
+    if (mode === 'done') return bulk({ status: 'open' }, `Reopened ${plural(n)}`, true)
+    return bulk({ status: 'resolved' }, `Resolved ${plural(n)}`, true)
+  }
+  const anyUnread = sel.some(isUnread)
+  const toggleRead = () => bulk({ unread: !anyUnread }, `Marked ${plural(n)} as ${anyUnread ? 'read' : 'unread'}`)
+  const canMerge = n > 1 && sel.every((t) => t.customer.id === sel[0].customer.id)
+  const oldest = [...sel].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0]
+  const exportCsv = () => {
+    const rows = [['Ticket', 'Subject', 'Customer', 'Email', 'Status', 'Priority', 'Tags', 'Updated'], ...sel.map((t) => [t.id, t.subject, t.customer.name, t.customer.email, t.status, t.priority, t.tags.join(' '), t.updatedAt])]
+    const url = URL.createObjectURL(new Blob([rows.map((r) => r.map(csvCell).join(',')).join('\n')], { type: 'text/csv' }))
+    const a = Object.assign(document.createElement('a'), { href: url, download: `goorin-tickets-${n}.csv` })
+    a.click(); URL.revokeObjectURL(url)
+    toast.success(`Exported ${plural(n)} as CSV`)
+  }
+  const confirmed = async () => {
+    const c = confirm
+    setConfirm(null)
+    if (c === 'delete') return bulk({ setAside: 'trash' }, `${plural(n)} moved to Trash`, true)
+    if (c === 'merge') { setSelected([]); toast.success(`Merged ${plural(n)} into ${oldest.id}`); return }
+    try { await inboxApi.deleteForeverMany(sel.map((t) => t.id)); setSelected([]); reload(); toast.success(`Deleted ${plural(n)} forever`) } catch { toast.error("Couldn't delete tickets. Try again.") }
+  }
+  const CONFIRM: Record<Confirm, [string, string, string]> = {
+    delete: [`Delete ${plural(n)}?`, "They'll move to Trash for 30 days.", 'Delete'],
+    forever: [`Delete ${plural(n)} forever?`, "This can't be undone.", 'Delete forever'],
+    merge: [`Merge ${plural(n)}?`, `They'll be combined into ${oldest?.id ?? ''} for ${sel[0]?.customer.name ?? ''}.`, 'Merge'],
   }
 
   const go = (q: string) => { setFoldersOpen(false); navigate({ pathname: '/inbox', search: q }) }
@@ -133,13 +175,21 @@ export default function InboxPage() {
   const canSelect = !isPhone || selectMode
   const selectAll = canSelect && <SelectAll tickets={list} selected={selected} onSelect={setSelected} className={selected.length || isPhone ? 'opacity-100' : 'opacity-0 group-hover/lh:opacity-100 focus-visible:opacity-100'} />
   const header = selected.length > 0 ? (
-    <BulkBar
-      count={selected.length} users={users} tags={tags} lead={selectAll}
-      onAssign={(u: User) => bulk({ assignee: u.id }, `${plural(selected.length)} assigned to ${u.name}`)}
-      onTag={(tag) => bulk({ addTag: tag }, `Tag added to ${plural(selected.length)}`)}
-      onResolve={() => bulk({ status: 'resolved' }, `${plural(selected.length)} resolved`)}
-      onClose={() => bulk({ status: 'closed' }, `${plural(selected.length)} closed`)}
+    <SelectionBar
+      mode={mode} count={n} total={list.length} folderLabel={viewLabel} lead={selectAll} compact={!!ticketId || vw < 1280}
+      users={users} meId={user?.id} tags={tags} anyUnread={anyUnread} canMerge={canMerge}
+      tagState={(tag) => { const k = sel.filter((t) => t.tags.includes(tag)).length; return k === 0 ? false : k === n ? true : 'indeterminate' }}
+      onSelectAll={() => setSelected(list.map((t) => t.id))}
       onClear={() => setSelected([])}
+      onAssign={(id) => bulk({ assignee: id }, id ? `Assigned ${plural(n)} to ${id === user?.id ? 'you' : users.find((u) => u.id === id)?.name.split(' ')[0] ?? 'agent'}` : `Unassigned ${plural(n)}`)}
+      onTag={(tag, on) => bulk(on ? { addTag: tag } : { removeTag: tag }, on ? `Tagged ${plural(n)} "${tag}"` : `Removed "${tag}" from ${plural(n)}`)}
+      onRead={toggleRead}
+      onPrimary={primaryAction}
+      onPriority={(p) => bulk({ priority: p }, `Set ${plural(n)} to ${PRIORITY_LABEL[p]} priority`)}
+      onMerge={() => setConfirm('merge')}
+      onExport={exportCsv}
+      onSpam={() => bulk({ setAside: 'spam' }, `${plural(n)} moved to Spam`, true)}
+      onDelete={() => setConfirm(mode === 'trash' ? 'forever' : 'delete')}
     />
   ) : (
     <div className="group/lh shrink-0" data-testid="inbox-list-header">
@@ -210,9 +260,9 @@ export default function InboxPage() {
           selectable={!isPhone || selectMode}
           users={users}
           tags={tags}
-          onAssign={(u: User) => bulk({ assignee: u.id }, `${plural(selected.length)} assigned to ${u.name}`)}
-          onTag={(tag) => bulk({ addTag: tag }, `Tag added to ${plural(selected.length)}`)}
-          onBulkClose={() => bulk({ status: 'closed' }, `${plural(selected.length)} closed`)}
+          onAssign={(u: User) => bulk({ assignee: u.id }, `Assigned ${plural(n)} to ${u.name.split(' ')[0]}`)}
+          onTag={(tag) => bulk({ addTag: tag }, `Tagged ${plural(n)} "${tag}"`)}
+          onBulkClose={() => bulk({ status: 'closed' }, `Closed ${plural(n)}`, true)}
           variant={variant}
           full={!isPhone && !ticketId}
           grouped={!saved && folder.id === 'needs-you'}
@@ -227,6 +277,18 @@ export default function InboxPage() {
       )}
       </div>
       <ShortcutHelp open={help} onOpenChange={setHelp} />
+      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+        {confirm && (
+          <AlertDialogContent data-testid={`bulk-confirm-${confirm}`}>
+            <AlertDialogTitle className="text-base font-semibold text-ink" data-testid="bulk-confirm-title">{CONFIRM[confirm][0]}</AlertDialogTitle>
+            <AlertDialogDescription className="mt-1 text-sm text-ink-muted">{CONFIRM[confirm][1]}</AlertDialogDescription>
+            <AlertDialogFooter>
+              <AlertDialogCancel data-testid="bulk-confirm-cancel">Cancel</AlertDialogCancel>
+              <AlertDialogAction className={confirm === 'merge' ? undefined : 'bg-red-700 hover:bg-red-700/90'} onClick={() => void confirmed()} data-testid="bulk-confirm-ok">{CONFIRM[confirm][2]}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        )}
+      </AlertDialog>
       <AskGoorinAI open={asking} onOpenChange={setAsking} ticketId={ticketId ?? null} onInsert={(text) => conv.current?.insertReply?.(text)} />
       <SaveViewDialog open={savingView} onOpenChange={setSavingView} filters={{ status: filters.status, tag: filters.tag, channel: filters.channel }} onSaved={(v) => { setSavingView(false); reloadViews(); setFilters({}); navigate({ pathname: '/inbox', search: `?saved=${v.id}` }) }} />
       <NewTicketDialog open={creating} onOpenChange={setCreating} onCreated={(t) => { setCreating(false); upsert([t]); navigate({ pathname: `/inbox/${t.id}`, search: '' }) }} />
