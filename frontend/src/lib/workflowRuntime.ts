@@ -127,8 +127,8 @@ function advance(wf: Wf, prev: TestRun, startId: string | null, deps: RuntimeDep
       }
       case 'handover': {
         const note = fill(c.note ?? '', run.vars)
-        bot(run, deps.handoverText ?? `Test run ended: handed to ${c.team ?? 'Support'} (no real ticket created).`)
-        log(`Handed to ${c.team ?? 'Support'}${c.tag ? ` · tag ${c.tag}` : ''}${note ? ` · note: ${note}` : ''}`); run.ended = `handed to ${c.team ?? 'Support'}`; run.current = st.id; return run
+        bot(run, deps.handoverText ?? 'Test run ended: handed to a person (no real ticket created).')
+        log(`Handed to a person${c.tag ? ` · tag ${c.tag}` : ''}${note ? ` · note: ${note}` : ''}`); run.ended = 'handed to a person'; run.current = st.id; return run
       }
       case 'end':
         if (c.csat) bot(run, 'Thanks! How did we do today? (1–5)')

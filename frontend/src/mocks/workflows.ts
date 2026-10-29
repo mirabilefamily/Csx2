@@ -14,7 +14,7 @@ const verify = (p: string, next: string): { steps: Step[]; edges: Edge[] } => ({
     s(`${p}-v1`, 'ask', { text: 'What email did you use for your order?', kind: 'email', variable: 'email', validation: "That doesn't look like an email address." }),
     s(`${p}-v2`, 'send_code', { text: "We've sent a 6-digit code to {{email}}. It expires in 10 minutes." }),
     s(`${p}-v3`, 'check_code', { attempts: 3, wrongText: "That code didn't match. {{tries_left_text}}" }),
-    s(`${p}-vh`, 'handover', { team: 'Support', tag: 'verification-failed', note: 'Customer failed email verification 3 times.' }),
+    s(`${p}-vh`, 'handover', { tag: 'verification-failed', note: 'Customer failed email verification 3 times.' }),
   ],
   edges: [e(`${p}-v1`, `${p}-v2`), e(`${p}-v2`, `${p}-v3`), e(`${p}-v3`, next, 'ok'), e(`${p}-v3`, `${p}-vh`, 'fail')],
 })
@@ -29,13 +29,13 @@ export function orderTracking(variant = 3): WorkflowSnapshot {
       s('ot-3', 'condition', { condVar: 'channel', op: 'is', condValue: 'chat', yesLabel: 'Channel is Chat', noLabel: 'Email or Contact form' }),
       s('ot-4', 'send_code', { text: "We've sent a 6-digit code to {{email}}. It expires in 10 minutes." }),
       s('ot-5', 'check_code', { attempts: 3, wrongText: "That code didn't match. {{tries_left_text}}" }),
-      s('ot-6', 'handover', { team: 'Support', tag: 'verification-failed', note: 'Customer failed email verification 3 times.' }),
+      s('ot-6', 'handover', { tag: 'verification-failed', note: 'Customer failed email verification 3 times.' }),
       s('ot-7', 'find_orders', { variable: 'email' }),
       s('ot-8', 'condition', { condVar: 'orders.count', op: 'gt', condValue: '0', yesLabel: 'Orders found', noLabel: 'Otherwise' }),
       s('ot-9', 'show_orders', { limit: 3 }),
       s('ot-10', 'ask', btn('Anything else I can help with?', 'anything_else', [['done', "That's all"], ['person', 'Talk to a person']])),
       s('ot-11', 'end', { csat: true }),
-      s('ot-12', 'handover', { team: 'Support', note: 'Customer asked for a person during order tracking.' }),
+      s('ot-12', 'handover', { note: 'Customer asked for a person during order tracking.' }),
       ...(variant >= 3 ? [s('ot-13', 'ask', btn("I couldn't find any orders for {{email}}.", 'no_orders_choice', [['retry', 'Try another email'], ['person', 'Talk to a person']]))] : []),
     ],
     [
@@ -52,7 +52,7 @@ function startReturn(): WorkflowSnapshot {
     [
       s('rt-1', 'message', { text: "Happy to help with a return. Returns are free within 30 days of delivery." }), ...v.steps,
       s('rt-4', 'pick_order', { text: 'Which order would you like to return from?', orderFilter: 'delivered', withinDays: 30, noneText: "I don't see an order delivered in the last 30 days." }),
-      s('rt-n', 'ask', btn('Would you like to talk to the team?', 'none_choice', [['person', 'Talk to a person'], ['done', "That's all"]])),
+      s('rt-n', 'ask', btn('Would you like to talk to a person?', 'none_choice', [['person', 'Talk to a person'], ['done', "That's all"]])),
       s('rt-5', 'pick_items', { text: 'Which item would you like to return?' }),
       s('rt-6', 'ask', btn("What's the reason for the return?", 'reason', [['small', 'Too small'], ['big', 'Too big'], ['mind', 'Changed my mind'], ['damaged', 'Arrived damaged']])),
       s('rt-dmg', 'run_workflow', { workflowId: 'wf-damaged' }),
@@ -61,7 +61,7 @@ function startReturn(): WorkflowSnapshot {
       s('rt-9', 'message', { text: 'Your return {{rma}} is started for {{item}}. Print the label and drop the parcel at any UPS location.', linkLabel: 'Download return label', linkUrl: 'https://returns.goorin.com/label/{{rma}}' }),
       s('rt-10', 'send_email', { subject: 'Your Goorin return {{rma}}', body: 'Hi,\n\nYour return {{rma}} for {{item}} is started. Refund method: {{refund_method}}. Your prepaid label: https://returns.goorin.com/label/{{rma}}\n\nGoorin Bros.' }),
       s('rt-11', 'end', { csat: true }),
-      s('rt-h', 'handover', { team: 'Returns', note: 'Return could not be started automatically.' }),
+      s('rt-h', 'handover', { note: 'Return could not be started automatically.' }),
     ],
     [e('trigger', 'rt-1'), e('rt-1', 'rt-v1'), ...v.edges, e('rt-4', 'rt-5'), e('rt-4', 'rt-n', 'none'), e('rt-n', 'rt-h', 'person'), e('rt-n', 'rt-11', 'done'), e('rt-5', 'rt-6'),
       e('rt-6', 'rt-7', 'small'), e('rt-6', 'rt-7', 'big'), e('rt-6', 'rt-7', 'mind'), e('rt-6', 'rt-dmg', 'damaged'), e('rt-7', 'rt-8', 'orig'), e('rt-7', 'rt-8', 'credit'),
@@ -81,7 +81,7 @@ function changeAddress(): WorkflowSnapshot {
       s('ad-8', 'message', { text: 'Done. {{order.number}} will now ship to {{new_address}}.' }),
       s('ad-9', 'end', { csat: true }),
       s('ad-shipped', 'message', { text: "This order has already shipped, so I can't change the address. I'll pass you to the team." }),
-      s('ad-h', 'handover', { team: 'Support', tag: 'address-change', note: 'Customer wants a new address on {{order.number}}.' }),
+      s('ad-h', 'handover', { tag: 'address-change', note: 'Customer wants a new address on {{order.number}}.' }),
     ],
     [e('trigger', 'ad-v1'), ...v.edges, e('ad-4', 'ad-5'), e('ad-4', 'ad-h', 'none'), e('ad-5', 'ad-shipped', 'yes'), e('ad-5', 'ad-6', 'no'), e('ad-shipped', 'ad-h'), e('ad-6', 'ad-7'), e('ad-7', 'ad-8'), e('ad-7', 'ad-h', 'failed'), e('ad-8', 'ad-9')])
 }
@@ -101,7 +101,7 @@ function cancelOrder(): WorkflowSnapshot {
       s('cx-end', 'end', { csat: true }),
       s('cx-shipped', 'message', { text: 'This order has already shipped. I can start a return for you instead.' }),
       s('cx-ret', 'run_workflow', { workflowId: 'wf-return' }),
-      s('cx-h', 'handover', { team: 'Support', note: 'Cancellation failed in Shopify for {{order.number}}.' }),
+      s('cx-h', 'handover', { note: 'Cancellation failed in Shopify for {{order.number}}.' }),
     ],
     [e('trigger', 'cx-v1'), ...v.edges, e('cx-4', 'cx-5'), e('cx-4', 'cx-h', 'none'), e('cx-5', 'cx-shipped', 'yes'), e('cx-5', 'cx-6', 'no'), e('cx-shipped', 'cx-ret'), e('cx-6', 'cx-7', 'yes'), e('cx-6', 'cx-keep', 'keep'), e('cx-keep', 'cx-end'),
       e('cx-7', 'cx-8'), e('cx-7', 'cx-h', 'failed'), e('cx-8', 'cx-end')])
@@ -125,8 +125,8 @@ export function damagedClaim(variant = 2): WorkflowSnapshot {
       s('dm-12', 'issue_refund', { amountMode: 'items' }),
       s('dm-13', 'message', { text: 'Done. {{refund.amount}} is on its way back to your original payment.' }),
       s('dm-end', 'end', { csat: true }),
-      s('dm-appr', 'handover', { team: 'Returns', tag: 'damaged', note: 'Refund {{refund.amount}} above $75 limit, photos attached' }),
-      s('dm-h', 'handover', { team: 'Returns', tag: 'damaged', note: 'Damaged item claim needs a person.' }),
+      s('dm-appr', 'handover', { tag: 'damaged', note: 'Refund {{refund.amount}} above $75 limit, photos attached' }),
+      s('dm-h', 'handover', { tag: 'damaged', note: 'Damaged item claim needs a person.' }),
     ],
     [e('trigger', 'dm-1'), e('dm-1', 'dm-v1'), ...v.edges, e('dm-4', 'dm-5'), e('dm-4', 'dm-h', 'none'), ...(variant >= 2 ? [e('dm-5', 'dm-6'), e('dm-6', 'dm-7')] : [e('dm-5', 'dm-7')]),
       e('dm-7', 'dm-8', 'rep'), e('dm-7', 'dm-12', 'ref'), e('dm-8', 'dm-9'), e('dm-8', 'dm-oos', 'out'), e('dm-9', 'dm-10'), e('dm-9', 'dm-h', 'failed'), e('dm-10', 'dm-11'), e('dm-11', 'dm-end'),
@@ -134,17 +134,17 @@ export function damagedClaim(variant = 2): WorkflowSnapshot {
 }
 
 function wholesale(): WorkflowSnapshot {
-  return def('Wholesale inquiry', 'Qualifies wholesale leads, tags them and hands them to the Wholesale team.',
+  return def('Wholesale inquiry', 'Qualifies wholesale leads, tags them and hands them to a person.',
     { intent: 'Wholesale', phrases: ['wholesale', 'stock your hats', 'bulk order', 'wholesale inquiry'], channels: ALL, quickReply: null },
     [
       s('ws-1', 'ask', { text: "What's your business name?", kind: 'text', variable: 'business' }),
       s('ws-2', 'ask', { text: "What's your store URL?", kind: 'text', variable: 'store_url', validation: 'Please enter a valid store URL, like bellandbrim.com.' }),
       s('ws-3', 'ask', { text: 'Where are you located?', kind: 'text', variable: 'location' }),
       s('ws-4', 'ask', btn('Roughly how many units a month?', 'volume', [['v1', 'Under 50'], ['v2', '50–200'], ['v3', '200+']])),
-      s('ws-e', 'ask', { text: 'What email should the Wholesale team reply to?', kind: 'email', variable: 'email', validation: "That doesn't look like an email address." }),
+      s('ws-e', 'ask', { text: 'What email should we reply to?', kind: 'email', variable: 'email', validation: "That doesn't look like an email address." }),
       s('ws-5', 'add_tag', { tag: 'wholesale' }),
-      s('ws-6', 'send_email', { subject: 'Thanks for your wholesale inquiry', body: 'Hi,\n\nThanks for reaching out about stocking Goorin at {{business}}. Our Wholesale team will reply within 2 business days with our line sheet and terms.\n\nGoorin Bros. Wholesale' }),
-      s('ws-7', 'handover', { team: 'Wholesale', tag: 'wholesale', note: '{{business}} · {{store_url}} · {{location}} · {{volume}} units/month' }),
+      s('ws-6', 'send_email', { subject: 'Thanks for your wholesale inquiry', body: 'Hi,\n\nThanks for reaching out about stocking Goorin at {{business}}. We will reply within 2 business days with our line sheet and terms.\n\nGoorin Bros. Wholesale' }),
+      s('ws-7', 'handover', { tag: 'wholesale', note: '{{business}} · {{store_url}} · {{location}} · {{volume}} units/month' }),
     ],
     [e('trigger', 'ws-1'), ...chain(['ws-1', 'ws-2', 'ws-3']), e('ws-3', 'ws-4'), e('ws-4', 'ws-e', 'v1'), e('ws-4', 'ws-e', 'v2'), e('ws-4', 'ws-e', 'v3'), ...chain(['ws-e', 'ws-5', 'ws-6', 'ws-7'])])
 }

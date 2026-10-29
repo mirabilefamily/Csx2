@@ -113,7 +113,7 @@ for (const t of tickets) {
   if (skipGrok) {
     push('claude', 'AI', s.claude, 2)
     attempt('claude', pick(0.7, 0.8), 'escalated', 'Customer asked for a human')
-    push('system', 'System', 'Customer asked for a person · Handed to the team', 1)
+    push('system', 'System', 'Customer asked for a person · Handed to a person', 1)
     if (t.assignee) push('agent', agentName, s.note, 20, true)
     continue
   }

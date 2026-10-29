@@ -138,8 +138,6 @@ export interface Ticket {
   orderNumber: string | null
   fraud?: TicketFraudFlag | null
   setAside?: 'spam' | 'trash' | null
-  team?: TeamId | null
-  snoozedUntil?: string | null
   draftReady?: boolean
   handoverReason?: string | null
   aiConfidence?: number | null
@@ -402,12 +400,9 @@ export interface TicketPatch {
   status?: TicketStatus
   priority?: Priority
   assignee?: string | null
-  team?: TeamId | null
-  snoozedUntil?: string | null
   tags?: string[]
 }
 
-export type TeamId = 'support' | 'returns' | 'wholesale'
 export interface SavedViewFilters { q?: string; channel?: Channel | 'all'; tag?: string; status?: TicketStatus | 'active' | 'all'; sort?: 'newest' | 'oldest' | 'priority' }
 export interface SavedView { id: string; name: string; scope: 'shared' | 'private'; ownerId: string; ownerName: string; filters: SavedViewFilters }
 export interface OrderRefundInput { orderId: string; items: Record<string, number>; shipping: boolean; restock: boolean; reason: string; note: string; notify: boolean }

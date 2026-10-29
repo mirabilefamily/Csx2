@@ -31,7 +31,7 @@ const REASONS: [RegExp, string][] = [[/damag/, 'Damaged item'], [/order-status|s
 const PANEL_IDS = Object.keys(VIEW_OF)
 const reasonOf = (t: Ticket) => REASONS.find(([re]) => re.test(t.tags.join(' ')))?.[1] ?? 'General question'
 const isOpen = (t: Ticket) => t.status !== 'resolved' && t.status !== 'closed'
-const resolutionOf = (t: Ticket) => (isOpen(t) ? 'Unresolved' : t.resolvedBy === 'human' ? 'Answered by team' : 'Answered by AI')
+const resolutionOf = (t: Ticket) => (isOpen(t) ? 'Unresolved' : t.resolvedBy === 'human' ? 'Answered by a person' : 'Answered by AI')
 const msgCount = (t: Ticket) => 2 + (Number(t.id.replace(/\D/g, '')) % 6)
 const notYet = (what: string) => () => toast(`${what} isn't available in this demo.`)
 const initials = (n: string) => n.split(' ').map((p) => p[0]).slice(0, 2).join('')
@@ -118,7 +118,7 @@ function TicketDetails({ d, allTags, onPatch }: Pick<Props, 'd' | 'allTags' | 'o
       </div>
       <SubGroup id="ticket-fields" title="Ticket fields">
         <Field label="Contact reason"><FieldSelect id="reason" value={reasonOf(t)} options={REASONS.map(([, l]) => l)} /></Field>
-        <Field label="Resolution"><FieldSelect id="resolution" value={isOpen(t) ? 'Not yet' : resolutionOf(t)} options={['Not yet', 'Replacement sent', 'Refund issued', 'Answered by team']} /></Field>
+        <Field label="Resolution"><FieldSelect id="resolution" value={isOpen(t) ? 'Not yet' : resolutionOf(t)} options={['Not yet', 'Replacement sent', 'Refund issued', 'Answered by a person']} /></Field>
         <Field label="Product"><FieldSelect id="product" value={product} options={(d.customer?.orders ?? []).flatMap((o) => o.lineItems.map((l) => l.title))} /></Field>
       </SubGroup>
     </Section>

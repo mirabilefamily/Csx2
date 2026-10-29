@@ -33,7 +33,7 @@ function Reasoning({ m, reasoning }: { m: Message; reasoning?: string[] }) {
   )
 }
 
-// Customer left, AI and team right as soft tinted blocks (REQ-1068..1069). Events: one centred single line.
+// Customer left, AI and agents right as soft tinted blocks (REQ-1068..1069). Events: one centred single line.
 export function MessageItem({ m, reasoning }: { m: Message; channel?: 'email' | 'chat'; email?: string; reasoning?: string[] }) {
   if (m.authorType === 'system') {
     const hand = /^AI handed over/.test(m.body)

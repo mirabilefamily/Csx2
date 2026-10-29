@@ -24,7 +24,6 @@ export interface StepConfig {
   tag?: string
   field?: string
   fieldValue?: string
-  team?: string
   note?: string
   csat?: boolean
   linkLabel?: string

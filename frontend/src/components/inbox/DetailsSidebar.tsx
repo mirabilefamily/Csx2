@@ -86,7 +86,7 @@ const OUTCOME = { answered: 'Answered', escalated: 'Escalated', in_progress: 'In
 const REASON = { answered: 'Replied to the customer', escalated: 'Handed to the next tier', in_progress: 'Still working on a reply' } as const
 // Plain-language reason with percentages, never raw 0.65 scores.
 function plainReason(a: TicketDetail['attempts'][number]) {
-  const next = a.tier === 'claude' ? 'Grokbot' : 'your team'
+  const next = a.tier === 'claude' ? 'Grokbot' : 'a person'
   if (/below [\d.]+ threshold/i.test(a.reason ?? '')) return `Below the ${viewsApi.aiThreshold()}% threshold, handed to ${next}`
   if (a.outcome === 'escalated') return a.reason ? `${a.reason}, handed to ${next}` : `Handed to ${next}`
   return (a.reason ?? REASON[a.outcome]).replace(/\b0\.(\d{2})\b/g, (_, d) => `${Number(d)}%`)

@@ -106,8 +106,8 @@ export function StepSettings({ wf, step, onChange, onClose, onDelete }: { wf: W;
       {step.type === 'set_field' && <div className="flex gap-2"><Input className="h-9" placeholder="Field" value={c.field ?? ''} onChange={(e) => set({ field: e.target.value })} aria-label="Field" /><Input className="h-9" placeholder="Value" value={c.fieldValue ?? ''} onChange={(e) => set({ fieldValue: e.target.value })} aria-label="Value" /></div>}
       {step.type === 'handover' && (
         <>
-          <Field label="Team"><Input className="h-9" value={c.team ?? ''} onChange={(e) => set({ team: e.target.value })} data-testid="step-team" /></Field>
-          <Field label="Note for the team"><Textarea rows={2} value={c.note ?? ''} onChange={(e) => set({ note: e.target.value })} data-testid="step-note" /></Field>
+          <p className="text-sm text-ink" data-testid="step-handover-label">Hand to a person</p>
+          <Field label="Note for the person"><Textarea rows={2} value={c.note ?? ''} onChange={(e) => set({ note: e.target.value })} data-testid="step-note" /></Field>
         </>
       )}
       {step.type === 'end' && <label className="flex min-h-8 items-center gap-2 text-sm text-ink"><input type="checkbox" className="h-4 w-4 accent-tobacco-600" checked={!!c.csat} onChange={(e) => set({ csat: e.target.checked })} data-testid="step-csat" />Ask the CSAT question</label>}

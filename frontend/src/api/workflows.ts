@@ -131,7 +131,7 @@ export const getRun = (runId: string) =>
     const w = db.workflows.find((x) => x.id === r.workflowId)!
     const path = (MAIN_PATH[r.workflowId] ?? []).slice(0, r.reach + 1)
     const steps = r.outcome === 'handed' && r.lastStep && !path.includes(r.lastStep) ? [...path, r.lastStep] : path
-    const timeline = steps.map((sid) => { const st = w.steps.find((s) => s.id === sid); return { stepId: sid, label: st ? STEP_LABEL[st.type] : sid, detail: st ? (st.type === 'ask' && st.config.variable !== 'email' ? (r.ticketId === 'GB-1076' && st.config.variable === 'remedy' ? 'Customer chose “Refund me”' : 'Customer answered') : DETAIL[st.type]?.(r) ?? (st.type === 'handover' ? `Handed to ${st.config.team}${r.note ? ` · ${r.note}` : ''}` : 'Done')) : '' } })
+    const timeline = steps.map((sid) => { const st = w.steps.find((s) => s.id === sid); return { stepId: sid, label: st ? STEP_LABEL[st.type] : sid, detail: st ? (st.type === 'ask' && st.config.variable !== 'email' ? (r.ticketId === 'GB-1076' && st.config.variable === 'remedy' ? 'Customer chose “Refund me”' : 'Customer answered') : DETAIL[st.type]?.(r) ?? (st.type === 'handover' ? `Handed to a person${r.note ? ` · ${r.note}` : ''}` : 'Done')) : '' } })
     return { ...r, timeline } as WorkflowRun
   })
 

@@ -7,8 +7,7 @@ import { HandoverSummary } from './HandoverSummary'
 import { CustomerSections } from './CustomerSections'
 import { CustomerRail, type RailTarget } from './CustomerRail'
 import { AskGoorinAI } from './AskGoorinAI'
-import { TEAMS } from '@/api/inbox'
-import type { Message, TeamId } from '@/types'
+import type { Message } from '@/types'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { AI_STATE_LABEL, aiState, shortId } from '@/lib/inboxViews'
 import { AiRepliedBanner, SlaChip } from './TicketBanners'
@@ -47,7 +46,6 @@ interface Props {
   onAsk?: () => void
 }
 
-const SNOOZE: [string, number][] = [['Later today', 4], ['Tomorrow', 24], ['Next week', 168]]
 const PRIORITIES: [Priority, string][] = [['low', 'Low'], ['normal', 'Normal'], ['high', 'High'], ['urgent', 'Urgent']]
 const CUST_KEY = 'goorin.inbox.customerPanel'
 const SECS_KEY = 'goorin.inbox.panelSections'
@@ -254,21 +252,11 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
   const copyLink = () => { void navigator.clipboard?.writeText(`${window.location.origin}/inbox/${ticket.id}`).catch(() => {}); toast.success('Link copied') }
   const moreItems = (
     <>
-      <DropdownMenuLabel>Snooze</DropdownMenuLabel>
-      {SNOOZE.map(([l, h]) => <DropdownMenuItem key={l} onSelect={() => update({ snoozedUntil: new Date(Date.now() + h * 36e5).toISOString() })} data-testid={`snooze-${h}`}>{l}</DropdownMenuItem>)}
-      {ticket.snoozedUntil && <DropdownMenuItem onSelect={() => update({ snoozedUntil: null })} data-testid="snooze-clear">Unsnooze</DropdownMenuItem>}
-      <DropdownMenuSeparator />
       <DropdownMenuItem onSelect={() => { toggleCust(true); setCustTab('customer') }} data-testid="ticket-tags"><Tag className="mr-2 h-4 w-4" aria-hidden />Tags…</DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuLabel>Priority</DropdownMenuLabel>
       <DropdownMenuRadioGroup value={ticket.priority} onValueChange={(v) => update({ priority: v as Priority })}>
         {PRIORITIES.map(([p, l]) => <DropdownMenuRadioItem key={p} value={p} data-testid={`header-priority-${p}`}>{l}</DropdownMenuRadioItem>)}
-      </DropdownMenuRadioGroup>
-      <DropdownMenuSeparator />
-      <DropdownMenuLabel>Team</DropdownMenuLabel>
-      <DropdownMenuRadioGroup value={ticket.team ?? 'none'} onValueChange={(v) => update({ team: v === 'none' ? null : (v as TeamId) })}>
-        <DropdownMenuRadioItem value="none" data-testid="header-team-none">No team</DropdownMenuRadioItem>
-        {(Object.entries(TEAMS) as [TeamId, string][]).map(([id, l]) => <DropdownMenuRadioItem key={id} value={id} data-testid={`header-team-${id}`}>{l}</DropdownMenuRadioItem>)}
       </DropdownMenuRadioGroup>
       <DropdownMenuSeparator />
       <DropdownMenuItem onSelect={copyLink} data-testid="ticket-copy-link"><Link2 className="mr-2 h-4 w-4" aria-hidden />Copy link</DropdownMenuItem>
@@ -369,7 +357,6 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
               <ChevronRight className="h-3.5 w-3.5 shrink-0 text-ink-muted/60 max-md:hidden" aria-hidden />
               <h2 className="min-w-[96px] flex-1 truncate text-[15px] font-semibold text-ink max-sm:min-w-0 max-sm:text-sm" title={ticket.subject} data-testid="conversation-subject">{ticket.subject}</h2>
               <span className="sr-only" data-testid="conversation-short-id">{shortId(ticket.id)}</span>
-              {ticket.snoozedUntil && <span className="shrink-0 rounded-full bg-amber-50 px-2 text-xs leading-5 text-amber-800 max-lg:hidden" data-testid="snoozed-until">Snoozed</span>}
             </nav>
             <div className="ml-auto flex shrink-0 items-center gap-1" data-testid="conversation-actions">
               {!isPhone && <span data-testid="meta-assignee">{assignee}</span>}

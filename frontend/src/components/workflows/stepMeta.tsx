@@ -38,7 +38,7 @@ export function stepSummary(st: Step, workflowName?: (id: string) => string | un
     case 'condition': return c.condVar ? `${c.condVar} ${c.op === 'gt' ? '>' : c.op === 'lt' ? '<' : 'is'} ${c.condValue}` : 'No rule yet'
     case 'add_tag': return c.tag ? `Tag "${c.tag}"` : 'No tag yet'
     case 'set_field': return c.field ? `${c.field} = ${c.fieldValue}` : 'No field yet'
-    case 'handover': return `To ${c.team ?? 'Support'}${c.tag ? ` · tag ${c.tag}` : ''}`
+    case 'handover': return `Hand to a person${c.tag ? ` · tag ${c.tag}` : ''}`
     case 'end': return c.csat ? 'Ask the CSAT question' : 'End the conversation'
     case 'pick_order': return `Verified customer's ${c.orderFilter === 'delivered' ? `orders delivered within ${c.withinDays ?? 30} days` : FILTER[c.orderFilter ?? 'any']}`
     case 'pick_items': return 'Pick line items and quantity from {{order.number}}'

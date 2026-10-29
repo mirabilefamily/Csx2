@@ -19,7 +19,7 @@ export const STEP_GROUPS: [string, StepType[]][] = [
 export const DEFAULT_CONFIG: Partial<Record<StepType, StepConfig>> = {
   message: { text: '' }, ask: { text: '', kind: 'text', variable: '' }, send_code: { text: "We've sent a 6-digit code to {{email}}. It expires in 10 minutes." },
   check_code: { attempts: 3, wrongText: "That code didn't match. {{tries_left_text}}" }, find_orders: { variable: 'email' }, show_orders: { limit: 3 },
-  condition: { condVar: '', op: 'eq', condValue: '', yesLabel: 'If', noLabel: 'Otherwise' }, add_tag: { tag: '' }, set_field: { field: '', fieldValue: '' }, handover: { team: 'Support' }, end: { csat: false },
+  condition: { condVar: '', op: 'eq', condValue: '', yesLabel: 'If', noLabel: 'Otherwise' }, add_tag: { tag: '' }, set_field: { field: '', fieldValue: '' }, handover: {}, end: { csat: false },
   pick_order: { text: 'Which order is this about?', orderFilter: 'any', withinDays: 30, noneText: "I don't see a matching order." }, pick_items: { text: 'Which items?' }, address_form: { text: "What's the new shipping address?" },
   upload_photos: { text: 'Please add 1–3 photos of the item (jpg or png, up to 10MB).', minPhotos: 1, maxPhotos: 3, required: true }, consent: { text: '' }, issue_refund: { amountMode: 'items' },
   create_discount: { discountType: 'percent', discountValue: 10, expiryDays: 30 }, send_email: { subject: '', body: '' }, wait: { waitFor: 'duration', waitMinutes: 60 }, run_workflow: { workflowId: '' }, add_to_list: { listId: '' },

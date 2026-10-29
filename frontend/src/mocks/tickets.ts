@@ -21,7 +21,6 @@ type TicketSeed = [
 
 const D = 24
 const SET_ASIDE: Record<number, 'spam' | 'trash'> = { 1083: 'spam', 1082: 'spam', 1081: 'trash' }
-const TEAM: Record<number, 'support' | 'returns' | 'wholesale'> = { 1076: 'returns', 1074: 'wholesale', 1071: 'returns', 1064: 'support' }
 // One-line handover reasons for "Needs you" cards (Phase 11), grounded in each ticket's seed.
 export const HANDOVER_REASONS: Record<string, string> = {
   'GB-1076': 'Damaged fedora needs an overnight replacement before a wedding',
@@ -123,8 +122,6 @@ export const ticketSeeds: TicketSeed[] = [
     "Buying a fedora for my wife as a surprise. How do I figure out her size without asking her?"],
 ]
 
-const SNOOZED = [1073, 1067]
-
 export const tickets: Ticket[] = ticketSeeds.map(
   ([num, subject, customerId, channel, status, priority, tags, assignee, resolvedBy, age, upd, body, reason, orderNumber]) => {
     const c = customers.find((x) => x.id === customerId)!
@@ -144,8 +141,6 @@ export const tickets: Ticket[] = ticketSeeds.map(
       escalationReason: reason ?? null,
       orderNumber: orderNumber ?? null,
       setAside: SET_ASIDE[num] ?? null,
-      team: TEAM[num] ?? null,
-      snoozedUntil: SNOOZED.includes(num) ? new Date(Date.now() + 20 * 36e5).toISOString() : null,
     }
   },
 )

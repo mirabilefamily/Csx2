@@ -2,7 +2,6 @@ import type { AIDraft, BulkPatch, Message, NewMessage, NewTicketInput, SessionUs
 import { STATUS_LABELS } from '@/lib/labels'
 import { isValidEmail } from '@/lib/format'
 import { ApiError, request } from './client'
-export const TEAMS = { support: 'Support', returns: 'Returns', wholesale: 'Wholesale' } as const
 import { HANDOVER_REASONS } from '@/mocks/tickets'
 import { db } from './db'
 
@@ -48,14 +47,6 @@ function applyPatch(t: Ticket, patch: TicketPatch | BulkPatch, actor: SessionUse
   if (patch.assignee !== undefined && patch.assignee !== t.assignee) {
     t.assignee = patch.assignee
     system(t.id, patch.assignee ? `${actor.name} assigned the ticket to ${userName(patch.assignee)}` : `${actor.name} unassigned the ticket`)
-  }
-  if ('team' in patch && patch.team !== undefined && patch.team !== t.team) {
-    t.team = patch.team
-    system(t.id, patch.team ? `${actor.name} set the team to ${TEAMS[patch.team]}` : `${actor.name} removed the team`)
-  }
-  if ('snoozedUntil' in patch && patch.snoozedUntil !== undefined) {
-    t.snoozedUntil = patch.snoozedUntil
-    system(t.id, patch.snoozedUntil ? `${actor.name} snoozed the ticket until ${new Date(patch.snoozedUntil).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}` : `${actor.name} unsnoozed the ticket`)
   }
   if ('tags' in patch && patch.tags) t.tags = [...patch.tags]
   if ('addTag' in patch && patch.addTag && !t.tags.includes(patch.addTag)) {
