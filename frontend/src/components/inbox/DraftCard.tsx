@@ -38,12 +38,10 @@ export function DraftCard({ draft, titles, busy, onApprove, onEdit, onDiscard, o
   const pct = Math.round(draft.confidence * 100)
   const copy = async () => { await navigator.clipboard?.writeText(draft.body).catch(() => {}); toast('Draft copied') }
   return (
-    <section className="flex max-h-[50vh] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-card" data-testid={`draft-card-${draft.id}`} aria-label={`Draft by ${tier}`}>
-      <div className="flex min-w-0 shrink-0 items-center gap-2 border-b border-border bg-tobacco-50/60 px-4 py-2" data-testid="draft-header">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-tobacco-50 ring-1 ring-inset ring-tobacco-100" aria-hidden><Sparkles className="h-3.5 w-3.5 text-brass-600" /></span>
-        <p className="shrink-0 text-[13px] font-semibold text-ink" data-testid="draft-label">Draft by {tier}</p>
-        <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', confTone(pct))} data-testid="draft-confidence">{pct}% confidence</span>
-        <Sources draft={draft} titles={titles} />
+    <section className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-card" data-testid={`draft-card-${draft.id}`} aria-label={`Draft by ${tier}`}>
+      <div className="flex min-w-0 shrink-0 items-center gap-2 px-4 pt-3" data-testid="draft-header">
+        <Sparkles className="h-3.5 w-3.5 shrink-0 text-brass-600" aria-hidden />
+        <p className="shrink-0 text-[13px] font-semibold text-ink" data-testid="draft-label">AI draft <span className="font-normal text-ink-muted">·</span> <span className="font-medium tabular-nums text-ink-muted" data-testid="draft-confidence">{pct}%</span></p>
         <DropdownMenu>
           <DropdownMenuTrigger className={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm' }), 'ml-auto shrink-0')} aria-label="More draft actions" data-testid="draft-more"><MoreHorizontal aria-hidden /></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -52,14 +50,11 @@ export function DraftCard({ draft, titles, busy, onApprove, onEdit, onDiscard, o
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-4" data-testid="draft-body-wrap">
-        <div className="relative">
-          <p className={cn('max-w-[90ch] whitespace-pre-wrap text-[14px] leading-[1.6] text-ink min-[1600px]:text-[15px]', !open && 'max-h-[calc(4*1.6em)] overflow-hidden')} data-testid="draft-body">{draft.body}</p>
-          {!open && <span className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-surface to-transparent" aria-hidden data-testid="draft-fade" />}
-        </div>
-        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className={cn(LINK, 'mt-1 inline-flex min-h-7 items-center gap-1 max-sm:min-h-11')} data-testid="draft-expand">{open ? 'Show less' : 'Show full draft'}<ChevronDown className={cn('h-4 w-4 transition-transform motion-reduce:transition-none', open && 'rotate-180')} aria-hidden /></button>
+      <div className="px-4 pb-1 pt-1.5" data-testid="draft-body-wrap">
+        <p className={cn('whitespace-pre-wrap text-[14px] leading-[1.6] text-ink', !open && 'line-clamp-3')} data-testid="draft-body">{draft.body}</p>
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className={cn(LINK, 'mt-0.5 inline-flex min-h-7 items-center max-sm:min-h-11')} data-testid="draft-expand">{open ? 'Show less' : 'Show all'}</button>
       </div>
-      <div className="flex shrink-0 items-center gap-2 border-t border-border px-4 py-3 max-sm:grid max-sm:grid-cols-2" data-testid="draft-actions">
+      <div className="flex shrink-0 items-center gap-2 px-4 pb-3 pt-1 max-sm:grid max-sm:grid-cols-2" data-testid="draft-actions">
         <div className="flex max-sm:col-span-2">
           <Button size="sm" className="rounded-r-none max-sm:flex-1" onClick={() => onApprove()} loading={busy} data-testid="draft-approve">Approve &amp; send</Button>
           <DropdownMenu>

@@ -106,3 +106,10 @@ Admin (support lead), Agent (support rep), Customer (later phases), Backend deve
 - P2: Order cards in widget runtime; verify Channels chat preview runtime
 - P0 next: Phase 16 follow-ups (multi-item pick with quantity, run stats on Canvas, real photo picker in the widget)
 - P1: Script the unsaved-changes guard for Email, Contact form and CSAT (Q-866); confirm the Launcher "Button colour: White / Panel colour" setting
+
+## Phase 21 — Inbox redesign (Sep 2026, speed mode)
+- Inbox list: heading + search + new; Needs you / AI handling / Done tabs with quiet counts; Views menu; Sort + filter row; two-line rows; no stats line, pagination or left views rail
+- Header: subject + muted name/email/order; assignee avatar, Resolve, Customer toggle, overflow (Snooze, Tags, Priority, Team, Prev/Next, Copy link, Ask AI)
+- Thread: 760px column, chat-style messages without boxes, AI tint #FAF7F2 + Why?, note tint #FFF8E6, merged events, compact handoff brief, AI draft as the only card, composer toolbar on focus
+- Customer panel 360px (Customer | Ask AI), closed by default and remembered, ] toggles; docked at 1280 and up, overlay at 1024-1279, bottom sheet on phone
+- Backlog: older phase check scripts that look for removed Inbox elements (stats line, pagination, stepper, views rail) need updating

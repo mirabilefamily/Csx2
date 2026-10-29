@@ -79,7 +79,7 @@ export function TicketList(p: Props) {
           lead={<label className="inline-flex items-center gap-2 text-[13px] font-medium text-ink-muted"><SelectAll tickets={p.tickets} selected={p.selected} onSelect={p.onSelect} /><span className="whitespace-nowrap">Select all</span></label>}
         />
       ) : (
-        <div className="flex min-h-12 items-center gap-2 border-b border-border px-4 py-1.5" data-testid="list-subheader">
+        <div className="flex h-10 items-center gap-2 px-2.5" data-testid="list-subheader">
           {p.status}
           {p.toolbar}
         </div>

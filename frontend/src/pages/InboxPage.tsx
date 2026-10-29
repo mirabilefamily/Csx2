@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ChevronLeft, ChevronRight, MessagesSquare, Plus } from 'lucide-react'
+import { ChevronDown, MessagesSquare, Plus, Search } from 'lucide-react'
 import { NewTicketDialog } from '@/components/inbox/NewTicketDialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import type { BulkPatch, User } from '@/types'
@@ -11,26 +11,20 @@ import { useAuth } from '@/components/auth/AuthContext'
 import { useShellData } from '@/components/shell/ShellData'
 import { EmptyState } from '@/components/States'
 import { Button } from '@/components/ui/button'
-import { ViewsChips, ViewsDropdown } from '@/components/inbox/ViewsNav'
-import { InboxViewsPanel, SaveViewDialog } from '@/components/inbox/InboxViewsPanel'
+import { SaveViewDialog } from '@/components/inbox/InboxViewsPanel'
 import { AskGoorinAI } from '@/components/inbox/AskGoorinAI'
 import { viewsApi } from '@/api'
-import { ArrowUpDown } from 'lucide-react'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { buttonVariants } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { TicketFilters, activeFilterCount, matchFilters, type Filters } from '@/components/inbox/TicketFilters'
 import { TicketList } from '@/components/inbox/TicketList'
 import { ConversationPane, type ConversationHandle } from '@/components/inbox/ConversationPane'
 import { ShortcutHelp } from '@/components/inbox/ShortcutHelp'
 import { sortNeeds, viewById, viewCounts, type NeedsSort } from '@/lib/inboxViews'
-import { HANDLED_BY_AI_TODAY } from '@/api/inbox'
 import type { Ticket } from '@/types'
 import { cn } from '@/lib/utils'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/overlay'
 
 const EXTRA_TAGS = ['vip', 'follow-up', 'priority-shipping']
-const PAGE = 25
 const plural = (n: number) => `${n} ticket${n === 1 ? '' : 's'}`
 
 function isTyping(e: KeyboardEvent) {
@@ -71,16 +65,11 @@ export default function InboxPage() {
     if (!user) return
     try { const d = await inboxApi.takeOver(t.id, user); upsert([d.ticket]); toast.success(`You took over ${t.customer.name}'s ticket`); navigate({ pathname: `/inbox/${t.id}`, search: '?view=needs_you' }) } catch { toast.error("Couldn't take over this ticket. Try again.") }
   }
-  const inProgress = (tickets ?? []).filter((t) => !t.setAside && (t.status === 'ai_handling' || t.status === 'grok_handling')).length
   const variant = saved ? 'default' : view.id === 'needs_you' ? 'needs' : view.id === 'ai_handling' ? 'ai' : 'default'
-  const [page, setPage] = useState(1)
-  const pages = Math.max(1, Math.ceil(filteredAll.length / PAGE))
-  const list = useMemo(() => filteredAll.slice((page - 1) * PAGE, page * PAGE), [filteredAll, page])
+  const list = filteredAll
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
   const setAside = view.group === 'set_aside'
-  useEffect(() => setPage(1), [view.id, savedId, filters])
-  useEffect(() => { if (page > pages) setPage(pages) }, [page, pages])
   const counts = useMemo(() => (tickets ? viewCounts(tickets, user?.id) : undefined), [tickets, user?.id])
   const tags = useMemo(() => [...new Set([...(tickets ?? []).flatMap((t) => t.tags), ...EXTRA_TAGS])].sort(), [tickets])
 
@@ -134,30 +123,48 @@ export default function InboxPage() {
     if (!id) return
     try { await inboxApi.deleteForever(id); reload(); toast.success(`${id} deleted forever`); if (ticketId === id) navigate({ pathname: '/inbox', search }) } catch { toast.error("Couldn't delete. Try again.") }
   }
-  const panel = (onClose?: () => void) => (
-    <InboxViewsPanel counts={counts!} savedCounts={savedCounts} views={savedViews ?? []} onViewsChange={reloadViews} onNew={() => { onClose?.(); setCreating(true) }} onAsk={() => setAsking(true)} onHelp={() => setHelp(true)} activeSaved={saved?.id ?? null} activeView={view.id} />
-  )
-  const first = filteredAll.length ? (page - 1) * PAGE + 1 : 0
-  const footer = (
-    <div className="flex items-center gap-2 border-t border-border px-3 py-2 text-xs text-ink-muted" data-testid="inbox-pagination">
-      <span data-testid="pagination-range">{first}–{Math.min(page * PAGE, filteredAll.length)} of {filteredAll.length}</span>
-      <span className="ml-auto" data-testid="pagination-page">Page {page} of {pages}</span>
-      <Button variant="ghost" size="icon-sm" aria-label="Previous page" disabled={page <= 1} onClick={() => setPage(page - 1)} data-testid="pagination-prev"><ChevronLeft aria-hidden /></Button>
-      <Button variant="ghost" size="icon-sm" aria-label="Next page" disabled={page >= pages} onClick={() => setPage(page + 1)} data-testid="pagination-next"><ChevronRight aria-hidden /></Button>
+  const tabs = [['needs_you', 'Needs you', counts?.needs_you], ['ai_handling', 'AI handling', counts?.ai_handling], ['resolved', 'Done', undefined]] as const
+  const moreViews = [['mine', 'Assigned to me'], ['all', 'All tickets'], ['closed', 'Closed'], ['spam', 'Spam'], ['trash', 'Trash']] as const
+  const go = (q: string) => navigate({ pathname: '/inbox', search: q })
+  const header = (
+    <div className="shrink-0 bg-white" data-testid="inbox-list-header">
+      <div className="flex h-14 items-center gap-1 px-4">
+        <h1 className="flex-1 text-[17px] font-semibold tracking-[-0.01em] text-ink" data-testid="page-title">Inbox</h1>
+        <span className="sr-only" data-testid="page-view-label">{viewLabel}</span>
+        <Button variant="ghost" size="icon-sm" aria-label="Search tickets" onClick={() => document.querySelector<HTMLElement>('[data-testid="ticket-search"], [data-testid="filters-trigger"]')?.focus()} data-testid="inbox-search"><Search aria-hidden /></Button>
+        <Button variant="ghost" size="icon-sm" onClick={() => setCreating(true)} aria-label="New ticket" data-testid="new-ticket-button"><Plus aria-hidden /></Button>
+      </div>
+      <div role="tablist" aria-label="Inbox views" className="flex items-center gap-3 whitespace-nowrap border-b border-border px-4 xl:gap-3.5" data-testid="inbox-tabs">
+        {tabs.map(([id, l, n]) => {
+          const on = !saved && view.id === id
+          return (
+            <button key={id} type="button" role="tab" aria-selected={on} onClick={() => go(`?view=${id}`)} className={cn('relative -mb-px flex h-10 items-center gap-1.5 border-b-2 text-[13px] font-medium transition-colors', on ? 'border-ink text-ink' : 'border-transparent text-ink-muted hover:text-ink')} data-testid={`inbox-tab-${id}`}>
+              {l}{n !== undefined && n > 0 && <span className="text-xs font-normal text-ink-muted tabular-nums" data-testid={`inbox-tab-count-${id}`}>{n}</span>}
+            </button>
+          )
+        })}
+        <DropdownMenu>
+          <DropdownMenuTrigger className={cn('ml-auto flex h-10 items-center gap-1 text-[13px] font-medium', !tabs.some(([id]) => id === view.id) || saved ? 'text-ink' : 'text-ink-muted hover:text-ink')} data-testid="inbox-views-menu">
+            <span className={cn(!saved && tabs.some(([id]) => id === view.id) && 'md:max-xl:sr-only [[data-testid=inbox-page]:has([data-testid=customer-panel])_&]:max-[1599px]:sr-only')}>{saved ? saved.name : tabs.some(([id]) => id === view.id) ? 'Views' : view.label}</span><ChevronDown className="h-3.5 w-3.5" aria-hidden />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            {moreViews.map(([id, l]) => <DropdownMenuItem key={id} onSelect={() => go(`?view=${id}`)} data-testid={`views-menu-${id}`}>{l}<span className="ml-auto pl-3 text-xs text-ink-muted tabular-nums">{counts?.[id] ?? ''}</span></DropdownMenuItem>)}
+            {(savedViews ?? []).length > 0 && <><DropdownMenuSeparator /><DropdownMenuLabel>Saved views</DropdownMenuLabel></>}
+            {(savedViews ?? []).map((v) => <DropdownMenuItem key={v.id} onSelect={() => go(`?saved=${v.id}`)} data-testid={`views-menu-saved-${v.id}`}>{v.name}<span className="ml-auto pl-3 text-xs text-ink-muted tabular-nums">{savedCounts[v.id] ?? ''}</span></DropdownMenuItem>)}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setAsking(true)} data-testid="views-menu-ask">Ask Goorin AI<span className="ml-auto pl-3 text-xs text-ink-muted">⌘G</span></DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setHelp(true)} data-testid="views-menu-shortcuts">Keyboard shortcuts<span className="ml-auto pl-3 text-xs text-ink-muted">?</span></DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   )
+  const SORT_LABEL: Record<NeedsSort, string> = { urgency: 'Most urgent', longest: 'Waiting longest', newest: 'Newest' }
 
   return (
     <div className="flex h-full min-h-0" data-testid="inbox-page">
-      {counts && !isPhone && (
-        <div className="hidden min-[1600px]:flex">{panel()}</div>
-      )}
-      <section aria-label="Ticket list" className={cn('min-h-0 w-full flex-col border-r border-border bg-white md:flex md:w-[300px] md:shrink-0 lg:w-[256px] xl:w-[320px] min-[1600px]:w-[340px]', ticketId ? 'hidden' : 'flex')}>
-        <div className="flex h-[72px] shrink-0 items-center gap-2 border-b border-border bg-white px-3 max-sm:h-14">
-          <h1 className="sr-only min-[1600px]:not-sr-only min-[1600px]:flex-1 min-[1600px]:truncate min-[1600px]:text-base min-[1600px]:font-semibold min-[1600px]:text-ink" data-testid="page-title">{viewLabel}</h1>
-          {isPhone ? <div className="min-w-0 flex-1"><ViewsChips active={view.id} counts={counts} loading={loading} saved={savedViews ?? []} activeSaved={saved?.id ?? null} onViewsChange={reloadViews} /></div> : <div className="min-w-0 flex-1 min-[1600px]:hidden"><ViewsDropdown active={view.id} counts={counts} loading={loading} saved={savedViews ?? []} activeSaved={saved?.id ?? null} /></div>}
-          <Button size="sm" variant="outline" className="max-sm:h-11 max-sm:px-3" onClick={() => setCreating(true)} aria-label="New ticket" data-testid="new-ticket-button"><Plus aria-hidden /> <span aria-hidden>New</span></Button>
-        </div>
+      <section aria-label="Ticket list" data-testid="ticket-list-section" className={cn('min-h-0 w-full flex-col border-r border-border bg-white md:flex md:w-[300px] md:shrink-0 lg:w-[300px] xl:w-[340px] xl:max-[1599px]:has-[~div_[data-testid=customer-panel]]:w-[300px]', ticketId ? 'hidden' : 'flex')}>
+        {header}
         <TicketList
           title={viewLabel}
           emptyText={view.empty}
@@ -177,10 +184,6 @@ export default function InboxPage() {
           onAssign={(u: User) => bulk({ assignee: u.id }, `${plural(selected.length)} assigned to ${u.name}`)}
           onTag={(tag) => bulk({ addTag: tag }, `Tag added to ${plural(selected.length)}`)}
           onBulkClose={() => bulk({ status: 'closed' }, `${plural(selected.length)} closed`)}
-          footer={footer}
-          status={counts && (
-            <p className="min-w-0 flex-1 text-xs leading-4 text-ink-muted" data-testid="ai-status-line" title={`${HANDLED_BY_AI_TODAY} handled by AI today · ${counts.needs_you} need you · ${inProgress} in progress`}><span className="font-semibold text-ink">{HANDLED_BY_AI_TODAY}</span> by AI today · <span className="font-semibold text-ink">{counts.needs_you}</span> need you · <span className="font-semibold text-ink">{inProgress}</span> in progress</p>
-          )}
           variant={variant}
           onTakeOver={takeOver}
           rowActions={setAside ? (t) => (
@@ -192,26 +195,21 @@ export default function InboxPage() {
           toolbar={
             <>
               <span className="sr-only" data-testid="list-count">{loading ? '…' : `${filteredAll.length} shown`}</span>
-              {isPhone && <Button variant="ghost" size="sm" className="ml-auto" aria-pressed={selectMode} onClick={() => { setSelectMode((m) => !m); setSelected([]) }} data-testid="select-mode-toggle">{selectMode ? 'Done' : 'Select'}</Button>}
-              <div className={cn('flex shrink-0 items-center gap-1', !isPhone && 'ml-auto')}>
-                {variant === 'needs' && (
-                  <DropdownMenu>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <DropdownMenuTrigger className={buttonVariants({ variant: 'ghost', size: 'icon-sm' })} aria-label="Sort tickets" data-testid="needs-sort"><ArrowUpDown aria-hidden /></DropdownMenuTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent>Sort</TooltipContent>
-                    </Tooltip>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Sort</DropdownMenuLabel>
-                      <DropdownMenuRadioGroup value={sort} onValueChange={(v) => setSort(v as NeedsSort)}>
-                        <DropdownMenuRadioItem value="urgency" data-testid="needs-sort-urgency">Most urgent</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="longest" data-testid="needs-sort-longest">Longest waiting</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="newest" data-testid="needs-sort-newest">Newest</DropdownMenuRadioItem>
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+              {isPhone && <Button variant="ghost" size="sm" aria-pressed={selectMode} onClick={() => { setSelectMode((m) => !m); setSelected([]) }} data-testid="select-mode-toggle">{selectMode ? 'Done' : 'Select'}</Button>}
+              {variant === 'needs' ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex h-8 items-center gap-1 rounded-md px-1.5 text-xs text-ink-muted hover:text-ink" aria-label="Sort tickets" data-testid="needs-sort">Sort: <span className="font-medium text-ink">{SORT_LABEL[sort]}</span><ChevronDown className="h-3 w-3" aria-hidden /></DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuLabel>Sort</DropdownMenuLabel>
+                    <DropdownMenuRadioGroup value={sort} onValueChange={(v) => setSort(v as NeedsSort)}>
+                      <DropdownMenuRadioItem value="urgency" data-testid="needs-sort-urgency">Most urgent</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="longest" data-testid="needs-sort-longest">Waiting longest</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="newest" data-testid="needs-sort-newest">Newest</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : <span className="px-1.5 text-xs text-ink-muted" data-testid="list-shown">{loading ? '' : plural(filteredAll.length)}</span>}
+              <div className="ml-auto flex shrink-0 items-center gap-1">
                 {activeFilterCount(filters) > 0 && <Button variant="ghost" size="sm" onClick={() => setSavingView(true)} data-testid="save-view-button">Save view</Button>}
                 <TicketFilters filters={filters} onChange={setFilters} tags={tags} users={users} />
               </div>

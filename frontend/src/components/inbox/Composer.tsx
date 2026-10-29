@@ -142,8 +142,8 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ onSend, onResolve, 
 
   return (
     <div className={inline ? 'pt-1' : cn('border-t border-border bg-white px-4 pt-3 md:px-6', demoToolsEnabled ? 'pb-16 max-sm:pb-[calc(12px+env(safe-area-inset-bottom))]' : 'pb-3')}>
-      <div className={cn('relative rounded-lg border transition-colors', note ? 'border-amber-300 bg-amber-50/60' : 'border-border bg-white')} data-testid="composer" data-mode={mode}>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-2 py-1.5">
+      <div className={cn('group relative rounded-xl border transition-colors focus-within:border-ink/25', note ? 'border-amber-300 bg-[#FFF8E6]' : 'border-border bg-white')} data-testid="composer" data-mode={mode}>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 pt-1.5">
           <div role="tablist" aria-label="Composer mode" className="inline-flex rounded-md border border-border p-0.5">
             {(['reply', 'note'] as const).map((m) => (
               <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)} data-testid={`composer-mode-${m}`}
@@ -156,7 +156,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ onSend, onResolve, 
           <span className="ml-auto text-xs text-ink-muted" role="status" data-testid="composer-draft-state">{saved === 'saving' ? 'Saving draft…' : saved === 'saved' ? 'Draft saved' : ''}</span>
         </div>
         <EditorContent editor={editor} />
-        <div className="flex items-center gap-0.5 border-t border-border px-2 py-1">
+        <div className="hidden items-center gap-0.5 border-t border-border/70 px-2 py-1 group-focus-within:flex" data-testid="composer-toolbar">
           <ToolButton label="Bold" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="h-4 w-4" aria-hidden /></ToolButton>
           <ToolButton label="Italic" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="h-4 w-4" aria-hidden /></ToolButton>
           <LinkButton editor={editor} />

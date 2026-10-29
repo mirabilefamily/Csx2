@@ -18,14 +18,14 @@ export function WhyBrief({ d }: { d: TicketDetail }) {
   if (!b) return null
   const refresh = () => { setBusy(true); setTimeout(() => { setGen(new Date().toISOString()); setBusy(false) }, 600) }
   return (
-    <section className="mb-6 w-full scroll-mt-6 overflow-hidden rounded-xl border border-[#F1D9B0]/60 bg-surface shadow-glow-ai max-sm:mb-4 max-sm:shadow-glow-ai-sm" aria-label="Why you're here" data-testid="why-brief">
-      <div className="flex items-center gap-2.5 border-b border-border bg-tobacco-50/60 px-4 py-2.5 min-[1440px]:px-5" data-testid="why-brief-header">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-tobacco-50 ring-1 ring-inset ring-tobacco-100" aria-hidden><Sparkles className="h-4 w-4 text-brass-600" /></span>
-        <span className="text-xs font-medium text-ink-muted">Why you're here</span>
-        <span className="ml-auto text-xs text-ink-muted" data-testid="why-brief-time">{stamp(b.at)}</span>
-      </div>
-      <div className="p-4 min-[1440px]:p-5">
-      <p className="text-[15px] font-semibold text-ink" data-testid="why-brief-reason">{b.reason}</p>
+    <section className="mb-5 w-full overflow-hidden rounded-xl border border-[#F1D9B0]/60 bg-surface shadow-glow-ai-sm" aria-label="Why you're here" data-testid="why-brief">
+      <button type="button" aria-expanded={how} onClick={() => setHow(!how)} className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" data-testid="why-brief-header">
+        <Sparkles className="h-3.5 w-3.5 shrink-0 text-brass-600" aria-hidden />
+        <span className="min-w-0 flex-1 truncate text-ink"><span className="text-ink-muted">AI handed this over:</span> <span className="font-medium" data-testid="why-brief-reason">{b.reason}</span></span>
+        <span className="inline-flex shrink-0 items-center gap-0.5 text-xs font-medium text-ink-muted">Details<ChevronRight className={cn('h-3.5 w-3.5 transition-transform', how && 'rotate-90')} aria-hidden /></span>
+      </button>
+      {how && (
+      <div className="border-t border-border px-4 pb-4 pt-3">
       {b.summary === null ? (
         <div className="mt-2 flex items-center gap-3" data-testid="why-brief-short">
           <p className="text-[13px] text-ink-muted">Not enough conversation yet to summarize.</p>
@@ -54,18 +54,13 @@ export function WhyBrief({ d }: { d: TicketDetail }) {
           <Button size="sm" variant="ghost" className="h-7" loading={busy} onClick={refresh} data-testid="why-brief-refresh"><RefreshCw aria-hidden /> Refresh</Button>
         </p>
       )}
-      <button type="button" aria-expanded={how} onClick={() => setHow(!how)} className="mt-3 inline-flex min-h-8 items-center gap-1 rounded text-xs font-medium text-ink-muted hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid="why-brief-how-toggle">
-        <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', how && 'rotate-90')} aria-hidden />How the AI got here
-      </button>
-      {how && (
-        <dl className="mt-1 grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 text-xs" data-testid="why-brief-how">
-          <dt className="text-ink-muted">Intent</dt><dd className="text-ink">{b.how.intent}</dd>
-          <dt className="text-ink-muted">Articles</dt><dd className="text-ink">{b.how.articles.join(', ') || 'None matched'}</dd>
-          <dt className="text-ink-muted">Data checked</dt><dd className="text-ink">{b.how.data.join(' · ')}</dd>
-          <dt className="text-ink-muted">Confidence</dt><dd className="text-ink">{b.how.confidence != null ? `${Math.round(b.how.confidence * 100)}%` : '—'}</dd>
-        </dl>
-      )}
+      <dl className="mt-4 grid grid-cols-[110px_1fr] gap-x-3 gap-y-1 border-t border-border pt-3 text-xs" data-testid="why-brief-how">
+        <dt className="text-ink-muted">Intent</dt><dd className="text-ink">{b.how.intent}</dd>
+        <dt className="text-ink-muted">Data checked</dt><dd className="text-ink">{b.how.data.join(' · ')}</dd>
+        <dt className="text-ink-muted">Confidence</dt><dd className="text-ink">{b.how.confidence != null ? `${Math.round(b.how.confidence * 100)}%` : '—'}</dd>
+      </dl>
       </div>
+      )}
     </section>
   )
 }

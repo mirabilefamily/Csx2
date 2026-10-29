@@ -114,9 +114,9 @@ export function StatsGrid({ orders }: { orders: ShopifyOrder[] }) {
     ['Last order', last ? timeAgo(last.createdAt) : '—', 'customer-last-order'],
   ]
   return (
-    <dl className="grid grid-cols-2 overflow-hidden rounded-lg border border-border" data-testid="customer-stats">
-      {items.map(([label, value, testId], i) => (
-        <div key={testId} className={cn('min-w-0 px-3 py-2.5', i % 2 === 1 && 'border-l border-border', i > 1 && 'border-t border-border')}>
+    <dl className="grid grid-cols-2 gap-x-4 gap-y-3" data-testid="customer-stats">
+      {items.map(([label, value, testId]) => (
+        <div key={testId} className="min-w-0">
           <dt className="text-xs text-ink-muted">{label}</dt>
           <dd className="mt-0.5 truncate text-[15px] font-semibold tabular-nums text-ink" data-testid={testId}>{value}</dd>
         </div>

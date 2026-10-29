@@ -92,7 +92,7 @@ function plainReason(a: TicketDetail['attempts'][number]) {
   return (a.reason ?? REASON[a.outcome]).replace(/\b0\.(\d{2})\b/g, (_, d) => `${Number(d)}%`)
 }
 
-export function DetailsSidebar({ d, loop, onPatch, onOrdersChanged, allTags = [] }: { d: TicketDetail; onClose?: () => void; onCollapse?: () => void; loop?: { data?: LoopReturn[]; error?: unknown; reload: () => void; loading?: boolean }; onPatch?: (p: TicketPatch) => void; onOrdersChanged?: () => void; allTags?: string[]; onAsk?: () => void }) {
+export function DetailsSidebar({ d, loop, onPatch, onOrdersChanged, allTags = [], hideCard = false }: { hideCard?: boolean; d: TicketDetail; onClose?: () => void; onCollapse?: () => void; loop?: { data?: LoopReturn[]; error?: unknown; reload: () => void; loading?: boolean }; onPatch?: (p: TicketPatch) => void; onOrdersChanged?: () => void; allTags?: string[]; onAsk?: () => void }) {
   const c = d.customer
   const orders = newestFirst(c?.orders ?? [])
   const [ordersKey, setOrdersKey] = useState(0)
@@ -123,10 +123,10 @@ export function DetailsSidebar({ d, loop, onPatch, onOrdersChanged, allTags = []
   return (
     <div className="pb-16" data-testid="details-sidebar">
       <p className="sr-only" data-testid="customer-panel-title">Full details</p>
-      <div className="space-y-4 border-b border-border px-5 py-5" data-testid="customer-card">
+      {!hideCard && <div className="space-y-4 border-b border-border px-5 py-5" data-testid="customer-card">
         <Identity name={d.ticket.customer.name} email={d.ticket.customer.email} c={c} fraud={openFraud} />
         {c?.shopifyCustomerId && <StatsGrid orders={orders} />}
-      </div>
+      </div>}
       <Section title="Orders" count={orders.length} icon={<ShopifyMark size={14} decorative />} action={ordersMenu} testId="shopify-orders">
         {tool && <OrderTool key={tool} tool={tool} orders={orders} />}
         {refreshing ? <p className="text-[13px] text-ink-muted" role="status" data-testid="shopify-orders-loading">Refreshing orders from Shopify…</p> : orders.length === 0 ? (

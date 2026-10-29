@@ -1,10 +1,9 @@
-import { X, PanelRightClose, PanelRightOpen, RotateCcw, ShieldAlert, ShoppingBag, User } from 'lucide-react'
+import { PanelRightOpen, RotateCcw, ShieldAlert, ShoppingBag, User } from 'lucide-react'
 import type { LoopReturn, TicketDetail } from '@/types'
 import { Button } from '@/components/ui/button'
 import { usd } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { lifetimeSpend, loopStats, paidOrders } from '@/lib/customerFacts'
-import { PillTabs } from '@/components/dashboard/Panel'
 import { Identity, StatsGrid } from './DetailParts'
 
 const HIGH_RETURN = 30
@@ -47,28 +46,19 @@ export function SummaryRail({ d, returns, onExpand }: { d: TicketDetail; returns
   )
 }
 
-// Compact summary (REQ-657): identity, latest order, returns, risk. Same pieces as full details.
-export function SummaryPanel({ d, returns, full, onToggle, onCollapse, onClose }: { d: TicketDetail; returns?: LoopReturn[]; full: boolean; onToggle: () => void; onCollapse?: () => void; onClose?: () => void }) {
+// One scrolling customer summary (REQ-1046): identity, stats, latest order, returns, risk, past tickets.
+export function SummaryPanel({ d, returns }: { d: TicketDetail; returns?: LoopReturn[] }) {
   const c = d.customer
   const { orders, latest: o, stats, high } = facts(d, returns)
   const alert = d.fraudAlert
   return (
     <div data-testid="summary-panel">
-      <div className="flex h-[72px] items-center justify-between gap-2 border-b border-border px-5 max-sm:h-14 max-sm:px-4">
-        <h2 className="text-[15px] font-semibold text-ink" data-testid="summary-title">Customer</h2>
-        <span className="flex items-center gap-1">
-          <PillTabs size="sm" tabs={[{ id: 'summary', label: 'Summary' }, { id: 'details', label: 'Details' }]} value={full ? 'details' : 'summary'} onChange={(v) => { if ((v === 'details') !== full) onToggle() }} label="Customer panel view" testId="summary-view" />
-          {onCollapse && <Button variant="ghost" size="icon-sm" className="max-sm:h-11 max-sm:w-11" aria-label="Collapse details panel" aria-expanded onClick={onCollapse} data-testid="summary-collapse"><PanelRightClose aria-hidden /></Button>}
-          {onClose && <Button variant="ghost" size="icon-sm" aria-label="Close details" onClick={onClose} data-testid="details-close"><X aria-hidden /></Button>}
-        </span>
-      </div>
-      {!full && (
-        <div className="space-y-4 px-5 py-5 max-sm:px-4" data-testid="summary-rows">
-          <div data-testid="summary-customer">
-            <Identity compact name={d.ticket.customer.name} email={d.ticket.customer.email} c={c} fraud={null} />
-            <p className="mt-2 text-xs text-ink-muted" data-testid="summary-past-tickets">{countOf(d.pastTickets.length, 'past ticket')}{c?.customerSince ? ` · customer since ${new Date(c.customerSince).getFullYear()}` : ''}</p>
-          </div>
-          {c?.shopifyCustomerId && <StatsGrid orders={orders} />}
+      <div className="space-y-5 px-5 py-5 max-sm:px-4" data-testid="summary-rows">
+        <div data-testid="summary-customer">
+          <Identity compact name={d.ticket.customer.name} email={d.ticket.customer.email} c={c} fraud={null} />
+          <p className="mt-2 text-xs text-ink-muted" data-testid="summary-past-tickets">{countOf(d.pastTickets.length, 'past ticket')}{c?.customerSince ? ` · customer since ${new Date(c.customerSince).getFullYear()}` : ''}</p>
+        </div>
+        {c?.shopifyCustomerId && <StatsGrid orders={orders} />}
           <dl className="grid grid-cols-[112px_minmax(0,1fr)] gap-x-3 gap-y-3 text-[13px]">
             <Row label="Latest order" testId="summary-order">
               {o ? (
@@ -86,8 +76,20 @@ export function SummaryPanel({ d, returns, full, onToggle, onCollapse, onClose }
               {alert ? <span className="inline-flex flex-col">{alert.status === 'open' ? <span className="inline-flex items-center gap-1"><ShieldAlert className="h-4 w-4" aria-hidden />Score {alert.riskScore}</span> : <span>Score {alert.riskScore} · Reviewed</span>}<span className="text-xs font-normal text-ink-muted">{alert.signals[0]?.label}</span></span> : <span className="text-ink-muted">No risk signals</span>}
             </Row>
           </dl>
-        </div>
-      )}
+        {d.pastTickets.length > 0 && (
+          <div data-testid="summary-past-list">
+            <p className="text-xs font-medium text-ink-muted">Past tickets</p>
+            <ul className="mt-2 space-y-2">
+              {d.pastTickets.slice(0, 4).map((t) => (
+                <li key={t.id} className="flex items-baseline justify-between gap-3 text-[13px]" data-testid={`summary-past-${t.id}`}>
+                  <span className="min-w-0 truncate text-ink">{t.subject}</span>
+                  <span className="shrink-0 text-xs capitalize text-ink-muted">{t.status.replace('_', ' ')}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 interface Turn { q: string; a?: AssistantAnswer }
 
 // "Ask Goorin AI" side panel (MOCKED). Answers come from the open ticket's seed data.
-export function AskGoorinAI({ open, onOpenChange, ticketId, onInsert }: { open: boolean; onOpenChange: (o: boolean) => void; ticketId: string | null; onInsert?: (text: string) => void }) {
+export function AskGoorinAI({ open, onOpenChange, ticketId, onInsert, inline }: { open: boolean; onOpenChange: (o: boolean) => void; ticketId: string | null; onInsert?: (text: string) => void; inline?: boolean }) {
   const { data, loading } = useApi(() => (ticketId && open ? inboxApi.getTicketDetail(ticketId) : Promise.resolve(null)), [ticketId, open])
   const detail = data ?? null
   const ready = !ticketId || !!detail || !loading
@@ -29,14 +29,15 @@ export function AskGoorinAI({ open, onOpenChange, ticketId, onInsert }: { open: 
     setTurns((t) => t.map((x, i) => (i === t.length - 1 ? { ...x, a } : x)))
   }
   const prompts = detail ? assistantApi.PROMPTS_TICKET : assistantApi.PROMPTS_GLOBAL
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col sm:max-w-[420px]" aria-describedby={undefined} data-testid="ask-ai-panel">
+  const header = (
         <div className="flex items-center gap-2 border-b border-border px-5 py-4">
           <Sparkles className="h-4 w-4 text-ink-muted" aria-hidden />
           <SheetTitle className="flex-1 text-base font-semibold text-ink">Ask Goorin AI</SheetTitle>
           <Button variant="ghost" size="icon-sm" aria-label="Close Ask Goorin AI" onClick={() => onOpenChange(false)} data-testid="ask-ai-close"><X aria-hidden /></Button>
         </div>
+  )
+  const body = (
+    <>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4" aria-live="polite">
           <p className="text-sm text-ink-muted">Context <span className="ml-1 inline-flex items-center rounded-md border border-border bg-surface px-2 py-0.5 text-xs font-medium text-ink" data-testid="ask-ai-context">{detail ? `${shortId(detail.ticket.id)} · ${detail.ticket.customer.name}` : ticketId ? shortId(ticketId) : 'Whole inbox'}</span></p>
           {!ready ? <p className="text-sm text-ink-muted" role="status" data-testid="ask-ai-loading">Reading this ticket…</p> : <div className="flex flex-wrap gap-1.5">{prompts.map((p) => <button key={p} type="button" onClick={() => ask(p)} className="min-h-9 rounded-full border border-border-strong px-3 text-xs font-medium text-ink hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`ask-ai-prompt-${prompts.indexOf(p)}`}>{p}</button>)}</div>}
@@ -58,7 +59,12 @@ export function AskGoorinAI({ open, onOpenChange, ticketId, onInsert }: { open: 
           <Input aria-label="Ask Goorin AI" placeholder="Ask anything about this ticket…" value={q} onChange={(e) => setQ(e.target.value)} data-testid="ask-ai-input" />
           <Button type="submit" aria-label="Send question" data-testid="ask-ai-send"><Send aria-hidden /></Button>
         </form>
-      </SheetContent>
+    </>
+  )
+  if (inline) return <div className="flex h-full min-h-0 flex-col" data-testid="ask-ai-inline">{body}</div>
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="flex w-full flex-col sm:max-w-[420px]" aria-describedby={undefined} data-testid="ask-ai-panel">{header}{body}</SheetContent>
     </Sheet>
   )
 }

@@ -113,7 +113,7 @@ for (const t of tickets) {
   if (skipGrok) {
     push('claude', 'AI', s.claude, 2)
     attempt('claude', pick(0.7, 0.8), 'escalated', 'Customer asked for a human')
-    push('system', 'System', 'Customer asked for a human. Skipped Grokbot and escalated to the team.', 1)
+    push('system', 'System', 'Customer asked for a person · Handed to the team', 1)
     if (t.assignee) push('agent', agentName, s.note, 20, true)
     continue
   }
@@ -129,7 +129,7 @@ for (const t of tickets) {
   } else {
     const c = pick(0.42, 0.66)
     attempt('claude', c, 'escalated', `Confidence ${c.toFixed(2)} below ${(aiSettings.threshold / 100).toFixed(2)} threshold`)
-    push('system', 'System', `AI confidence ${c.toFixed(2)} is below the ${(aiSettings.threshold / 100).toFixed(2)} threshold. Handed to Grokbot.`, 3)
+    push('system', 'System', `Handed to a person · AI confidence ${Math.round(c * 100)}% (below ${aiSettings.threshold}%)`, 3)
     if (t.status === 'grok_handling') {
       attempt('grokbot', pick(0.6, 0.78), 'in_progress', null)
       continue
