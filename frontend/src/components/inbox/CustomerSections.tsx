@@ -22,9 +22,13 @@ interface Props {
   allTags: string[]
   onPatch: (p: TicketPatch) => void
   hidden?: string[]
+  view?: 'customer' | 'shopify' | 'loop'
 }
 
+const VIEW_OF: Record<string, 'customer' | 'shopify' | 'loop'> = { ticket: 'customer', customer: 'customer', past: 'customer', shopify: 'shopify', purchases: 'shopify', orders: 'shopify', loop: 'loop' }
+
 const REASONS: [RegExp, string][] = [[/damag/, 'Damaged item'], [/order-status|shipping/, 'Order status'], [/sizing/, 'Sizing'], [/return|exchange/, 'Returns & exchanges'], [/wholesale|custom/, 'Wholesale & custom'], [/care/, 'Product care']]
+const PANEL_IDS = Object.keys(VIEW_OF)
 const reasonOf = (t: Ticket) => REASONS.find(([re]) => re.test(t.tags.join(' ')))?.[1] ?? 'General question'
 const isOpen = (t: Ticket) => t.status !== 'resolved' && t.status !== 'closed'
 const resolutionOf = (t: Ticket) => (isOpen(t) ? 'Unresolved' : t.resolvedBy === 'human' ? 'Answered by team' : 'Answered by AI')
@@ -220,14 +224,14 @@ function OrderCard({ o }: { o: ShopifyOrder }) {
 }
 
 // Customer panel sections (REQ-1072).
-export function CustomerSections({ d, returns, loopError, onLoopRetry, users, allTags, onPatch, hidden = [] }: Props) {
+export function CustomerSections({ d, returns, loopError, onLoopRetry, users, allTags, onPatch, hidden = [], view = 'customer' }: Props) {
   const [timeline, setTimeline] = useState(false)
   const c = d.customer
   const orders = paidOrders(c?.orders)
   const spend = lifetimeSpend(c?.orders)
   const past = d.pastTickets.filter((t) => t.id !== d.ticket.id)
   const [store, setStore] = useState('goorin-bros')
-  const show = (id: string) => !hidden.includes(id)
+  const show = (id: string) => VIEW_OF[id] === view && !hidden.includes(id)
   return (
     <div data-testid="customer-sections">
       {show('ticket') && <TicketDetails d={d} allTags={allTags} onPatch={onPatch} />}
@@ -242,7 +246,7 @@ export function CustomerSections({ d, returns, loopError, onLoopRetry, users, al
         </Section>
       )}
       {show('shopify') && c?.shopifyCustomerId && (
-        <Section id="shopify" title="Shopify" icon={<ShopifyMark size={14} decorative />} action={
+        <Section id="shopify" title="Profile" action={
           <Select value={store} onValueChange={setStore}>
             <SelectTrigger className="h-7 w-auto gap-1 rounded-full border-[#EEE9E1] px-2.5 text-xs" aria-label="Shopify store" data-testid="shopify-store"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="goorin-bros">goorin-bros</SelectItem><SelectItem value="goorin-wholesale">goorin-wholesale</SelectItem></SelectContent>
@@ -268,10 +272,12 @@ export function CustomerSections({ d, returns, loopError, onLoopRetry, users, al
         </Section>
       )}
       {show('loop') && (
-        <Section id="loop" title="Loop returns" icon={<span className="rounded bg-[#D6F5E8] px-1 text-[9px] font-bold leading-4 text-[#0F6B4C]" aria-hidden>LR</span>}>
+        <div className="px-5 py-4" data-testid="cp-section-loop">
           <LoopReturnsSection bare returns={returns} lifetimeSpend={spend} error={loopError} onRetry={onLoopRetry} />
-        </Section>
+        </div>
       )}
+      {view === 'shopify' && !c?.shopifyCustomerId && <p className="px-5 py-6 text-[13px] text-ink-muted" data-testid="shopify-empty">No Shopify customer linked to this email.</p>}
+      {PANEL_IDS.filter((id) => VIEW_OF[id] === view).every((id) => hidden.includes(id)) && <p className="px-5 py-6 text-[13px] text-ink-muted" data-testid="view-all-hidden">All sections here are hidden. Turn them back on from the gear in the rail.</p>}
       <Timeline d={d} users={users} open={timeline} onOpenChange={setTimeline} />
     </div>
   )

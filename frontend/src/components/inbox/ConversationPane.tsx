@@ -1,7 +1,8 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Link2, MessageCircleReply, MoreHorizontal, RotateCcw, SearchX, Sparkles, Tag, UserPlus, UserRound, X } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Contact, Link2, MessageCircleReply, MoreHorizontal, RotateCcw, SearchX, Sparkles, Tag, UserPlus, UserRound, X } from 'lucide-react'
+import { ShopifyMark } from '@/components/brand/ShopifyMark'
 import { HandoverSummary } from './HandoverSummary'
 import { CustomerSections } from './CustomerSections'
 import { CustomerRail, type RailTarget } from './CustomerRail'
@@ -50,6 +51,7 @@ const SNOOZE: [string, number][] = [['Later today', 4], ['Tomorrow', 24], ['Next
 const PRIORITIES: [Priority, string][] = [['low', 'Low'], ['normal', 'Normal'], ['high', 'High'], ['urgent', 'Urgent']]
 const CUST_KEY = 'goorin.inbox.customerPanel'
 const SECS_KEY = 'goorin.inbox.panelSections'
+const VIEW_KEY = 'goorin.inbox.panelView'
 
 // One centred 760px column shared by header, thread and draft dock so their edges line up.
 const COL = 'mx-auto box-content max-w-[760px] px-6 xl:px-8 max-sm:px-4'
@@ -84,7 +86,7 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
   // Customer panel opens by default at ≥1280 and remembers a close (REQ-1072).
   const [cust, setCust] = useState(() => window.innerWidth >= 1280 && localStorage.getItem(CUST_KEY) !== '0')
   const [hiddenSecs, setHiddenSecs] = useState<string[]>(() => JSON.parse(localStorage.getItem(SECS_KEY) ?? '[]'))
-  const [custTab, setCustTab] = useState<'customer' | 'ask'>('customer')
+  const [custTab, setCustTab] = useState<RailTarget>(() => (sessionStorage.getItem(VIEW_KEY) as RailTarget | null) ?? 'customer')
   const toggleCust = useCallback((v?: boolean) => setCust((c) => { const n = v ?? !c; localStorage.setItem(CUST_KEY, n ? '1' : '0'); return n }), [])
   const [vw, setVw] = useState(() => window.innerWidth)
   useEffect(() => { const f = () => setVw(window.innerWidth); window.addEventListener('resize', f); return () => window.removeEventListener('resize', f) }, [])
@@ -334,27 +336,24 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
 
   const panelBody = (
     <div className="flex h-full min-h-0 flex-col">
-      {custTab === 'customer' ? (
-        <div className="min-h-0 flex-1 overflow-y-auto" data-testid="customer-panel-body">
-          <CustomerSections hidden={hiddenSecs} d={{ ...detail, ticket }} returns={loop.data} loopError={loop.error} onLoopRetry={loop.reload} users={users} allTags={[...new Set([...(tickets ?? []).flatMap((t) => t.tags), 'vip', 'follow-up'])]} onPatch={(p) => update(p)} />
-        </div>
+      <p className="flex h-12 shrink-0 items-center gap-2 border-b border-[#F0ECE6] px-5 text-[13px] font-semibold text-ink" data-testid="panel-view-title">
+        {custTab === 'shopify' ? <><ShopifyMark size={16} decorative />Shopify</> : custTab === 'loop' ? <><img src="/images/brand/loop-wordmark.svg" alt="Loop Returns" height={16} style={{ height: 16, width: 'auto' }} data-testid="panel-loop-wordmark" /></> : custTab === 'ask' ? <><Sparkles className="h-3.5 w-3.5 text-[#4A6382]" aria-hidden />Ask Goorin AI</> : <><Contact className="h-4 w-4 text-ink-muted" strokeWidth={1.75} aria-hidden />Customer</>}
+      </p>
+      {custTab === 'ask' ? (
+        <div key="ask" className="min-h-0 flex-1 animate-in fade-in duration-150" data-testid="customer-panel-ask"><AskGoorinAI inline open onOpenChange={() => {}} ticketId={ticketId} onInsert={(t) => { setWriteOwn(true); setTimeout(() => composer.current?.insertText(t), 0) }} /></div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col" data-testid="customer-panel-ask">
-          <p className="flex h-12 shrink-0 items-center gap-2 border-b border-[#F0ECE6] px-5 text-[13px] font-semibold text-ink"><Sparkles className="h-3.5 w-3.5 text-[#4A6382]" aria-hidden />Ask Goorin AI</p>
-          <div className="min-h-0 flex-1"><AskGoorinAI inline open onOpenChange={() => {}} ticketId={ticketId} onInsert={(t) => { setWriteOwn(true); setTimeout(() => composer.current?.insertText(t), 0) }} /></div>
+        <div key={custTab} className="min-h-0 flex-1 overflow-y-auto animate-in fade-in duration-150" data-testid="customer-panel-body" data-view={custTab}>
+          <CustomerSections view={custTab} hidden={hiddenSecs} d={{ ...detail, ticket }} returns={loop.data} loopError={loop.error} onLoopRetry={loop.reload} users={users} allTags={[...new Set([...(tickets ?? []).flatMap((t) => t.tags), 'vip', 'follow-up'])]} onPatch={(p) => update(p)} />
         </div>
       )}
     </div>
   )
+  // Each rail icon is its own view; clicking the active one collapses the panel (REQ-1084..1090).
   const railPick = (t: RailTarget) => {
-    setCustTab(t === 'ask' ? 'ask' : 'customer')
+    if (cust && custTab === t) { toggleCust(false); return }
+    sessionStorage.setItem(VIEW_KEY, t)
+    setCustTab(t)
     toggleCust(true)
-    if (t === 'ask' || t === 'customer') return
-    setTimeout(() => {
-      const el = document.querySelector<HTMLElement>(`[data-testid="cp-section-${t}"]`)
-      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      el?.animate([{ backgroundColor: '#FBF3E4' }, { backgroundColor: 'rgba(251,243,228,0)' }], { duration: 1400, easing: 'ease-out' })
-    }, 240)
   }
   const panelW = vw < 1600 ? 'w-[340px]' : 'w-[360px]'
   return (

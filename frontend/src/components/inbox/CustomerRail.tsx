@@ -1,5 +1,6 @@
 import { Contact, PanelRightClose, PanelRightOpen, Settings2, Sparkles } from 'lucide-react'
 import { ShopifyMark } from '@/components/brand/ShopifyMark'
+import { LoopMark } from './LoopReturns'
 import { Popover, PopoverContent, PopoverTrigger, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/overlay'
 import { cn } from '@/lib/utils'
 
@@ -8,7 +9,7 @@ export type RailTarget = 'customer' | 'shopify' | 'loop' | 'ask'
 
 interface Props {
   open: boolean
-  active: 'customer' | 'ask'
+  active: RailTarget
   onToggle: () => void
   onPick: (t: RailTarget) => void
   hidden: string[]
@@ -36,8 +37,8 @@ export function CustomerRail({ open, active, onToggle, onPick, hidden, onHidden 
       <RailButton label={open ? 'Hide panel  ]' : 'Show panel  ]'} onClick={onToggle} testId="rail-toggle"><Toggle className="h-4 w-4" strokeWidth={1.75} /></RailButton>
       <span className="my-1 h-px w-6 bg-[#F0ECE6]" aria-hidden />
       <RailButton label="Customer" on={open && active === 'customer'} onClick={() => onPick('customer')} testId="rail-customer"><Contact className="h-4 w-4" strokeWidth={1.75} /></RailButton>
-      <RailButton label="Shopify" onClick={() => onPick('shopify')} testId="rail-shopify"><ShopifyMark size={16} decorative /></RailButton>
-      <RailButton label="Loop returns" onClick={() => onPick('loop')} testId="rail-loop"><span className="rounded-md bg-[#D6F5E8] px-1 text-[10px] font-bold leading-4 text-[#0F6B4C]">LR</span></RailButton>
+      <RailButton label="Shopify" on={open && active === 'shopify'} onClick={() => onPick('shopify')} testId="rail-shopify"><ShopifyMark size={20} decorative /></RailButton>
+      <RailButton label="Loop returns" on={open && active === 'loop'} onClick={() => onPick('loop')} testId="rail-loop"><LoopMark size={18} /></RailButton>
       <span className="my-1 h-px w-6 bg-[#F0ECE6]" aria-hidden />
       <RailButton label="Ask Goorin AI" on={open && active === 'ask'} onClick={() => onPick('ask')} testId="rail-ask"><Sparkles className="h-4 w-4" strokeWidth={1.75} /></RailButton>
       <span className="my-1 h-px w-6 bg-[#F0ECE6]" aria-hidden />
