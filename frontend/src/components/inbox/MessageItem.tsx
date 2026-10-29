@@ -25,8 +25,8 @@ function Reasoning({ m, reasoning }: { m: Message; reasoning?: string[] }) {
   const items = reasoning?.length ? reasoning : ['Matched the question to published guidance.', 'Checked the order in Shopify before replying.']
   return (
     <div className="mt-2">
-      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="inline-flex items-center gap-1 rounded text-xs font-medium text-[#4A6382] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`ai-reasoning-toggle-${m.id}`}>
-        {open ? 'Hide reasoning' : 'Show reasoning'}<ChevronDown className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')} aria-hidden />
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="inline-flex items-center gap-0.5 rounded text-xs text-ink-muted transition-colors duration-150 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`ai-reasoning-toggle-${m.id}`}>
+        {open ? 'Hide reasoning' : 'Show reasoning'}<ChevronDown className={cn('h-3 w-3 transition-transform duration-150', open && 'rotate-180')} aria-hidden />
       </button>
       {open && <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[13px] text-ink/80 animate-in fade-in" data-testid={`ai-reasoning-${m.id}`}>{items.map((r) => <li key={r}>{r}</li>)}</ul>}
     </div>
@@ -48,11 +48,11 @@ export function MessageItem({ m, reasoning }: { m: Message; channel?: 'email' | 
   }
   const ai = isAi(m)
   const customer = m.authorType === 'customer'
-  const tint = customer ? 'bg-[#F6F4F1] rounded-tl-md' : m.isInternal ? 'bg-[#FFF8E6] rounded-tr-md' : ai ? 'bg-[#F4F7FB] rounded-tr-md' : 'bg-[#F8F3EC] rounded-tr-md'
+  const tint = customer ? 'bg-[#F7F5F1] rounded-tl-md' : m.isInternal ? 'bg-[#FFF9EB] rounded-tr-md' : ai ? 'bg-[#F5F8FC] rounded-tr-md' : 'bg-[#F9F5EF] rounded-tr-md'
   return (
     <li data-testid={`message-${m.id}`} data-author={m.authorType} data-internal={m.isInternal || undefined} className={cn('flex gap-2.5 py-2', !customer && 'justify-end')}>
       {customer && <Avatar m={m} />}
-      <div className={cn('min-w-0 max-w-[80%] rounded-2xl px-4 py-3', tint)} data-testid="message-block">
+      <div className={cn('min-w-0 max-w-[80%] rounded-2xl border border-[#EEE9E1] px-3.5 py-3', tint)} data-testid="message-block">
         <p className="flex flex-wrap items-center gap-x-2 text-[13px]" data-testid="message-meta">
           {!customer && (ai
             ? <Sparkles className="h-3.5 w-3.5 text-[#4A6382]" aria-hidden />

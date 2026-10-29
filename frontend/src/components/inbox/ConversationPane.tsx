@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Link2, MessageCircleReply, MoreHorizontal, RotateCcw, SearchX, Sparkles, Tag, UserPlus, UserRound, X } from 'lucide-react'
 import { HandoverSummary } from './HandoverSummary'
 import { CustomerSections } from './CustomerSections'
+import { CustomerRail, type RailTarget } from './CustomerRail'
 import { AskGoorinAI } from './AskGoorinAI'
 import { TEAMS } from '@/api/inbox'
 import type { Message, TeamId } from '@/types'
@@ -48,6 +49,7 @@ interface Props {
 const SNOOZE: [string, number][] = [['Later today', 4], ['Tomorrow', 24], ['Next week', 168]]
 const PRIORITIES: [Priority, string][] = [['low', 'Low'], ['normal', 'Normal'], ['high', 'High'], ['urgent', 'Urgent']]
 const CUST_KEY = 'goorin.inbox.customerPanel'
+const SECS_KEY = 'goorin.inbox.panelSections'
 
 // One centred 760px column shared by header, thread and draft dock so their edges line up.
 const COL = 'mx-auto box-content max-w-[760px] px-6 xl:px-8 max-sm:px-4'
@@ -81,6 +83,7 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
   const loop = useApi(() => (customerId ? loopApi.getCustomerReturns(customerId) : Promise.resolve([])), [customerId])
   // Customer panel opens by default at ≥1280 and remembers a close (REQ-1072).
   const [cust, setCust] = useState(() => window.innerWidth >= 1280 && localStorage.getItem(CUST_KEY) !== '0')
+  const [hiddenSecs, setHiddenSecs] = useState<string[]>(() => JSON.parse(localStorage.getItem(SECS_KEY) ?? '[]'))
   const [custTab, setCustTab] = useState<'customer' | 'ask'>('customer')
   const toggleCust = useCallback((v?: boolean) => setCust((c) => { const n = v ?? !c; localStorage.setItem(CUST_KEY, n ? '1' : '0'); return n }), [])
   const [vw, setVw] = useState(() => window.innerWidth)
@@ -220,7 +223,7 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
   const resolved = ticket.status === 'resolved' || ticket.status === 'closed'
   const compactResolve = vw < 1280 && hw < 610
   const resolve = (
-    <Button size="sm" className={cn('h-8 shrink-0', compactResolve && 'w-8 px-0')} aria-label={compactResolve ? (resolved ? 'Reopen' : 'Resolve') : undefined} title={compactResolve ? (resolved ? 'Reopen' : 'Resolve') : undefined} onClick={() => update({ status: resolved ? 'open' : 'resolved' })} variant={resolved ? 'outline' : 'primary'} data-testid="ticket-resolve">
+    <Button size="sm" className={cn('h-8 shrink-0 rounded-full px-3.5 transition-[background-color,box-shadow] duration-150', compactResolve && 'w-8 px-0')} aria-label={compactResolve ? (resolved ? 'Reopen' : 'Resolve') : undefined} title={compactResolve ? (resolved ? 'Reopen' : 'Resolve') : undefined} onClick={() => update({ status: resolved ? 'open' : 'resolved' })} variant={resolved ? 'outline' : 'primary'} data-testid="ticket-resolve">
       {resolved ? (compactResolve ? <RotateCcw aria-hidden /> : 'Reopen') : <><CheckCircle2 aria-hidden />{!compactResolve && ' Resolve'}</>}
     </Button>
   )
@@ -331,28 +334,34 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
 
   const panelBody = (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex h-12 shrink-0 items-center gap-1 border-b border-border px-3" data-testid="customer-panel-head">
-        <div role="tablist" aria-label="Customer panel" className="flex gap-1">
-          {([['customer', 'Customer'], ['ask', 'Ask AI']] as const).map(([k, l]) => (
-            <button key={k} type="button" role="tab" aria-selected={custTab === k} onClick={() => setCustTab(k)} className={cn('h-8 rounded-md px-3 text-[13px] font-medium transition-colors', custTab === k ? 'bg-surface-muted text-ink' : 'text-ink-muted hover:text-ink', focusRing)} data-testid={`customer-tab-${k}`}>{l}</button>
-          ))}
-        </div>
-        <Button variant="ghost" size="icon-sm" className="ml-auto" aria-label="Close customer panel" onClick={() => toggleCust(false)} data-testid="customer-panel-close"><X aria-hidden /></Button>
-      </div>
       {custTab === 'customer' ? (
         <div className="min-h-0 flex-1 overflow-y-auto" data-testid="customer-panel-body">
-          <CustomerSections d={{ ...detail, ticket }} returns={loop.data} loopError={loop.error} onLoopRetry={loop.reload} users={users} allTags={[...new Set([...(tickets ?? []).flatMap((t) => t.tags), 'vip', 'follow-up'])]} onPatch={(p) => update(p)} />
+          <CustomerSections hidden={hiddenSecs} d={{ ...detail, ticket }} returns={loop.data} loopError={loop.error} onLoopRetry={loop.reload} users={users} allTags={[...new Set([...(tickets ?? []).flatMap((t) => t.tags), 'vip', 'follow-up'])]} onPatch={(p) => update(p)} />
         </div>
       ) : (
-        <div className="min-h-0 flex-1" data-testid="customer-panel-ask"><AskGoorinAI inline open onOpenChange={() => {}} ticketId={ticketId} onInsert={(t) => { setWriteOwn(true); setTimeout(() => composer.current?.insertText(t), 0) }} /></div>
+        <div className="flex min-h-0 flex-1 flex-col" data-testid="customer-panel-ask">
+          <p className="flex h-12 shrink-0 items-center gap-2 border-b border-[#F0ECE6] px-5 text-[13px] font-semibold text-ink"><Sparkles className="h-3.5 w-3.5 text-[#4A6382]" aria-hidden />Ask Goorin AI</p>
+          <div className="min-h-0 flex-1"><AskGoorinAI inline open onOpenChange={() => {}} ticketId={ticketId} onInsert={(t) => { setWriteOwn(true); setTimeout(() => composer.current?.insertText(t), 0) }} /></div>
+        </div>
       )}
     </div>
   )
+  const railPick = (t: RailTarget) => {
+    setCustTab(t === 'ask' ? 'ask' : 'customer')
+    toggleCust(true)
+    if (t === 'ask' || t === 'customer') return
+    setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-testid="cp-section-${t}"]`)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      el?.animate([{ backgroundColor: '#FBF3E4' }, { backgroundColor: 'rgba(251,243,228,0)' }], { duration: 1400, easing: 'ease-out' })
+    }, 240)
+  }
+  const panelW = vw < 1600 ? 'w-[340px]' : 'w-[360px]'
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 bg-white max-sm:fixed max-sm:inset-x-0 max-sm:top-0 max-sm:z-40 max-sm:pt-[env(safe-area-inset-top)]" style={isPhone ? { height: vvh ?? '100dvh' } : undefined} data-testid="conversation">
       <section aria-label="Conversation" className="flex min-w-0 flex-1 flex-col">
-        <header className={cn('shrink-0 overflow-hidden border-b border-border bg-white', GUTTER)} data-testid={isPhone ? 'conversation-phone-header' : 'conversation-header'}>
-          <div ref={headRef} className="flex items-center gap-3 px-6 py-3.5 max-sm:h-14 max-sm:gap-2 max-sm:px-2 max-sm:py-0" data-testid="conversation-header-inner">
+        <header className={cn('shrink-0 overflow-hidden border-b border-[#F0ECE6] bg-white', GUTTER)} data-testid={isPhone ? 'conversation-phone-header' : 'conversation-header'}>
+          <div ref={headRef} className="flex items-center gap-2.5 px-5 py-3.5 max-sm:h-14 max-sm:gap-2 max-sm:px-2 max-sm:py-0" data-testid="conversation-header-inner">
             <Button variant="ghost" size={isPhone ? 'icon' : 'icon-sm'} className="md:hidden" onClick={onBack} aria-label="Back to inbox" data-testid="conversation-back"><ArrowLeft aria-hidden /></Button>
             <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-1.5 text-[13px]" data-testid="ticket-breadcrumb">
               <button type="button" onClick={onBack} className={cn('shrink-0 rounded font-medium text-ink-muted transition-colors hover:text-ink max-md:hidden', focusRing)} data-testid="breadcrumb-folder">{crumb ?? 'Inbox'}</button>
@@ -366,12 +375,12 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
             <div className="ml-auto flex shrink-0 items-center gap-1" data-testid="conversation-actions">
               {!isPhone && <span data-testid="meta-assignee">{assignee}</span>}
               {!isPhone && resolve}
-              {(!cust || isPhone) && <Button variant="ghost" size="icon-sm" className="h-8 w-8" aria-label="Show customer info" aria-pressed={cust} title="Customer info  ]" onClick={() => toggleCust()} data-testid="customer-toggle"><UserRound aria-hidden /></Button>}
+              {isPhone && <Button variant="ghost" size="icon-sm" className="h-8 w-8" aria-label="Show customer info" aria-pressed={cust} title="Customer info  ]" onClick={() => toggleCust()} data-testid="customer-toggle"><UserRound aria-hidden /></Button>}
               {more}
               {onStep && !isPhone && (
-                <span className="flex items-center" data-testid="ticket-stepper">
-                  <Button variant="ghost" size="icon-sm" aria-label="Previous ticket (K)" title="Previous  K" disabled={!canStep?.prev} onClick={() => onStep(-1)} data-testid="ticket-prev"><ChevronLeft aria-hidden /></Button>
-                  <Button variant="ghost" size="icon-sm" aria-label="Next ticket (J)" title="Next  J" disabled={!canStep?.next} onClick={() => onStep(1)} data-testid="ticket-next"><ChevronRight aria-hidden /></Button>
+                <span className="ml-1 flex items-center rounded-full border border-[#EEE9E1] p-0.5" data-testid="ticket-stepper">
+                  <Button variant="ghost" size="icon-sm" className="h-7 w-7 rounded-full" aria-label="Previous ticket (K)" title="Previous  K" disabled={!canStep?.prev} onClick={() => onStep(-1)} data-testid="ticket-prev"><ChevronLeft aria-hidden /></Button>
+                  <Button variant="ghost" size="icon-sm" className="h-7 w-7 rounded-full" aria-label="Next ticket (J)" title="Next  J" disabled={!canStep?.next} onClick={() => onStep(1)} data-testid="ticket-next"><ChevronRight aria-hidden /></Button>
                 </span>
               )}
             </div>
@@ -408,18 +417,21 @@ export const ConversationPane = forwardRef<ConversationHandle, Props>(({ ticketI
         </div>
         {!inline && replyArea}
       </section>
-      {cust && docked && (
-        <aside aria-label="Customer info" className={cn('shrink-0 border-l border-border bg-white animate-in fade-in slide-in-from-right-2 duration-200', vw < 1600 ? 'w-[340px]' : 'w-[360px]')} data-testid="customer-panel">{panelBody}</aside>
+      {docked && (
+        <aside aria-label="Customer info" aria-hidden={!cust} className={cn('shrink-0 overflow-hidden bg-white transition-[width,opacity] duration-200 ease-out', cust ? cn(panelW, 'border-l border-[#F0ECE6] opacity-100') : 'w-0 opacity-0')} data-testid={cust ? 'customer-panel' : 'customer-panel-closed'}>
+          <div className={cn('h-full', panelW)}>{panelBody}</div>
+        </aside>
       )}
       {cust && !docked && (
         <>
-          <div className={cn('z-20 bg-ink/20 animate-in fade-in', isPhone ? 'fixed inset-0 z-50' : 'absolute inset-0')} onClick={() => toggleCust(false)} aria-hidden data-testid="customer-sheet-backdrop" />
-          <div role="dialog" aria-modal="true" aria-label="Customer info" className={cn('bg-white shadow-popover', isPhone ? 'fixed inset-x-0 bottom-0 z-50 h-[78dvh] rounded-t-2xl pb-[env(safe-area-inset-bottom)] animate-in slide-in-from-bottom-4' : 'absolute inset-y-0 right-0 z-30 w-[360px] border-l border-border animate-in slide-in-from-right-4')} data-testid="customer-sheet">
+          <div className={cn('z-20 bg-ink/20 animate-in fade-in', isPhone ? 'fixed inset-0 z-50' : 'absolute inset-y-0 left-0 right-[52px]')} onClick={() => toggleCust(false)} aria-hidden data-testid="customer-sheet-backdrop" />
+          <div role="dialog" aria-modal="true" aria-label="Customer info" className={cn('bg-white shadow-popover', isPhone ? 'fixed inset-x-0 bottom-0 z-50 h-[78dvh] rounded-t-2xl pb-[env(safe-area-inset-bottom)] animate-in slide-in-from-bottom-4' : 'absolute inset-y-0 right-[52px] z-30 w-[360px] border-l border-[#F0ECE6] animate-in fade-in slide-in-from-right-4 duration-200')} data-testid="customer-sheet">
             {isPhone && <div aria-hidden className="mx-auto mt-2 h-1 w-10 rounded-full bg-border" />}
             {panelBody}
           </div>
         </>
       )}
+      {!isPhone && <CustomerRail open={cust} active={custTab} onToggle={() => toggleCust()} onPick={railPick} hidden={hiddenSecs} onHidden={(h) => { localStorage.setItem(SECS_KEY, JSON.stringify(h)); setHiddenSecs(h) }} />}
     </div>
   )
 })

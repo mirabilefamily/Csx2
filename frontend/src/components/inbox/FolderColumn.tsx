@@ -23,7 +23,7 @@ interface ViewProps {
   onCollapse?: () => void
 }
 
-const rowCls = (on: boolean, phone?: boolean) => cn('flex w-full items-center gap-2.5 rounded-lg text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', phone ? 'h-12 px-3 text-[15px]' : 'h-9 px-2.5 text-[13px]', on ? 'bg-[#EFE7DC] font-medium text-ink' : 'text-ink/80 hover:bg-[#F3EEE7] hover:text-ink')
+const rowCls = (on: boolean, phone?: boolean) => cn('flex w-full items-center gap-2.5 rounded-lg text-left transition-[background-color,box-shadow,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', phone ? 'h-12 px-3 text-[15px]' : 'h-9 px-2.5 text-[13px]', on ? 'bg-white font-medium text-ink shadow-[0_1px_2px_rgb(0_0_0/.06),0_2px_8px_rgb(0_0_0/.05)]' : 'text-ink/75 hover:bg-white/60 hover:text-ink')
 
 function Count({ id, n, on, phone }: { id: FolderId; n?: number; on: boolean; phone?: boolean }) {
   const kind = FOLDERS.find((f) => f.id === id)!.count
@@ -38,7 +38,7 @@ function ViewGroup({ scope, title, p, phone }: { scope: 'shared' | 'private'; ti
   const views = (p.views ?? []).filter((v) => v.scope === scope)
   return (
     <div className="mt-1" data-testid={`views-group-${scope}`}>
-      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex h-8 w-full items-center gap-1.5 rounded-md px-2.5 text-left text-xs font-medium text-ink-muted hover:text-ink" data-testid={`views-toggle-${scope}`}>
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex h-8 w-full items-center gap-1.5 rounded-md px-2.5 text-left text-[11px] font-medium text-ink-muted transition-colors duration-150 hover:text-ink" data-testid={`views-toggle-${scope}`}>
         <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-90')} aria-hidden />{title}
         {views.length > 0 && <span className="ml-auto font-normal tabular-nums">{views.length}</span>}
       </button>
@@ -63,26 +63,26 @@ function ViewGroup({ scope, title, p, phone }: { scope: 'shared' | 'private'; ti
 export function FolderColumn({ active, counts, onSelect, onNew, phone, overlay, ...p }: Props & ViewProps & { phone?: boolean; overlay?: boolean }) {
   const t = overlay ? 'folder-overlay' : 'folder'
   return (
-    <nav aria-label="Inbox folders" className={cn('flex min-h-0 shrink-0 flex-col overflow-y-auto', phone ? 'w-full flex-1 bg-white' : 'w-[220px] border-r border-border bg-[#FBF9F6]', overlay && 'absolute inset-y-0 left-0 z-30 shadow-popover animate-in slide-in-from-left-2 duration-150')} data-testid={overlay ? 'folder-overlay' : 'folder-column'}>
+    <nav aria-label="Inbox folders" className={cn('flex min-h-0 shrink-0 flex-col overflow-y-auto', phone ? 'w-full flex-1 bg-white' : 'w-[220px]', overlay && 'absolute inset-y-0 left-0 z-30 bg-[#F6F3EE] shadow-popover animate-in fade-in slide-in-from-left-2 duration-200')} data-testid={overlay ? 'folder-overlay' : 'folder-column'}>
       <div className={cn('flex h-14 shrink-0 items-center gap-0.5', phone ? 'px-4' : 'pl-4 pr-2')}>
         <h1 className={cn('flex-1 font-semibold tracking-[-0.01em] text-ink', phone ? 'text-xl' : 'text-[17px]')} data-testid="page-title">Inbox</h1>
         {p.onSearch && <Button variant="ghost" size={phone ? 'icon' : 'icon-sm'} onClick={p.onSearch} aria-label="Search" data-testid={`${t}-search`}><Search aria-hidden /></Button>}
         {p.onCollapse && !phone && <Button variant="ghost" size="icon-sm" onClick={p.onCollapse} aria-label="Collapse folders" title="Collapse folders" data-testid="folder-collapse"><PanelLeftClose aria-hidden /></Button>}
       </div>
       <div className={phone ? 'px-3' : 'px-2'}>
-        <button type="button" onClick={onNew} className={cn('flex w-full items-center gap-2 rounded-lg border border-border bg-white font-medium text-ink shadow-xs transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', phone ? 'h-11 px-3 text-[15px]' : 'h-9 px-2.5 text-[13px]')} data-testid={overlay ? 'new-ticket-overlay' : 'new-ticket-button'}>
-          <Plus className="h-4 w-4" aria-hidden />New ticket
-          <kbd className="ml-auto rounded border border-border bg-surface-muted px-1.5 font-sans text-[11px] leading-[18px] text-ink-muted max-sm:hidden">N</kbd>
+        <button type="button" onClick={onNew} className={cn('flex w-full items-center gap-2 rounded-lg border border-transparent font-medium text-ink transition-[background-color,border-color] duration-150 hover:border-[#EAE5DD] hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', phone ? 'h-11 px-3 text-[15px]' : 'h-9 px-2.5 text-[13px]')} data-testid={overlay ? 'new-ticket-overlay' : 'new-ticket-button'}>
+          <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden />New ticket
+          <kbd className="ml-auto rounded-md border border-[#E7E2DA] bg-white/70 px-1.5 font-sans text-[11px] leading-[18px] text-ink-muted max-sm:hidden">N</kbd>
         </button>
       </div>
-      <p className="px-4 pb-1.5 pt-5 text-xs font-medium text-ink-muted" data-testid="folders-label">Folders</p>
+      <p className="px-4 pb-1.5 pt-5 text-[11px] font-medium text-ink-muted" data-testid="folders-label">Folders</p>
       <ul className={cn('space-y-0.5', phone ? 'px-2' : 'px-2')}>
         {FOLDERS.map((f) => {
           const on = active === f.id
           return (
             <li key={f.id}>
               <button type="button" aria-current={on ? 'page' : undefined} onClick={() => onSelect(f.id)} className={rowCls(on, phone)} data-testid={`${t}-${f.id}`}>
-                <f.icon className={cn('shrink-0', phone ? 'h-5 w-5' : 'h-4 w-4', on ? 'text-ink' : 'text-ink-muted')} aria-hidden />
+                <f.icon strokeWidth={1.75} className={cn('shrink-0', phone ? 'h-5 w-5' : 'h-4 w-4', on ? 'text-ink' : 'text-ink-muted')} aria-hidden />
                 <span className="min-w-0 flex-1 truncate">{f.label}</span>
                 <Count id={f.id} n={counts?.[f.id]} on={on} phone={phone} />
                 {phone && <ChevronRight className="h-4 w-4 text-ink-muted" aria-hidden />}
@@ -92,7 +92,7 @@ export function FolderColumn({ active, counts, onSelect, onNew, phone, overlay, 
         })}
       </ul>
       {!overlay && (
-        <div className="mt-4 border-t border-border/70 px-2 pt-2 pb-4">
+        <div className="mt-4 border-t border-[#ECE7DF] px-2 pt-2 pb-4">
           <ViewGroup scope="shared" title="Shared views" p={p} phone={phone} />
           <ViewGroup scope="private" title="Private views" p={p} phone={phone} />
         </div>
@@ -107,7 +107,7 @@ export function FolderStrip({ active, counts, onSelect, onNew, onExpand, classNa
     <Tooltip><TooltipTrigger asChild>{el}</TooltipTrigger><TooltipContent side="right">{label}</TooltipContent></Tooltip>
   )
   return (
-    <nav aria-label="Inbox folders" className={cn('w-14 shrink-0 flex-col items-center gap-1 border-r border-border bg-[#FBF9F6] py-2.5', className)} data-testid="folder-strip">
+    <nav aria-label="Inbox folders" className={cn('w-14 shrink-0 flex-col items-center gap-1 py-2.5', className)} data-testid="folder-strip">
       {onExpand && tip('Show folders', <Button variant="ghost" size="icon-sm" onClick={onExpand} aria-label="Show folders" data-testid="folder-strip-expand"><PanelLeftOpen aria-hidden /></Button>)}
       {tip('New ticket  N', <Button variant="ghost" size="icon-sm" onClick={onNew} aria-label="New ticket" data-testid="new-ticket-strip"><Plus aria-hidden /></Button>)}
       <span className="my-1 h-px w-6 bg-border" aria-hidden />
@@ -117,8 +117,8 @@ export function FolderStrip({ active, counts, onSelect, onNew, onExpand, classNa
         return (
           <span key={f.id} className="contents">
             {tip(`${f.label}${f.count !== 'none' && n ? ` · ${n}` : ''}`, (
-              <button type="button" aria-label={f.label} aria-current={on ? 'page' : undefined} onClick={() => onSelect(f.id)} className={cn('relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', on ? 'bg-[#EFE7DC] text-ink' : 'text-ink-muted hover:bg-[#F3EEE7] hover:text-ink')} data-testid={`folder-strip-${f.id}`}>
-                <f.icon className="h-4 w-4" aria-hidden />
+              <button type="button" aria-label={f.label} aria-current={on ? 'page' : undefined} onClick={() => onSelect(f.id)} className={cn('relative flex h-9 w-9 items-center justify-center rounded-lg transition-[background-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', on ? 'bg-white text-ink shadow-[0_1px_2px_rgb(0_0_0/.06),0_2px_8px_rgb(0_0_0/.05)]' : 'text-ink-muted hover:bg-white/60 hover:text-ink')} data-testid={`folder-strip-${f.id}`}>
+                <f.icon className="h-4 w-4" strokeWidth={1.75} aria-hidden />
                 {f.count !== 'none' && n > 0 && <span className={cn('absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full', f.count === 'badge' ? 'bg-tobacco-600' : 'bg-ink-muted/60')} aria-hidden />}
               </button>
             ))}

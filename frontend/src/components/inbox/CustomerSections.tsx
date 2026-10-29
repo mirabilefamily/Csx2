@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { ArrowUpDown, ChevronDown, ExternalLink, Filter, Mail, MessageCircle, Plus, X } from 'lucide-react'
+import { ArrowUpDown, ChevronDown, ChevronRight, ExternalLink, Filter, Mail, MessageCircle, Plus, Tag, X } from 'lucide-react'
 import type { LoopReturn, ShopifyOrder, Ticket, TicketDetail, TicketPatch, User } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/overlay'
@@ -21,6 +21,7 @@ interface Props {
   users: User[]
   allTags: string[]
   onPatch: (p: TicketPatch) => void
+  hidden?: string[]
 }
 
 const REASONS: [RegExp, string][] = [[/damag/, 'Damaged item'], [/order-status|shipping/, 'Order status'], [/sizing/, 'Sizing'], [/return|exchange/, 'Returns & exchanges'], [/wholesale|custom/, 'Wholesale & custom'], [/care/, 'Product care']]
@@ -30,27 +31,30 @@ const resolutionOf = (t: Ticket) => (isOpen(t) ? 'Unresolved' : t.resolvedBy ===
 const msgCount = (t: Ticket) => 2 + (Number(t.id.replace(/\D/g, '')) % 6)
 const notYet = (what: string) => () => toast(`${what} isn't available in this demo.`)
 const initials = (n: string) => n.split(' ').map((p) => p[0]).slice(0, 2).join('')
+const countLabel = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
 
-function Section({ id, title, count, action, icon, defaultOpen = true, children }: { id: string; title: string; count?: number; action?: React.ReactNode; icon?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
+function Section({ id, title, count, action, icon, defaultOpen = true, children }: { id: string; title: React.ReactNode; count?: number; action?: React.ReactNode; icon?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <section className="border-b border-border/70 px-5 py-4" data-testid={`cp-section-${id}`}>
+    <section className="border-b border-[#F0ECE6] px-5 py-4" data-testid={`cp-section-${id}`}>
       <div className="flex min-h-7 items-center gap-2">
-        <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex min-w-0 flex-1 items-center gap-2 text-left text-[13px] font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`cp-toggle-${id}`}>
-          <ChevronDown className={cn('h-4 w-4 shrink-0 text-ink-muted transition-transform', !open && '-rotate-90')} aria-hidden />
+        <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="group/sec flex min-w-0 flex-1 items-center gap-2 text-left text-[13px] font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`cp-toggle-${id}`}>
           {icon}{title}
-          {count !== undefined && <span className="rounded-full bg-surface-muted px-1.5 text-[11px] font-medium leading-5 text-ink-muted">{count}</span>}
+          {count !== undefined && <span className="rounded-full bg-[#F3F0EB] px-1.5 text-[11px] font-medium leading-5 text-ink-muted">{count}</span>}
         </button>
         {action}
+        <button type="button" tabIndex={-1} aria-hidden onClick={() => setOpen(!open)} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-ink-muted/70 transition-colors hover:bg-[#F7F5F1] hover:text-ink">
+          <ChevronDown className={cn('h-4 w-4 transition-transform duration-150', !open && '-rotate-90')} />
+        </button>
       </div>
-      {open && <div className="mt-3 space-y-3 pl-6 animate-in fade-in duration-150">{children}</div>}
+      {open && <div className="mt-3 space-y-3 animate-in fade-in slide-in-from-top-1 duration-150">{children}</div>}
     </section>
   )
 }
 
 function Field({ label, children, testId }: { label: string; children: React.ReactNode; testId?: string }) {
   return (
-    <div className="grid grid-cols-[104px_minmax(0,1fr)] items-center gap-3 text-[13px]" data-testid={testId}>
+    <div className="grid grid-cols-[116px_minmax(0,1fr)] items-center gap-3 text-[13px]" data-testid={testId}>
       <span className="text-ink-muted">{label}</span>
       <span className="min-w-0 text-ink">{children}</span>
     </div>
@@ -61,37 +65,58 @@ function FieldSelect({ id, value, options }: { id: string; value: string; option
   const [v, setV] = useState(value)
   return (
     <Select value={v} onValueChange={setV}>
-      <SelectTrigger className="-ml-2 h-8 w-full justify-between gap-1 border-transparent bg-transparent px-2 text-left text-[13px] hover:bg-surface-muted [&>span]:truncate" data-testid={`ticket-field-${id}`}><SelectValue /></SelectTrigger>
+      <SelectTrigger className="-ml-2 h-8 w-full justify-between gap-1 border-transparent bg-transparent px-2 text-left text-[13px] shadow-none transition-colors duration-150 hover:bg-[#F7F5F1] focus:bg-[#F7F5F1] [&>span]:truncate [&>svg]:opacity-0 [&>svg]:transition-opacity hover:[&>svg]:opacity-60 focus:[&>svg]:opacity-60" data-testid={`ticket-field-${id}`}><SelectValue /></SelectTrigger>
       <SelectContent>{[...new Set([value, ...options])].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
     </Select>
   )
 }
 
-const Chip = ({ children, onRemove, testId }: { children: React.ReactNode; onRemove?: () => void; testId?: string }) => (
-  <span className="inline-flex h-6 items-center gap-1 rounded-full bg-surface-muted pl-2.5 pr-1.5 text-xs text-ink" data-testid={testId}>
+const tagDot = (x: string) => (/^ai_|answered|resolved/.test(x) ? 'bg-emerald-500' : /hours|time|weekend/.test(x) ? 'bg-sky-500' : /vip|damag|fraud|chargeback|urgent/.test(x) ? 'bg-amber-500' : 'bg-ink-muted/40')
+
+const Chip = ({ children, onRemove, testId, dot }: { children: React.ReactNode; onRemove?: () => void; testId?: string; dot?: string }) => (
+  <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-[#EEE9E1] bg-white pl-2 pr-1.5 text-xs text-ink/80" data-testid={testId}>
+    {dot && <span className={cn('h-1.5 w-1.5 rounded-full', dot)} aria-hidden />}
     {children}
-    {onRemove && <button type="button" onClick={onRemove} aria-label={`Remove ${children}`} className="rounded-full p-0.5 text-ink-muted hover:bg-white hover:text-ink"><X className="h-3 w-3" aria-hidden /></button>}
+    {onRemove && <button type="button" onClick={onRemove} aria-label={`Remove ${children}`} className="rounded-full p-0.5 text-ink-muted transition-colors hover:bg-[#F5F2EE] hover:text-ink"><X className="h-3 w-3" aria-hidden /></button>}
   </span>
 )
 
+// Collapsible sub-group inside a section ("Ticket fields", "Customer fields").
+function SubGroup({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div>
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex items-center gap-1 text-xs font-medium text-ink-muted transition-colors hover:text-ink" data-testid={`subgroup-${id}`}>
+        <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-150', !open && '-rotate-90')} aria-hidden />{title}
+      </button>
+      {open && <div className="mt-2.5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">{children}</div>}
+    </div>
+  )
+}
+
 function TicketDetails({ d, allTags, onPatch }: Pick<Props, 'd' | 'allTags' | 'onPatch'>) {
   const t = d.ticket
+  const [more, setMore] = useState(false)
   const product = d.customer?.orders.find((o) => o.number === t.orderNumber)?.lineItems[0]?.title ?? '—'
   const add = allTags.filter((x) => !t.tags.includes(x))
+  const shown = more ? t.tags : t.tags.slice(0, 3)
   return (
-    <Section id="ticket" title="Ticket details">
+    <Section id="ticket" title="Ticket details" icon={<Tag className="h-3.5 w-3.5 text-ink-muted" aria-hidden />}>
       <div className="flex flex-wrap items-center gap-1.5" data-testid="ticket-tags">
-        {t.tags.map((x) => <Chip key={x} testId={`ticket-tag-${x}`} onRemove={() => onPatch({ tags: t.tags.filter((y) => y !== x) })}>{x}</Chip>)}
         <Popover>
-          <PopoverTrigger className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-border text-ink-muted hover:text-ink" aria-label="Add tag" data-testid="ticket-tag-add"><Plus className="h-3 w-3" aria-hidden /></PopoverTrigger>
+          <PopoverTrigger className="flex h-6 w-6 items-center justify-center rounded-md border border-[#EEE9E1] text-ink-muted transition-colors hover:bg-[#F7F5F1] hover:text-ink" aria-label="Add tag" data-testid="ticket-tag-add"><Plus className="h-3 w-3" aria-hidden /></PopoverTrigger>
           <PopoverContent align="start" className="max-h-64 w-48 overflow-y-auto p-1">
             {add.map((x) => <button key={x} type="button" onClick={() => onPatch({ tags: [...t.tags, x] })} className="block w-full rounded px-2 py-1.5 text-left text-[13px] hover:bg-surface-muted" data-testid={`ticket-tag-option-${x}`}>{x}</button>)}
           </PopoverContent>
         </Popover>
+        {shown.map((x) => <Chip key={x} dot={tagDot(x)} testId={`ticket-tag-${x}`} onRemove={() => onPatch({ tags: t.tags.filter((y) => y !== x) })}>{x}</Chip>)}
+        {t.tags.length > 3 && <button type="button" onClick={() => setMore(!more)} className="inline-flex h-6 items-center gap-0.5 rounded-full px-1.5 text-xs text-ink-muted hover:text-ink" data-testid="ticket-tags-more">{more ? 'Less' : `+${t.tags.length - 3}`}<ChevronDown className={cn('h-3 w-3 transition-transform', more && 'rotate-180')} aria-hidden /></button>}
       </div>
-      <Field label="Contact reason"><FieldSelect id="reason" value={reasonOf(t)} options={REASONS.map(([, l]) => l)} /></Field>
-      <Field label="Resolution"><FieldSelect id="resolution" value={isOpen(t) ? 'Not yet' : resolutionOf(t)} options={['Not yet', 'Replacement sent', 'Refund issued', 'Answered by team']} /></Field>
-      <Field label="Product"><FieldSelect id="product" value={product} options={(d.customer?.orders ?? []).flatMap((o) => o.lineItems.map((l) => l.title))} /></Field>
+      <SubGroup id="ticket-fields" title="Ticket fields">
+        <Field label="Contact reason"><FieldSelect id="reason" value={reasonOf(t)} options={REASONS.map(([, l]) => l)} /></Field>
+        <Field label="Resolution"><FieldSelect id="resolution" value={isOpen(t) ? 'Not yet' : resolutionOf(t)} options={['Not yet', 'Replacement sent', 'Refund issued', 'Answered by team']} /></Field>
+        <Field label="Product"><FieldSelect id="product" value={product} options={(d.customer?.orders ?? []).flatMap((o) => o.lineItems.map((l) => l.title))} /></Field>
+      </SubGroup>
     </Section>
   )
 }
@@ -99,10 +124,17 @@ function TicketDetails({ d, allTags, onPatch }: Pick<Props, 'd' | 'allTags' | 'o
 function CustomerInfo({ d }: { d: TicketDetail }) {
   const [note, setNote] = useState(d.customer?.note ?? '')
   const [editing, setEditing] = useState(false)
+  const name = d.ticket.customer.name
+  const title = (
+    <span className="flex min-w-0 items-center gap-2">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EFE7DC] text-[10px] font-semibold text-ink" aria-hidden>{initials(name)}</span>
+      <span className="truncate">{name}</span>
+    </span>
+  )
   return (
-    <Section id="customer" title="Customer">
-      <Field label="Email"><span className="block truncate" title={d.ticket.customer.email}>{d.ticket.customer.email}</span></Field>
-      <Field label="Phone">{d.customer?.phone ?? <span className="text-ink-muted">—</span>}</Field>
+    <Section id="customer" title={title}>
+      <Field label="Email"><a href={`mailto:${d.ticket.customer.email}`} className="block truncate text-[#3D5F86] hover:underline" title={d.ticket.customer.email} data-testid="customer-email">{d.ticket.customer.email}</a></Field>
+      <Field label="Phone">{d.customer?.phone ?? <button type="button" onClick={notYet('Adding a phone number')} className="inline-flex items-center gap-1 text-ink-muted hover:text-ink" data-testid="customer-phone-add"><Plus className="h-3.5 w-3.5" aria-hidden />Add</button>}</Field>
       <Field label="Note" testId="customer-note">
         {editing ? (
           <textarea autoFocus value={note} onChange={(e) => setNote(e.target.value)} onBlur={() => { setEditing(false); if (note) toast.success('Note saved') }} rows={2} className="w-full rounded-md border border-border px-2 py-1 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring" data-testid="customer-note-input" />
@@ -112,6 +144,11 @@ function CustomerInfo({ d }: { d: TicketDetail }) {
           <button type="button" onClick={() => setEditing(true)} className="inline-flex items-center gap-1 text-ink-muted hover:text-ink" data-testid="customer-note-add"><Plus className="h-3.5 w-3.5" aria-hidden />Add</button>
         )}
       </Field>
+      <SubGroup id="customer-fields" title="Customer fields">
+        <Field label="Location">{d.customer?.location ?? '—'}</Field>
+        <Field label="Language">English</Field>
+        <Field label="Customer since">{d.customer ? new Date(d.customer.customerSince).toLocaleDateString([], { month: 'short', year: 'numeric' }) : '—'}</Field>
+      </SubGroup>
     </Section>
   )
 }
@@ -122,7 +159,7 @@ function TicketCard({ t, current, users }: { t: Ticket; current?: boolean; users
   const Icon = t.channel === 'chat' ? MessageCircle : Mail
   const extra = Math.max(0, t.tags.length - 1)
   return (
-    <div className={cn('rounded-xl border bg-white p-3.5 transition-shadow hover:shadow-xs', current ? 'border-transparent ring-2 ring-brass-400/70' : 'border-border/70')} data-testid={`past-ticket-${t.id}`} data-current={current || undefined}>
+    <div className={cn('rounded-xl border bg-white p-3.5 transition-shadow duration-150 hover:shadow-[0_2px_10px_rgb(0_0_0/.05)]', current ? 'border-transparent ring-2 ring-brass-400/70' : 'border-[#EEE9E1]')} data-testid={`past-ticket-${t.id}`} data-current={current || undefined}>
       <div className="flex items-start gap-2">
         <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ink-muted" aria-hidden />
         <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink" title={t.subject}>{t.subject}</p>
@@ -167,7 +204,7 @@ const FUL: Record<ShopifyOrder['fulfillmentStatus'], [string, Tone]> = { fulfill
 
 function OrderCard({ o }: { o: ShopifyOrder }) {
   return (
-    <div className="rounded-xl border border-border/70 bg-white p-3.5" data-testid={`cp-order-${o.number}`}>
+    <div className="rounded-xl border border-[#EEE9E1] bg-white p-3.5" data-testid={`cp-order-${o.number}`}>
       <div className="flex items-baseline justify-between gap-2">
         <a href={o.adminUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[13px] font-semibold text-ink hover:underline">{o.number}<ExternalLink className="h-3 w-3 text-ink-muted" aria-hidden /></a>
         <span className="text-[13px] font-semibold tabular-nums text-ink">{usd(o.total)}</span>
@@ -183,41 +220,58 @@ function OrderCard({ o }: { o: ShopifyOrder }) {
 }
 
 // Customer panel sections (REQ-1072).
-export function CustomerSections({ d, returns, loopError, onLoopRetry, users, allTags, onPatch }: Props) {
+export function CustomerSections({ d, returns, loopError, onLoopRetry, users, allTags, onPatch, hidden = [] }: Props) {
   const [timeline, setTimeline] = useState(false)
   const c = d.customer
   const orders = paidOrders(c?.orders)
   const spend = lifetimeSpend(c?.orders)
   const past = d.pastTickets.filter((t) => t.id !== d.ticket.id)
+  const [store, setStore] = useState('goorin-bros')
+  const show = (id: string) => !hidden.includes(id)
   return (
     <div data-testid="customer-sections">
-      <TicketDetails d={d} allTags={allTags} onPatch={onPatch} />
-      <CustomerInfo d={d} />
-      <Section id="past" title="Past tickets" count={past.length}>
-        {past.length === 0 ? <p className="text-[13px] text-ink-muted">No other tickets</p> : past.slice(0, 2).map((t) => <TicketCard key={t.id} t={t} users={users} />)}
-        <button type="button" onClick={() => setTimeline(true)} className="text-[13px] font-medium text-ink-muted hover:text-ink hover:underline" data-testid="past-show-all">Show all</button>
-      </Section>
-      {c?.shopifyCustomerId && (
-        <Section id="shopify" title="Shopify" icon={<ShopifyMark size={14} decorative />}>
-          <Field label="Customer">{c.adminUrl ? <a href={c.adminUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline" data-testid="shopify-customer-link">{c.name}<ExternalLink className="h-3 w-3 text-ink-muted" aria-hidden /></a> : c.name}</Field>
-          <Field label="Created">{new Date(c.customerSince).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</Field>
-          <Field label="Tags">
-            <span className="flex flex-wrap items-center gap-1.5">{c.tags.map((x) => <Chip key={x}>{x}</Chip>)}<button type="button" onClick={notYet('Shopify tags')} className="inline-flex items-center gap-1 text-xs text-ink-muted hover:text-ink" data-testid="shopify-add-tags"><Plus className="h-3 w-3" aria-hidden />Add tags</button></span>
-          </Field>
+      {show('ticket') && <TicketDetails d={d} allTags={allTags} onPatch={onPatch} />}
+      {show('customer') && <CustomerInfo d={d} />}
+      {show('past') && (
+        <Section id="past" title="Tickets">
+          <div className="flex items-center justify-between gap-2">
+            <span className="rounded-full bg-[#F3F0EB] px-2.5 text-xs font-medium leading-6 text-ink/80" data-testid="past-count">{countLabel(past.length + 1, 'ticket')}</span>
+            <Button size="sm" variant="outline" className="h-7 gap-0.5 rounded-full border-[#EEE9E1] px-3 text-xs" onClick={() => setTimeline(true)} data-testid="past-show-all">Show all<ChevronRight className="h-3.5 w-3.5" aria-hidden /></Button>
+          </div>
+          {past.length === 0 ? <p className="text-[13px] text-ink-muted">No other tickets</p> : <TicketCard t={past[0]} users={users} />}
         </Section>
       )}
-      <Section id="purchases" title="Purchase summary">
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-          <div><dt className="text-xs text-ink-muted">Orders</dt><dd className="mt-0.5 text-[15px] font-semibold tabular-nums text-ink" data-testid="purchase-orders">{orders.length}</dd></div>
-          <div><dt className="text-xs text-ink-muted">Total spent</dt><dd className="mt-0.5 text-[15px] font-semibold tabular-nums text-ink" data-testid="purchase-amount">{usd(spend)}</dd></div>
-        </dl>
-      </Section>
-      <Section id="orders" title="Orders" count={c?.orders.length ?? 0} action={<Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={notYet('Create order')} data-testid="cp-create-order"><Plus aria-hidden />Create order</Button>}>
-        {(c?.orders ?? []).length === 0 ? <p className="text-[13px] text-ink-muted">No orders yet</p> : c!.orders.map((o) => <OrderCard key={o.id} o={o} />)}
-      </Section>
-      <Section id="loop" title="Loop returns">
-        <LoopReturnsSection bare returns={returns} lifetimeSpend={spend} error={loopError} onRetry={onLoopRetry} />
-      </Section>
+      {show('shopify') && c?.shopifyCustomerId && (
+        <Section id="shopify" title="Shopify" icon={<ShopifyMark size={14} decorative />} action={
+          <Select value={store} onValueChange={setStore}>
+            <SelectTrigger className="h-7 w-auto gap-1 rounded-full border-[#EEE9E1] px-2.5 text-xs" aria-label="Shopify store" data-testid="shopify-store"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="goorin-bros">goorin-bros</SelectItem><SelectItem value="goorin-wholesale">goorin-wholesale</SelectItem></SelectContent>
+          </Select>
+        }>
+          <Field label="Customer">{c.adminUrl ? <a href={c.adminUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#3D5F86] hover:underline" data-testid="shopify-customer-link">{c.name}<ExternalLink className="h-3 w-3" aria-hidden /></a> : c.name}</Field>
+          <Field label="Created at">{new Date(c.customerSince).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}</Field>
+          <div className="flex flex-wrap items-center gap-1.5" data-testid="shopify-tags">
+            {c.tags.map((x) => <Chip key={x} onRemove={notYet('Editing Shopify tags')}>{x}</Chip>)}
+            <button type="button" onClick={notYet('Shopify tags')} aria-label="Add Shopify tag" className="flex h-6 w-6 items-center justify-center rounded-md border border-[#EEE9E1] text-ink-muted transition-colors hover:bg-[#F7F5F1] hover:text-ink" data-testid="shopify-add-tags"><Plus className="h-3 w-3" aria-hidden /></button>
+          </div>
+        </Section>
+      )}
+      {show('purchases') && (
+        <Section id="purchases" title="Purchase summary">
+          <Field label="Number of orders"><span className="font-medium tabular-nums" data-testid="purchase-orders">{countLabel(orders.length, 'order')}</span></Field>
+          <Field label="Amount"><span className="font-medium tabular-nums" data-testid="purchase-amount">{usd(spend)} USD</span></Field>
+        </Section>
+      )}
+      {show('orders') && (
+        <Section id="orders" title="Orders" count={c?.orders.length ?? 0} action={<Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={notYet('Create order')} data-testid="cp-create-order"><Plus aria-hidden />Create order</Button>}>
+          {(c?.orders ?? []).length === 0 ? <p className="text-[13px] text-ink-muted">No orders yet</p> : c!.orders.map((o) => <OrderCard key={o.id} o={o} />)}
+        </Section>
+      )}
+      {show('loop') && (
+        <Section id="loop" title="Loop returns" icon={<span className="rounded bg-[#D6F5E8] px-1 text-[9px] font-bold leading-4 text-[#0F6B4C]" aria-hidden>LR</span>}>
+          <LoopReturnsSection bare returns={returns} lifetimeSpend={spend} error={loopError} onRetry={onLoopRetry} />
+        </Section>
+      )}
       <Timeline d={d} users={users} open={timeline} onOpenChange={setTimeline} />
     </div>
   )

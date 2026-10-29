@@ -143,9 +143,9 @@ export const Composer = forwardRef<ComposerHandle, Props>(({ onSend, onResolve, 
   const note = mode === 'note'
 
   return (
-    <div className={inline ? 'pt-1' : 'border-t border-border bg-white px-4 pb-3 pt-3 md:px-6 max-sm:pb-[calc(12px+env(safe-area-inset-bottom))]'}>
-      <div className={cn('group relative rounded-xl border transition-colors focus-within:border-ink/25', note ? 'border-amber-300 bg-[#FFF8E6]' : 'border-border bg-white')} data-testid="composer" data-mode={mode}>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 pt-1.5">
+    <div className={inline ? 'pt-1' : 'bg-white px-4 pb-4 pt-2 md:px-6 max-sm:pb-[calc(12px+env(safe-area-inset-bottom))]'}>
+      <div className={cn('group relative rounded-2xl border shadow-[0_1px_2px_rgb(0_0_0/.04),0_8px_24px_rgb(0_0_0/.06)] transition-[border-color,box-shadow] duration-150 focus-within:border-ink/20 focus-within:shadow-[0_1px_2px_rgb(0_0_0/.05),0_10px_30px_rgb(0_0_0/.08)]', note ? 'border-amber-200 bg-[#FFF9EB]' : 'border-[#EEE9E1] bg-white')} data-testid="composer" data-mode={mode}>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[#F3EFE9] px-3 py-1.5">
           <span className="min-w-0 flex-1 truncate text-xs text-ink-muted" data-testid="composer-goes-to">{note ? 'Internal note · only your team sees this' : <>To: <span className="font-medium text-ink">{to}</span></>}</span>
           <Select value={note ? 'note' : ch} onValueChange={(v) => { if (v === 'note') setMode('note'); else { setCh(v as 'email' | 'chat'); setMode('reply') } }}>
             <SelectTrigger className="h-7 w-auto shrink-0 gap-1.5 rounded-md border-transparent bg-surface-muted px-2.5 text-xs font-medium" aria-label="Reply channel" data-testid="composer-channel"><SelectValue /></SelectTrigger>

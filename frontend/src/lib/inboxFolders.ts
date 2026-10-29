@@ -1,6 +1,6 @@
 import { CheckCircle2, CircleAlert, Clock, Inbox, Sparkles, UserRound, UserX, type LucideIcon } from 'lucide-react'
 import type { Ticket } from '@/types'
-import { aiState } from './inboxViews'
+import { aiState, waiting } from './inboxViews'
 
 export type FolderId = 'needs-you' | 'ai' | 'mine' | 'unassigned' | 'snoozed' | 'done' | 'all'
 
@@ -31,3 +31,9 @@ const LEGACY: Record<string, FolderId> = { needs_you: 'needs-you', needs_human: 
 export const folderById = (id: string | null) => FOLDERS.find((f) => f.id === id) ?? FOLDERS.find((f) => f.id === LEGACY[id ?? '']) ?? FOLDERS[0]
 export const folderEmpty = (f: FolderDef) => (f.id === 'needs-you' ? "You're all caught up" : `Nothing in ${f.label}`)
 export const folderCounts = (tickets: Ticket[], uid: string | undefined) => Object.fromEntries(FOLDERS.map((f) => [f.id, tickets.filter((t) => f.match(t, uid)).length])) as Record<FolderId, number>
+
+export type RowGroup = 'Overdue' | 'Today' | 'Earlier'
+export const GROUP_ORDER: RowGroup[] = ['Overdue', 'Today', 'Earlier']
+export const rowGroup = (t: Ticket): RowGroup => (waiting(t).tone === 'breached' ? 'Overdue' : new Date(t.updatedAt).toDateString() === new Date().toDateString() ? 'Today' : 'Earlier')
+// Stable reorder so the list (and J/K) follows the visible groups (REQ-1077).
+export const byGroup = (list: Ticket[]) => GROUP_ORDER.flatMap((g) => list.filter((t) => rowGroup(t) === g))

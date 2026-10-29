@@ -43,6 +43,41 @@ The user asked for a sidebar and folder view in the Inbox. Confirmed choices:
 - REQ-1073 [always] Past-ticket cards shall show a mail/chat icon, subject, relative time, "Contact reason · Resolution" (+N more), a status chip (Open / Closed), the assignee and the message count. The current ticket is highlighted.
 - REQ-1074 [event] When the user clicks "Show all" on past tickets, the system shall open a "<Customer> Timeline" side sheet with sort and filter icons, a "Tickets" filter chip and the full list of ticket cards.
 
+### Premium polish (user: "needs a little more polish, make more modern and premium")
+- REQ-1075 [always] The Inbox work area (list or ticket + customer panel) shall sit on one white rounded surface (radius 16px, soft shadow, 8px inset from the warm canvas). The folder column sits directly on the canvas without a border. (interpreted)
+- REQ-1076 [always] The active folder shall be a white pill with a soft shadow on the canvas. Counts are tabular and muted, and the Needs you count stays a small brown badge.
+- REQ-1077 [always] The list header shall read "Needs you" with a muted count and one toolbar (search, sort, filter as ghost icon buttons).
+- REQ-1078 [always] List rows shall be grouped under quiet headers "Overdue · n" and "Today · n" (and "Earlier"), with tabular times and a softer overdue red. (interpreted)
+- REQ-1079 [always] The handover summary shall be a white card with a soft warm glow and a small "Handover" label, replacing the solid yellow block.
+- REQ-1080 [always] Message bubbles shall be tighter (radius 16px, 12–14px padding, hairline borders, AI tint #F5F8FC), with "Show reasoning" as a small quiet link.
+- REQ-1081 [always] The composer shall be a floating rounded box with a soft shadow at the end of the thread.
+- REQ-1082 [always] In the customer panel, section chevrons shall sit on the right, field dropdown chevrons show only on hover, dividers are hairline, and "Customer | Ask AI" is a segmented control.
+- REQ-1083 [always] Hovers, panel opens and list↔ticket switches shall use subtle 150–200ms transitions.
+
+### Right panel with an icon rail (user: "right side bar should be easily opened and collapsed and look more like <Gorgias panel>")
+- REQ-1084 [always] The ticket view shall show a 52px icon rail at the far right edge, always visible on desktop. From top to bottom it holds:
+  - the panel toggle (open/close)
+  - Customer (person-list icon)
+  - Shopify (logo)
+  - Loop Returns ("LR" badge)
+  - Ask AI (sparkle)
+  - a divider
+  - Panel settings (gear)
+- REQ-1085 [event] When the user clicks the toggle or presses `]`, the panel shall slide open or closed (200ms), with the rail staying put. The state is remembered.
+- REQ-1086 [event] When the user clicks Customer, Shopify or Loop while the panel is closed, it shall open. The panel then scrolls to that section with a brief highlight, and the active icon gets a soft filled tile.
+- REQ-1087 [event] When the user clicks Ask AI, the panel shall show the Ask AI view. Clicking Customer returns to the details view.
+- REQ-1088 [event] When the user clicks the gear, a popover shall list the panel sections with show/hide switches. (mock, remembered)
+- REQ-1089 [always] The panel content shall follow the inspiration, calmer:
+  - Ticket details: tag icon title + chevron, tags as chips with coloured dots and ×, "+" button, "+N ▾" overflow, collapsible "Ticket fields".
+  - Customer: avatar + name + search + ⋯ + chevron, label/value rows for Email (link colour), Phone ("+ Add") and Note, collapsible "Customer fields".
+  - Tickets: an "N tickets" chip with a "Show all ›" outline button, then the latest past-ticket card.
+  - Shopify: logo + "Shopify" + store selector (goorin-bros), the customer link with an external icon, Created at, and tags as chips with "+".
+  - Metafields: an empty note.
+  - Purchase summary: number of orders and amount.
+  - Orders: count chip, "+ Create order" and order cards.
+  - Loop returns.
+- REQ-1090 [state] While the screen is narrower than 1280px, the rail shall stay visible and the panel opens as an overlay sheet beside it. The Ask AI tab inside the panel is replaced by the rail icon.
+
 ## Quality
 ```
 Q-880  Tag: Inbox.Fit

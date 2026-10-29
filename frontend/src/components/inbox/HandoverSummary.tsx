@@ -18,12 +18,11 @@ export function HandoverSummary({ d }: { d: TicketDetail }) {
   const intent = /damag/i.test(b.how.intent + d.ticket.tags.join(' ')) ? 'Damaged item / replacement' : b.how.intent
   const refresh = () => { setBusy(true); setTimeout(() => { setGen(new Date().toISOString()); setBusy(false) }, 600) }
   return (
-    <section aria-label="Handover summary" className="mb-6 rounded-2xl bg-[#FFF8E6] px-5 py-4" data-testid="handover-summary">
+    <section aria-label="Handover summary" className="mb-6 rounded-2xl bg-white px-5 py-4 shadow-[0_0_0_1px_rgba(201,150,60,.20),0_10px_30px_-10px_rgba(201,150,60,.35)]" data-testid="handover-summary">
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid="handover-toggle">
-        <Sparkles className="h-3.5 w-3.5 text-brass-600" aria-hidden />
-        <span className="text-[13px] font-semibold text-ink">Handover summary</span>
-        <span className="ml-1 text-xs text-ink-muted" data-testid="handover-intent">Intent: <span className="text-ink">{intent}</span></span>
-        <ChevronDown className={cn('ml-auto h-4 w-4 text-ink-muted transition-transform', !open && '-rotate-90')} aria-hidden />
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 text-[11px] font-semibold leading-5 text-amber-800 ring-1 ring-amber-200/70"><Sparkles className="h-3 w-3" aria-hidden />Handover</span>
+        <span className="rounded-full bg-[#F5F2EE] px-2 text-xs leading-5 text-ink/80" data-testid="handover-intent">{intent}</span>
+        <ChevronDown className={cn('ml-auto h-4 w-4 text-ink-muted transition-transform duration-150', !open && '-rotate-90')} aria-hidden />
       </button>
       {open && (
         <div className="animate-in fade-in duration-150">
@@ -34,7 +33,7 @@ export function HandoverSummary({ d }: { d: TicketDetail }) {
                 const Icon = SOURCE_ICON[x.source]
                 return (
                   <li key={x.text} className="flex items-start gap-2.5 text-[13px] leading-5 text-ink/90">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white/70 text-ink-muted" title={assistantApi.SOURCE_LABEL[x.source]}><Icon className="h-3 w-3" /></span>
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#F7F5F1] text-ink-muted" title={assistantApi.SOURCE_LABEL[x.source]}><Icon className="h-3 w-3" /></span>
                     <span>{x.text}</span>
                   </li>
                 )
@@ -42,9 +41,9 @@ export function HandoverSummary({ d }: { d: TicketDetail }) {
             </ul>
           )}
           {newer && (
-            <p className="mt-3 flex items-center gap-1.5 text-xs text-amber-900" data-testid="handover-stale">
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-ink-muted" data-testid="handover-stale">
               New messages since this summary ·
-              <button type="button" onClick={refresh} disabled={busy} className="inline-flex items-center gap-1 font-medium underline-offset-2 hover:underline" data-testid="handover-refresh"><RefreshCw className={cn('h-3 w-3', busy && 'animate-spin')} aria-hidden />Refresh</button>
+              <button type="button" onClick={refresh} disabled={busy} className="inline-flex items-center gap-1 text-ink/80 underline-offset-2 transition-colors hover:text-ink hover:underline" data-testid="handover-refresh"><RefreshCw className={cn('h-3 w-3', busy && 'animate-spin')} aria-hidden />Refresh</button>
             </p>
           )}
         </div>
