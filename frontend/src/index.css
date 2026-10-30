@@ -156,3 +156,26 @@
 @container thread (min-width: 600px) { .thread-pad { padding-inline: 24px; } }
 @container thread (min-width: 720px) { .thread-pad { padding-inline: 32px; } }
 .thread-col { width: 100%; max-width: clamp(680px, 94%, 1120px); margin-inline: auto; }
+/* Public Help Center (Phase 23): goorin.com type and halftone. */
+.help-root { font-family: 'Inter Variable', Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+.help-root ::selection { background: #35B54A; color: #141414; }
+.hc-display { font-family: 'Archivo', 'Arial Black', sans-serif; font-weight: 800; font-stretch: 125%; font-variation-settings: 'wdth' 125; text-transform: uppercase; letter-spacing: -0.01em; }
+.hc-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+.hc-halftone { overflow: hidden; background: #141414; isolation: isolate; }
+.hc-halftone > img { filter: grayscale(1) contrast(1.4) brightness(.85); }
+.hc-halftone::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: radial-gradient(circle, rgb(20 20 20 / .7) 0 1.15px, transparent 1.6px); background-size: 5px 5px; mix-blend-mode: multiply; }
+.hc-halftone::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at center, rgb(0 0 0 / .1), rgb(0 0 0 / .45)); }
+.hc-caret { display: inline-block; width: .5em; height: 1.05em; margin-left: 2px; vertical-align: -0.15em; background: #35B54A; animation: hc-blink 0.9s steps(1) infinite; }
+@keyframes hc-blink { 50% { opacity: 0; } }
+.hc-rise { animation: hc-rise .5s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes hc-rise { from { opacity: 0; transform: translateY(10px); } }
+.hc-prose { font-size: 17px; line-height: 1.7; color: #232323; }
+.hc-prose > * { max-width: 68ch; }
+.hc-prose h2 { font-family: 'Archivo', sans-serif; font-weight: 800; font-stretch: 125%; text-transform: uppercase; font-size: 20px; letter-spacing: -0.005em; margin: 2.2em 0 .6em; color: #141414; }
+.hc-prose h2:first-child { margin-top: 0; }
+.hc-prose p + p { margin-top: 1em; }
+.hc-prose strong { font-weight: 650; color: #141414; }
+.hc-prose table { width: 100%; margin-top: 1em; border-collapse: collapse; font-size: 15px; }
+.hc-prose th, .hc-prose td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgb(0 0 0 / .1); }
+.hc-prose th { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: rgb(0 0 0 / .55); }
+@media (prefers-reduced-motion: reduce) { .hc-rise, .hc-caret { animation: none; } }

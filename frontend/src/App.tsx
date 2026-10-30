@@ -16,6 +16,9 @@ import SurveyPage from '@/pages/SurveyPage'
 import ThemeEditorPage from '@/pages/ThemeEditorPage'
 import AiPage from '@/pages/AiPage'
 import ChannelsPage from '@/pages/ChannelsPage'
+import HelpHomePage from '@/pages/HelpHomePage'
+import HelpTopicPage from '@/pages/HelpTopicPage'
+import HelpArticlePage from '@/pages/HelpArticlePage'
 import { useSearchParams } from 'react-router-dom'
 
 // The old Guidance sandbox tab now lives in AI & Workflows → Conversation testing.
@@ -41,6 +44,9 @@ export default function App() {
             <Route path="/widget-demo" element={<WidgetDemoPage />} />
             <Route path="/widget-demo/theme-editor" element={<ThemeEditorPage />} />
             <Route path="/survey/:token" element={<SurveyPage />} />
+            <Route path="/help" element={<HelpHomePage />} />
+            <Route path="/help/topic/:slug" element={<HelpTopicPage />} />
+            <Route path="/help/article/:id" element={<HelpArticlePage />} />
             <Route element={<RequireAuth />}>
               <Route element={<AppShell />}>
                 <Route index element={<Navigate to="/dashboard" replace />} />

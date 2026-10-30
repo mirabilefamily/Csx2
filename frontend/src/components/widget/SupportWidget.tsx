@@ -224,6 +224,19 @@ function WidgetApp({ settings: s, mode = 'live', forcedState, pageType = 'other'
     setOpen(false)
     requestAnimationFrame(() => launcherRef.current?.focus())
   }
+  // Help Center "Open chat" / "Continue in chat" carry the question and answer over (REQ-1103).
+  useEffect(() => {
+    if (mode !== 'live') return
+    const f = (e: Event) => {
+      const d = (e as CustomEvent<{ q?: string; a?: string }>).detail ?? {}
+      openPanel()
+      if (!d.q) return
+      setView('chat')
+      setMessages((ms) => [...ms.filter((m) => m.kind === 'greeting'), { id: uid(), author: 'customer', text: d.q!, at: Date.now() }, ...(d.a ? [{ id: uid(), author: 'ai' as const, text: d.a, at: Date.now() }] : [])])
+    }
+    window.addEventListener('goorin:open-chat', f)
+    return () => window.removeEventListener('goorin:open-chat', f)
+  })
 
   // Home actions: starters, Track orders, Cart, last conversation (REQ-787..790). MOCKED.
   const startChat = (text: string, wf?: Workflow | null) => {

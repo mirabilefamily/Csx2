@@ -34,6 +34,7 @@ export default function GuidancePage() {
         description="What the AI knows and the policies it follows."
         actions={!article && (
           <>
+            <a href="/help" target="_blank" rel="noopener" className={buttonVariants({ variant: 'ghost' })} data-testid="guidance-view-help-center">View help center ↗</a>
             <DropdownMenu>
               <DropdownMenuTrigger className={buttonVariants({ variant: 'outline' })} data-testid="guidance-io-menu"><FileSpreadsheet aria-hidden /> Import / export <ChevronDown className="h-4 w-4" aria-hidden /></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60">

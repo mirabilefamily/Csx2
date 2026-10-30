@@ -27,7 +27,7 @@ export default function ChannelsPage() {
   if (!meta) return <Navigate to="/channels/chat" replace />
   return (
     <div className="space-y-6" data-testid="channels-page">
-      <PageHeader title="Channels" description="How customers reach you: the chat widget, contact form and email." />
+      <PageHeader title="Channels" description="How customers reach you: the chat widget, contact form and email." actions={<a href="/help" target="_blank" rel="noopener" className="inline-flex h-10 items-center rounded-lg px-4 text-sm font-medium text-ink transition-colors hover:bg-surface-muted" data-testid="channels-help-center">Help center ↗</a>} />
       <PageTabs tabs={TABS} current={tab!} label="Channels sections" testIdPrefix="channels-tab" status={meta.status} />
       {tab !== 'chat' && <ChannelStatus tab={tab!} />}
       <div>
