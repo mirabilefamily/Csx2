@@ -7,8 +7,7 @@ import { ChatLine, Thinking, useAsk } from '@/components/help/helpKit'
 const QUICK: [label: string, q: string][] = [
   ['Where is my order?', 'Where is my order?'], ['Returns & exchanges', 'How do I start a return?'], ['Can I cancel / edit my order?', 'Can I cancel / edit my order?'],
   ['Find my size', 'What size am I?'], ['Shipping times & international', 'How long does shipping take?'], ['Damaged or defective item', 'My hat arrived damaged'],
-  ['Friday Drops info', 'How do Friday Drops work?'], ['Payments & gift cards', 'Payment methods we accept'], ['Cleaning & care', 'How do I clean my hat?'],
-  ['Is my Goorin authentic?', 'Is my Goorin authentic?'], ['Manufacturer guarantee', 'What does the guarantee cover?'], ['Custom orders & embroidery', 'Do you do custom embroidery?'],
+  ['Friday Drops info', 'How do Friday Drops work?'], ['Payments & gift cards', 'Payment methods we accept'],
   ['Wholesale inquiry', 'Wholesale inquiry'], ['Brand ambassadors & talent', 'Brand ambassadors & talent inquiry'],
 ]
 const POPULAR = ['How long do returns take?', 'What size am I?', 'When is the next Friday Drop?']
@@ -17,7 +16,7 @@ export default function HelpHomePage() {
   const { answer, busy, ask, ref } = useAsk()
   return (
     <HelpShell>
-      <div className="mx-auto max-w-[1200px] space-y-12 max-sm:space-y-10">
+      <div className="mx-auto max-w-[1200px]">
         <section className="hc-halftone hc-hero relative flex h-[320px] items-center justify-center px-6 max-sm:h-auto max-sm:px-4 max-sm:py-10" data-testid="help-hero">
           <img src="/images/help/hero-desert.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />
           <div className="relative z-10 w-full max-w-[720px] text-center">
@@ -29,19 +28,19 @@ export default function HelpHomePage() {
           </div>
         </section>
 
-        <div ref={ref} className="scroll-mt-6 empty:hidden">
-          {(busy || answer) && <div className="mx-auto max-w-[960px]">{busy ? <Thinking /> : answer && <AnswerCard key={answer.q} a={answer} onAsk={ask} />}</div>}
+        <div ref={ref} className="scroll-mt-6">
+          {(busy || answer) && <div className="mx-auto mt-12 max-w-[960px] max-sm:mt-8">{busy ? <Thinking /> : answer && <AnswerCard key={answer.q} a={answer} onAsk={ask} />}</div>}
         </div>
 
-        <section className="grid grid-cols-2 gap-2 max-sm:grid-cols-1" aria-label="Quick questions" data-testid="help-quick">
+        <section className="mt-12 grid grid-cols-2 gap-4 max-sm:mt-8 max-sm:grid-cols-1 max-sm:gap-3" aria-label="Quick questions" data-testid="help-quick">
           {QUICK.map(([label, q], i) => (
-            <button key={label} type="button" onClick={() => ask(q)} className="hc-card hc-mono group flex h-14 items-center justify-between bg-white px-5 text-left text-[13px] font-semibold uppercase tracking-[0.06em]" data-testid={`help-quick-${i}`}>
+            <button key={label} type="button" onClick={() => ask(q)} className="hc-card hc-mono group flex h-16 items-center justify-between gap-4 bg-white px-6 text-left text-[13px] font-semibold uppercase tracking-[0.06em] max-sm:h-14 max-sm:px-5" data-testid={`help-quick-${i}`}>
               {label}<ChevronRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" aria-hidden />
             </button>
           ))}
         </section>
 
-        <ChatLine />
+        <div className="mt-16 max-sm:mt-8"><ChatLine /></div>
       </div>
     </HelpShell>
   )
