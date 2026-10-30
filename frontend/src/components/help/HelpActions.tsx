@@ -6,7 +6,7 @@ import type { TrackResult } from '@/api/help'
 import { cn } from '@/lib/utils'
 
 const field = 'hc-mono h-11 min-w-0 flex-1 rounded-xl bg-white px-4 text-[14px] ring-1 ring-black/10 placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-[#141414]'
-const btn = 'hc-mono inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#141414] px-5 text-[12px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-black disabled:opacity-60'
+const btn = 'hc-btn hc-mono inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#141414] px-5 text-[12px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-black disabled:opacity-60'
 const fmt = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
 export function OrderLookup({ edit }: { edit?: boolean }) {
@@ -20,7 +20,7 @@ export function OrderLookup({ edit }: { edit?: boolean }) {
     try { setR(await helpApi.trackOrder(email, num)) } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }
   return (
-    <div className="rounded-2xl bg-[#F3F0E9] p-5 max-sm:p-4" data-testid={edit ? 'action-edit' : 'action-track'}>
+    <div className="hc-box rounded-2xl bg-[#F3F0E9] p-5 max-sm:p-4" data-testid={edit ? 'action-edit' : 'action-track'}>
       <p className="hc-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">{edit ? 'Check if your order can change' : 'Track my order'}</p>
       {!r ? (
         <form onSubmit={(e) => { e.preventDefault(); void go() }} className="mt-3 flex gap-2 max-md:flex-col">
@@ -56,8 +56,8 @@ export function OrderLookup({ edit }: { edit?: boolean }) {
 
 export function ReturnAction() {
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-[#F3F0E9] p-5 max-sm:p-4" data-testid="action-return">
-      <img src="/images/brand/loop-mark.svg" alt="" className="h-8 w-8" />
+    <div className="flex flex-wrap items-center gap-4 hc-box rounded-2xl bg-[#F3F0E9] p-5 max-sm:p-4" data-testid="action-return">
+      <img src="/images/brand/loop-mark.svg" alt="" className="hc-round h-8 w-8" />
       <div className="min-w-0 flex-1">
         <p className="hc-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">Returns portal by Loop</p>
         <p className="mt-0.5 text-[14px]">Pick the hat, choose refund, exchange or store credit, and print a free label.</p>
@@ -71,7 +71,7 @@ export function SizeAction() {
   const [cm, setCm] = useState('')
   const [r, setR] = useState<ReturnType<typeof helpApi.sizeFor> | undefined>()
   return (
-    <div className="rounded-2xl bg-[#F3F0E9] p-5 max-sm:p-4" data-testid="action-size">
+    <div className="hc-box rounded-2xl bg-[#F3F0E9] p-5 max-sm:p-4" data-testid="action-size">
       <p className="hc-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">Find my size</p>
       <form onSubmit={(e) => { e.preventDefault(); setR(helpApi.sizeFor(parseFloat(cm))) }} className="mt-3 flex gap-2">
         <label className="relative flex min-w-0 flex-1 items-center">

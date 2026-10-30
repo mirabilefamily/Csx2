@@ -49,7 +49,7 @@ export function HelpSearch({ onAsk, topic, placeholder = 'Ask anything — order
         </button>
       </form>
       {show && (
-        <ul id={`${testId}-list`} role="listbox" className="absolute inset-x-0 top-full z-30 mt-2 overflow-hidden rounded-2xl bg-white p-1.5 text-left shadow-[0_24px_60px_-20px_rgb(0_0_0/.5)] ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-150" data-testid={`${testId}-suggestions`}>
+        <ul id={`${testId}-list`} role="listbox" className="hc-box absolute inset-x-0 top-full z-30 mt-2 overflow-hidden rounded-2xl bg-white p-1.5 text-left shadow-[0_24px_60px_-20px_rgb(0_0_0/.5)] ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-150" data-testid={`${testId}-suggestions`}>
           {items.map((s, i) => (
             <li key={`${s.kind}-${s.label}`} role="option" aria-selected={i === idx}>
               <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(i)} onMouseEnter={() => setIdx(i)}

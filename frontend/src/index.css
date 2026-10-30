@@ -179,3 +179,12 @@
 .hc-prose th, .hc-prose td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgb(0 0 0 / .1); }
 .hc-prose th { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: rgb(0 0 0 / .55); }
 @media (prefers-reduced-motion: reduce) { .hc-rise, .hc-caret { animation: none; } }
+/* Help Center squared, goorin.com look: no radii or soft shadows, 2px on controls, crisp borders. */
+.help-root, .help-root * { border-radius: 0 !important; --tw-shadow: 0 0 #0000 !important; --tw-shadow-colored: 0 0 #0000 !important; }
+.help-root button, .help-root input, .help-root select, .help-root kbd, .help-root form[role="search"], .help-root .hc-chip, .help-root a.hc-btn { border-radius: 2px !important; }
+.help-root .hc-round { border-radius: 9999px !important; }
+.help-root :focus-visible { outline: 2px solid #141414; outline-offset: 2px; }
+.help-root .hc-hero :focus-visible { outline-color: #fff; }
+.hc-box, .hc-card { border: 1px solid rgb(20 20 20 / .12); }
+.hc-card { transition: transform 150ms ease-out, box-shadow 150ms ease-out, background-color 150ms; }
+.help-root .hc-card:hover { transform: translate(-2px, -2px) !important; box-shadow: 2px 2px 0 #141414 !important; }

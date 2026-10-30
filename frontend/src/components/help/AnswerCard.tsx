@@ -36,7 +36,7 @@ export function Vote({ testId = 'help-vote' }: { testId?: string }) {
 
 export function ArticleLink({ a, i }: { a: HelpArticle; i?: number }) {
   return (
-    <Link to={`/help/article/${a.id}`} className="group flex items-center gap-4 rounded-xl bg-white px-5 py-4 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-18px_rgb(0_0_0/.5)]" data-testid={`related-article-${a.id}`}>
+    <Link to={`/help/article/${a.id}`} className="hc-card group flex items-center gap-4 rounded-xl bg-white px-5 py-4 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-18px_rgb(0_0_0/.5)]" data-testid={`related-article-${a.id}`}>
       {i !== undefined && <span className="hc-mono text-[12px] text-black/40">{String(i + 1).padStart(2, '0')}</span>}
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[15px] font-semibold">{a.title}</span>
@@ -52,16 +52,16 @@ export function AnswerCard({ a, onAsk }: { a: HelpAnswer; onAsk: (q: string) => 
   const reveal = cn('transition-[opacity,transform] duration-500', done ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-1 opacity-0')
   return (
     <div data-testid="help-answer">
-      <article className="rounded-[22px] bg-white p-8 shadow-[0_30px_80px_-40px_rgb(0_0_0/.55)] max-sm:rounded-2xl max-sm:p-5" aria-live="polite">
+      <article className="hc-box bg-white p-6 max-sm:p-5" aria-live="polite">
         <div className="flex items-center justify-between gap-3">
           <p className="hc-mono flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-black/55"><Sparkles className="h-3.5 w-3.5 text-[#35B54A]" aria-hidden />{a.confident ? 'Answer' : 'Hmm'}</p>
           <p className="hc-mono truncate text-[11px] uppercase tracking-[0.08em] text-black/40" data-testid="help-answer-q">“{a.q}”</p>
         </div>
-        <p className="mt-4 text-[20px] leading-[1.55] text-[#141414] max-sm:text-[17px]" data-testid="help-answer-text">
+        <p className="mt-3 text-[18px] leading-[1.55] text-[#141414] max-sm:text-[16px]" data-testid="help-answer-text">
           {shown}{!done && <span className="hc-caret" aria-hidden />}
           {done && a.sources.map((s, i) => <Link key={s.id} to={`/help/article/${s.id}`} className="hc-mono ml-1 inline-flex h-5 min-w-5 -translate-y-0.5 items-center justify-center rounded-md bg-[#EFEBE2] px-1 align-middle text-[11px] font-semibold transition-colors hover:bg-[#141414] hover:text-white" aria-label={`Source ${i + 1}: ${s.title}`} data-testid={`help-source-inline-${i + 1}`}>{i + 1}</Link>)}
         </p>
-        <div className={cn('mt-6 space-y-6', reveal)}>
+        <div className={cn('mt-5 space-y-5', reveal)}>
           {a.action === 'track' && <OrderLookup />}
           {a.action === 'edit' && <OrderLookup edit />}
           {a.action === 'return' && <ReturnAction />}
@@ -69,7 +69,7 @@ export function AnswerCard({ a, onAsk }: { a: HelpAnswer; onAsk: (q: string) => 
           {a.sources.length > 0 && (
             <div className="flex flex-wrap gap-2" data-testid="help-sources">
               {a.sources.map((s, i) => (
-                <Link key={s.id} to={`/help/article/${s.id}`} className="group inline-flex max-w-full items-center gap-2 rounded-full bg-[#F3F0E9] py-1.5 pl-1.5 pr-3.5 text-[13px] transition-colors hover:bg-[#141414] hover:text-white" data-testid={`help-source-${i + 1}`}>
+                <Link key={s.id} to={`/help/article/${s.id}`} className="hc-chip group inline-flex max-w-full items-center gap-2 border border-[#141414]/15 bg-[#F3F0E9] py-1.5 pl-1.5 pr-3.5 text-[13px] transition-colors hover:bg-[#141414] hover:text-white" data-testid={`help-source-${i + 1}`}>
                   <span className="hc-mono flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-[#141414]">{i + 1}</span>
                   <span className="truncate">{s.title}</span>
                 </Link>
@@ -95,12 +95,6 @@ export function AnswerCard({ a, onAsk }: { a: HelpAnswer; onAsk: (q: string) => 
           </div>
         </div>
       </article>
-      {a.confident && a.related.length > 0 && (
-        <section className={cn('mt-8', reveal)} data-testid="help-related">
-          <h3 className="hc-display text-[18px]">Related articles</h3>
-          <div className="mt-4 grid gap-2 md:grid-cols-3">{a.related.map((r) => <ArticleLink key={r.id} a={r} />)}</div>
-        </section>
-      )}
     </div>
   )
 }
