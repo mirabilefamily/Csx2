@@ -9,7 +9,8 @@ const shot = (p, n, full = false) => p.screenshot({ path: `${OUT}/${n}.png`, ful
 const ask = async (p, q) => { await p.click('[data-testid="help-search-input"]'); await p.fill('[data-testid="help-search-input"]', q); await p.waitForTimeout(250); await p.keyboard.press('Enter'); await p.waitForSelector('[data-testid="help-thinking"]', { state: 'detached' }).catch(() => {}); await p.waitForSelector('[data-testid="help-continue-chat"]', { state: 'visible' }); await p.waitForTimeout(1600) }
 
 const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage()
-await p.goto(`${BASE}/help`); await p.waitForSelector('[data-testid^="help-topic-"]'); await p.waitForTimeout(800)
+await p.goto(`${BASE}/help`); await p.waitForSelector('[data-testid="help-quick-0"]'); await p.waitForTimeout(800)
+console.log('quick intents:', await p.evaluate(async () => { const out = []; for (const b of document.querySelectorAll('[data-testid^="help-quick-"]')) out.push(b.textContent); return out.length }))
 await shot(p, 'home-1440'); await shot(p, 'home-1440-full', true)
 await p.keyboard.press('/'); await p.keyboard.type('return', { delay: 20 }); await p.waitForTimeout(300); await shot(p, 'typeahead-1440')
 console.log('suggestions:', await p.locator('[data-testid="help-search-suggestions"] li').count())
@@ -33,7 +34,7 @@ await p.fill('[data-testid="ask-article-input"]', 'does this apply to truckers?'
 await shot(p, 'article-1440')
 
 const m = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage()
-await m.goto(`${BASE}/help`); await m.waitForSelector('[data-testid^="help-topic-"]'); await m.waitForTimeout(800); await shot(m, 'home-390'); await shot(m, 'home-390-full', true)
+await m.goto(`${BASE}/help`); await m.waitForSelector('[data-testid="help-quick-0"]'); await m.waitForTimeout(800); await shot(m, 'home-390'); await shot(m, 'home-390-full', true)
 console.log('overflow 390:', await m.evaluate(() => document.documentElement.scrollWidth > innerWidth))
 await m.click('[data-testid="help-search-input"]'); await m.keyboard.type('where is my order'); await m.keyboard.press('Enter')
 await m.waitForSelector('[data-testid="help-continue-chat"]', { state: 'visible' }); await m.waitForTimeout(1500)
