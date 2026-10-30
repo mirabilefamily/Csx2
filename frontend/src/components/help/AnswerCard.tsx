@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight, MessageCircle, Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react'
 import type { HelpAnswer, HelpArticle } from '@/api/help'
 import { OrderLookup, ReturnAction, SizeAction } from './HelpActions'
-import { openChat } from './HelpChrome'
+import { openChat } from './HelpShell'
 import { cn } from '@/lib/utils'
 
 function useTyped(text: string) {

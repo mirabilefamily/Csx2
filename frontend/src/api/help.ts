@@ -4,7 +4,7 @@ import { ApiError, request } from './client'
 import { db } from './db'
 
 export type { HelpAction, HelpTopic }
-export { HELP_TOPICS, NEXT_DROP } from '@/mocks/helpCenter'
+export { HELP_TOPICS } from '@/mocks/helpCenter'
 
 export interface HelpArticle { id: string; title: string; topic: HelpTopic; excerpt: string; body: string; readMins: number; updatedAt: string }
 export interface HelpAnswer { q: string; text: string; confident: boolean; sources: HelpArticle[]; followUps: string[]; action: HelpAction | null; related: HelpArticle[] }

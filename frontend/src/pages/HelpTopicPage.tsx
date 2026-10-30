@@ -1,13 +1,17 @@
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, Clock } from 'lucide-react'
+import { ArrowRight, ChevronLeft, Clock } from 'lucide-react'
 import { helpApi } from '@/api'
 import { HELP_TOPICS } from '@/api/help'
 import { useApi } from '@/hooks/useApi'
-import { HelpShell } from '@/components/help/HelpChrome'
+import { HelpShell } from '@/components/help/HelpShell'
 import { HelpSearch } from '@/components/help/HelpSearch'
 import { AnswerCard } from '@/components/help/AnswerCard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ChatCard, Thinking, TOPIC_ICON, useAsk } from './HelpHomePage'
+
+export function BackLink() {
+  return <Link to="/help" className="hc-mono mb-6 inline-flex items-center gap-1 text-[12px] uppercase tracking-[0.12em] text-black/60 transition-colors hover:text-black" data-testid="help-back"><ChevronLeft className="h-4 w-4" aria-hidden />Help center</Link>
+}
 
 export function Crumbs({ items }: { items: [string, string?][] }) {
   return (
@@ -24,7 +28,8 @@ export default function HelpTopicPage() {
   const I = data ? TOPIC_ICON[data.topic.icon] : null
   return (
     <HelpShell>
-      <div className="mx-auto max-w-[1440px] px-6 pb-24 pt-12 max-sm:px-4 max-sm:pt-8" data-testid="help-topic-page">
+      <div className="mx-auto max-w-[1440px] pb-8" data-testid="help-topic-page">
+        <BackLink />
         <Crumbs items={[['Help center', '/help'], [data?.topic.title ?? '…']]} />
         {error && <p className="mt-10 text-lg" data-testid="help-topic-missing">That topic doesn't exist. <Link to="/help" className="underline">Back to the help center</Link></p>}
         {data && I && (
@@ -40,7 +45,7 @@ export default function HelpTopicPage() {
             <div className="mt-10 max-w-[820px]"><HelpSearch onAsk={ask} topic={slug} compact placeholder={`Ask about ${data.topic.title.toLowerCase()}…`} testId="topic-search" /></div>
           </>
         )}
-        <div ref={ref} className="scroll-mt-28">{(busy || answer) && <div className="mt-8 max-w-[1040px]">{busy ? <Thinking /> : answer && <AnswerCard key={answer.q} a={answer} onAsk={ask} />}</div>}</div>
+        <div ref={ref} className="scroll-mt-6">{(busy || answer) && <div className="mt-8 max-w-[1040px]">{busy ? <Thinking /> : answer && <AnswerCard key={answer.q} a={answer} onAsk={ask} />}</div>}</div>
         <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_340px]">
           <ul className="space-y-2" data-testid="help-topic-articles">
             {!data && !error && Array.from({ length: 4 }, (_, i) => <li key={i}><Skeleton className="h-[92px] rounded-2xl" /></li>)}

@@ -6,10 +6,10 @@ import { ArrowRight, Sparkles } from 'lucide-react'
 import { helpApi } from '@/api'
 import type { HelpAnswer } from '@/api/help'
 import { useApi } from '@/hooks/useApi'
-import { HelpShell, openChat } from '@/components/help/HelpChrome'
+import { HelpShell, openChat } from '@/components/help/HelpShell'
 import { ArticleLink, Vote } from '@/components/help/AnswerCard'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Crumbs } from './HelpTopicPage'
+import { BackLink, Crumbs } from './HelpTopicPage'
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
@@ -43,7 +43,8 @@ export default function HelpArticlePage() {
   const toc = a ? [...a.body.matchAll(/^## (.+)$/gm)].map((m) => m[1]) : []
   return (
     <HelpShell>
-      <div className="mx-auto max-w-[1440px] px-6 pb-24 pt-12 max-sm:px-4 max-sm:pt-8" data-testid="help-article-page">
+      <div className="mx-auto max-w-[1440px] pb-8" data-testid="help-article-page">
+        <BackLink />
         <Crumbs items={[['Help center', '/help'], ...(a ? [[a.topic.title, `/help/topic/${a.topic.slug}`] as [string, string]] : []), [a?.title ?? '…']]} />
         {error && <p className="mt-10 text-lg" data-testid="help-article-missing">That article doesn't exist. <Link to="/help" className="underline">Back to the help center</Link></p>}
         {!a && !error && <Skeleton className="mt-8 h-24 w-2/3 rounded-2xl" />}
@@ -53,15 +54,15 @@ export default function HelpArticlePage() {
             <p className="hc-mono mt-5 text-[12px] uppercase tracking-[0.12em] text-black/55" data-testid="help-article-updated">Updated {new Date(a.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} · {a.readMins} min read</p>
             <div className="mt-12 grid gap-10 lg:grid-cols-[200px_minmax(0,1fr)_320px]">
               <nav aria-label="On this page" className="max-lg:hidden" data-testid="help-article-toc">
-                {toc.length > 0 && <div className="sticky top-32"><p className="hc-mono text-[11px] uppercase tracking-[0.14em] text-black/50">On this page</p><ul className="mt-3 space-y-2 border-l border-black/15">{toc.map((h) => <li key={h}><a href={`#${slug(h)}`} className="-ml-px block border-l border-transparent pl-4 text-[14px] text-black/70 transition-colors hover:border-black hover:text-black">{h}</a></li>)}</ul></div>}
+                {toc.length > 0 && <div className="sticky top-6"><p className="hc-mono text-[11px] uppercase tracking-[0.14em] text-black/50">On this page</p><ul className="mt-3 space-y-2 border-l border-black/15">{toc.map((h) => <li key={h}><a href={`#${slug(h)}`} className="-ml-px block border-l border-transparent pl-4 text-[14px] text-black/70 transition-colors hover:border-black hover:text-black">{h}</a></li>)}</ul></div>}
               </nav>
               <div className="min-w-0">
                 <article className="hc-prose rounded-[22px] bg-white p-10 max-sm:p-6" data-testid="help-article-body">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ h2: ({ children }) => <h2 id={slug(String(children))} className="scroll-mt-32">{children}</h2> }}>{a.body}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ h2: ({ children }) => <h2 id={slug(String(children))} className="scroll-mt-6">{children}</h2> }}>{a.body}</ReactMarkdown>
                 </article>
                 <div className="mt-6 flex flex-wrap items-center justify-between gap-4 px-2"><Vote testId="article-vote" /><button type="button" onClick={() => openChat()} className="hc-mono text-[12px] uppercase tracking-[0.1em] underline underline-offset-4" data-testid="article-chat">Still stuck? Chat with us</button></div>
               </div>
-              <aside className="space-y-6 lg:sticky lg:top-32 lg:self-start">
+              <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
                 <AskArticle id={a.id} title={a.title} />
                 {data.related.length > 0 && (
                   <section data-testid="help-article-related">
