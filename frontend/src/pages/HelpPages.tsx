@@ -1,10 +1,9 @@
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
-import { ArrowRight } from 'lucide-react'
 import { helpApi } from '@/api'
 import { useApi } from '@/hooks/useApi'
 import { HelpShell } from '@/components/help/HelpShell'
-import { ArticleRow, ChatLine, NotFound, PageTop, SearchField, Vote } from '@/components/help/kb'
+import { ArticleRow, NotFound, PageTop, SearchField, Vote } from '@/components/help/kb'
 import { Skeleton } from '@/components/ui/skeleton'
 import { FolderGrid } from './HelpHomePage'
 
@@ -23,65 +22,37 @@ export function HelpFolderPage() {
             <PageTop back={['/help', 'All topics']} crumbs={[['Help Center', '/help'], [f.title]]} />
             <Title>{f.title}</Title>
             <p className="mt-2 text-[16px] text-black/65">{f.description}</p>
-            <div className="mt-10 space-y-8">
-              {f.subs.map((s) => (
-                <section key={s.slug} className="hc-box bg-white px-6 pb-2 pt-5 max-sm:px-5" data-testid={`help-sub-${s.slug}`}>
-                  <h2><Link to={s.path} className="text-[15px] font-semibold text-[#141414] underline-offset-4 hover:underline" data-testid={`help-sub-link-${s.slug}`}>{s.title}</Link></h2>
-                  <ul className="mt-2 border-t border-black/10">{s.articles.slice(0, 5).map((a) => <ArticleRow key={a.slug} a={a} excerpt={false} />)}</ul>
-                  {s.articles.length > 5 && <Link to={s.path} className="flex h-11 items-center gap-1.5 border-t border-black/10 text-[14px] font-medium underline-offset-4 hover:underline" data-testid={`help-see-all-${s.slug}`}>See all {s.articles.length} articles<ArrowRight className="h-4 w-4" aria-hidden /></Link>}
-                </section>
-              ))}
-            </div>
+            <p className="mt-1 text-[14px] text-black/50" data-testid="help-folder-count">{f.count} articles</p>
+            <ul className="hc-box mt-8 bg-white px-6 max-sm:px-5" data-testid="help-folder-articles">{f.articles.map((a) => <ArticleRow key={a.slug} a={a} />)}</ul>
           </>
         )}
-        <ChatLine />
-      </div>
-    </HelpShell>
-  )
-}
-
-export function HelpSubfolderPage() {
-  const { folder = '', sub = '' } = useParams()
-  const { data, error } = useApi(() => helpApi.getSub(folder, sub), [folder, sub])
-  return (
-    <HelpShell>
-      <div className="mx-auto max-w-[880px]" data-testid="help-subfolder-page">
-        {error ? <NotFound /> : !data ? <Loading /> : (
-          <>
-            <PageTop back={[`/help/${data.folder.slug}`, data.folder.title]} crumbs={[['Help Center', '/help'], [data.folder.title, `/help/${data.folder.slug}`], [data.sub.title]]} />
-            <Title>{data.sub.title}</Title>
-            <p className="mt-2 text-[15px] text-black/55">{data.sub.articles.length} articles</p>
-            <ul className="hc-box mt-8 bg-white px-6 max-sm:px-5">{data.sub.articles.map((a) => <ArticleRow key={a.slug} a={a} />)}</ul>
-          </>
-        )}
-        <ChatLine />
       </div>
     </HelpShell>
   )
 }
 
 export function HelpArticlePage() {
-  const { folder = '', sub = '', article = '' } = useParams()
-  const { data, error } = useApi(() => helpApi.getArticle(folder, sub, article), [folder, sub, article])
+  const { folder = '', article = '' } = useParams()
+  const { data, error } = useApi(() => helpApi.getArticle(folder, article), [folder, article])
+  if (error) { const to = helpApi.redirectFor(folder, article); if (to && to !== `/help/${folder}/${article}`) return <Navigate to={to} replace /> }
   return (
     <HelpShell>
       <div className="mx-auto max-w-[880px]" data-testid="help-article-page">
         {error ? <NotFound /> : !data ? <Loading /> : (
           <>
-            <PageTop back={[data.sub.path, data.sub.title]} crumbs={[['Help Center', '/help'], [data.folder.title, `/help/${data.folder.slug}`], [data.sub.title, data.sub.path], [data.article.title]]} />
+            <PageTop back={[`/help/${data.folder.slug}`, data.folder.title]} crumbs={[['Help Center', '/help'], [data.folder.title, `/help/${data.folder.slug}`]]} />
             <Title>{data.article.title}</Title>
             <p className="mt-2 text-[14px] text-black/55" data-testid="help-article-meta">Updated {fmt(data.article.updatedAt)} · {data.article.readMins} min read</p>
             <article className="hc-box mt-8 bg-white p-10 max-sm:p-5" data-testid="help-article-body"><div className="hc-prose"><ReactMarkdown>{data.article.body}</ReactMarkdown></div></article>
             <div className="mt-6"><Vote /></div>
             {data.more.length > 0 && (
               <section className="mt-12" data-testid="help-more">
-                <h2 className="text-[15px] font-semibold">More in {data.sub.title}</h2>
+                <h2 className="text-[15px] font-semibold">More in {data.folder.title}</h2>
                 <ul className="hc-box mt-3 bg-white px-6 max-sm:px-5">{data.more.map((a) => <ArticleRow key={a.slug} a={a} excerpt={false} />)}</ul>
               </section>
             )}
           </>
         )}
-        <ChatLine />
       </div>
     </HelpShell>
   )
@@ -99,7 +70,7 @@ export function HelpSearchPage() {
         {!data ? <div className="mt-8"><Loading /></div> : data.total === 0 ? (
           <div className="mt-8" data-testid="help-no-results">
             <Title>No results for ‘{q}’</Title>
-            <p className="mt-2 text-[15px] text-black/60">Try different words, browse a topic below, or open chat.</p>
+            <p className="mt-2 text-[15px] text-black/60">Try different words, or browse a topic below.</p>
             <div className="mt-8"><FolderGrid /></div>
           </div>
         ) : (
@@ -125,7 +96,6 @@ export function HelpSearchPage() {
             </div>
           </>
         )}
-        <ChatLine />
       </div>
     </HelpShell>
   )
@@ -134,4 +104,9 @@ export function HelpSearchPage() {
 export function HelpLegacyRedirect({ kind }: { kind: 'topic' | 'article' }) {
   const { id = '' } = useParams()
   return <Navigate to={helpApi.legacyPath(kind, id)} replace />
+}
+
+export function HelpLegacy3Redirect() {
+  const { folder = '', article = '' } = useParams()
+  return <Navigate to={helpApi.redirectFor(folder, article) ?? '/help'} replace />
 }

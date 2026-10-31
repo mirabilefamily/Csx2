@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, ChevronRight, Search } from 'lucide-react'
 import { helpApi } from '@/api'
 import type { HelpArticle } from '@/api/help'
-import { openChat } from './HelpShell'
 import { cn } from '@/lib/utils'
 
 export function BackLink({ to, label }: { to: string; label: string }) {
@@ -74,7 +73,7 @@ export function HeroSearch() {
             <li key={a.path} role="option" aria-selected={i === idx}>
               <Link to={a.path} data-active={i === idx || undefined} onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setIdx(i)} className="hc-option block px-4 py-2.5 transition-colors" data-testid={`help-suggestion-${i}`}>
                 <span className="block truncate text-[15px] font-medium text-[#141414]">{a.title}</span>
-                <span className="block truncate text-[12px] text-black/50">{a.folder.title} › {a.sub.title}</span>
+                <span className="block truncate text-[12px] text-black/50">{a.folder.title}</span>
               </Link>
             </li>
           ))}
@@ -89,8 +88,8 @@ export function ArticleRow({ a, path, excerpt = true }: { a: HelpArticle; path?:
     <li className="border-b border-black/10 last:border-b-0">
       <Link to={a.path} className="group flex items-center gap-4 py-3.5 transition-colors hover:text-black/70" data-testid={`help-article-link-${a.slug}`}>
         <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-medium text-[#141414] underline-offset-4 group-hover:underline">{a.title}</span>
-          {path && <span className="mt-0.5 block text-[12px] text-black/50">{a.folder.title} › {a.sub.title}</span>}
+          <span className="block text-[16px] font-medium text-[#141414] underline-offset-4 group-hover:underline">{a.title}</span>
+          {path && <span className="mt-0.5 block text-[12px] text-black/50">{a.folder.title}</span>}
           {excerpt && <span className="mt-0.5 block text-[14px] text-black/60">{a.excerpt}</span>}
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-black/40 transition-transform group-hover:translate-x-0.5" aria-hidden />
@@ -110,15 +109,6 @@ export function Vote() {
         </>
       )}
     </div>
-  )
-}
-
-export function ChatLine() {
-  return (
-    <section className="hc-box mt-16 flex items-center justify-between gap-6 bg-white px-8 py-6 max-sm:mt-10 max-sm:flex-col max-sm:items-stretch max-sm:gap-4 max-sm:px-5 max-sm:py-5" data-testid="help-chat-line">
-      <p className="text-[15px] text-black/70"><span className="font-semibold text-[#141414]">Still need help?</span> Our team usually replies within a day.</p>
-      <button type="button" onClick={() => openChat()} className="inline-flex h-11 shrink-0 items-center justify-center gap-2 bg-[#141414] px-5 text-[14px] font-medium text-white transition-colors hover:bg-black" data-testid="help-open-chat">Open chat<ArrowRight className="h-4 w-4" aria-hidden /></button>
-    </section>
   )
 }
 

@@ -17,7 +17,7 @@ import ThemeEditorPage from '@/pages/ThemeEditorPage'
 import AiPage from '@/pages/AiPage'
 import ChannelsPage from '@/pages/ChannelsPage'
 import HelpHomePage from '@/pages/HelpHomePage'
-import { HelpArticlePage, HelpFolderPage, HelpLegacyRedirect, HelpSearchPage, HelpSubfolderPage } from '@/pages/HelpPages'
+import { HelpArticlePage, HelpFolderPage, HelpLegacy3Redirect, HelpLegacyRedirect, HelpSearchPage } from '@/pages/HelpPages'
 import { useSearchParams } from 'react-router-dom'
 
 // The old Guidance sandbox tab now lives in AI & Workflows → Conversation testing.
@@ -48,8 +48,8 @@ export default function App() {
             <Route path="/help/topic/:id" element={<HelpLegacyRedirect kind="topic" />} />
             <Route path="/help/article/:id" element={<HelpLegacyRedirect kind="article" />} />
             <Route path="/help/:folder" element={<HelpFolderPage />} />
-            <Route path="/help/:folder/:sub" element={<HelpSubfolderPage />} />
-            <Route path="/help/:folder/:sub/:article" element={<HelpArticlePage />} />
+            <Route path="/help/:folder/:article" element={<HelpArticlePage />} />
+            <Route path="/help/:folder/:sub/:article" element={<HelpLegacy3Redirect />} />
             <Route element={<RequireAuth />}>
               <Route element={<AppShell />}>
                 <Route index element={<Navigate to="/dashboard" replace />} />

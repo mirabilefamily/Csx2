@@ -4,7 +4,7 @@ import { helpApi } from '@/api'
 import type { KbIcon } from '@/api/help'
 import { useApi } from '@/hooks/useApi'
 import { HelpShell } from '@/components/help/HelpShell'
-import { ChatLine, HeroSearch } from '@/components/help/kb'
+import { HeroSearch } from '@/components/help/kb'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export const FOLDER_ICON: Record<KbIcon, LucideIcon> = { package: Package, rotate: RotateCcw, ruler: Ruler, brush: Brush, card: CreditCard, zap: Zap, store: Store, info: Info }
@@ -40,7 +40,6 @@ export default function HelpHomePage() {
           </div>
         </section>
         <div className="mt-12 max-sm:mt-8"><FolderGrid /></div>
-        <ChatLine />
       </div>
     </HelpShell>
   )
