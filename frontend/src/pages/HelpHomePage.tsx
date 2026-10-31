@@ -1,46 +1,42 @@
-import { ChevronRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Brush, CreditCard, Info, Package, RotateCcw, Ruler, Store, Zap, type LucideIcon } from 'lucide-react'
+import { helpApi } from '@/api'
+import type { KbIcon } from '@/api/help'
+import { useApi } from '@/hooks/useApi'
 import { HelpShell } from '@/components/help/HelpShell'
-import { HelpSearch } from '@/components/help/HelpSearch'
-import { AnswerCard } from '@/components/help/AnswerCard'
-import { ChatLine, Thinking, useAsk } from '@/components/help/helpKit'
+import { ChatLine, SearchField } from '@/components/help/kb'
+import { Skeleton } from '@/components/ui/skeleton'
 
-const QUICK: [label: string, q: string][] = [
-  ['Where is my order?', 'Where is my order?'], ['Returns & exchanges', 'How do I start a return?'], ['Can I cancel / edit my order?', 'Can I cancel / edit my order?'],
-  ['Find my size', 'What size am I?'], ['Shipping times & international', 'How long does shipping take?'], ['Damaged or defective item', 'My hat arrived damaged'],
-  ['Friday Drops info', 'How do Friday Drops work?'], ['Payments & gift cards', 'Payment methods we accept'],
-  ['Wholesale inquiry', 'Wholesale inquiry'], ['Brand ambassadors & talent', 'Brand ambassadors & talent inquiry'],
-]
-const POPULAR = ['How long do returns take?', 'What size am I?', 'When is the next Friday Drop?']
+export const FOLDER_ICON: Record<KbIcon, LucideIcon> = { package: Package, rotate: RotateCcw, ruler: Ruler, brush: Brush, card: CreditCard, zap: Zap, store: Store, info: Info }
+
+export function FolderGrid() {
+  const { data } = useApi(() => helpApi.listFolders(), [])
+  return (
+    <ul className="grid grid-cols-4 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1 max-sm:gap-3" data-testid="help-folders">
+      {!data && Array.from({ length: 8 }, (_, i) => <li key={i}><Skeleton className="h-[168px]" /></li>)}
+      {data?.map((f) => { const I = FOLDER_ICON[f.icon]; return (
+        <li key={f.slug}>
+          <Link to={`/help/${f.slug}`} className="hc-card flex h-full flex-col bg-white p-6 max-sm:p-5" data-testid={`help-folder-${f.slug}`}>
+            <I className="h-5 w-5 text-[#141414]" strokeWidth={1.75} aria-hidden />
+            <span className="mt-4 text-[17px] font-semibold text-[#141414]">{f.title}</span>
+            <span className="mt-1 text-[14px] leading-snug text-black/60">{f.description}</span>
+            <span className="mt-4 text-[13px] text-black/50 max-sm:mt-3">{f.count} articles</span>
+          </Link>
+        </li>
+      ) })}
+    </ul>
+  )
+}
 
 export default function HelpHomePage() {
-  const { answer, busy, ask, ref } = useAsk()
   return (
     <HelpShell>
-      <div className="mx-auto max-w-[1200px]">
-        <section className="hc-halftone hc-hero relative flex h-[320px] items-center justify-center px-6 max-sm:h-auto max-sm:px-4 max-sm:py-10" data-testid="help-hero">
-          <img src="/images/help/hero-desert.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="relative z-10 w-full max-w-[720px] text-center">
-            <h1 className="hc-display text-[clamp(28px,3.6vw,52px)] leading-none text-white [text-shadow:0_2px_24px_rgb(0_0_0/.45)]" data-testid="help-hero-title">How can we help?</h1>
-            <div className="mt-6"><HelpSearch onAsk={ask} /></div>
-            <div className="mt-4 flex flex-wrap justify-center gap-2" data-testid="help-popular">
-              {POPULAR.map((q, i) => <button key={q} type="button" onClick={() => ask(q)} className="hc-chip hc-mono border border-white/40 bg-black/25 px-3 py-1.5 text-[11px] uppercase tracking-[0.06em] text-white backdrop-blur-md transition-colors hover:bg-white hover:text-[#141414]" data-testid={`help-popular-${i}`}>{q}</button>)}
-            </div>
-          </div>
-        </section>
-
-        <div ref={ref} className="scroll-mt-6">
-          {(busy || answer) && <div className="mx-auto mt-12 max-w-[960px] max-sm:mt-8">{busy ? <Thinking /> : answer && <AnswerCard key={answer.q} a={answer} onAsk={ask} />}</div>}
-        </div>
-
-        <section className="mt-12 grid grid-cols-2 gap-4 max-sm:mt-8 max-sm:grid-cols-1 max-sm:gap-3" aria-label="Quick questions" data-testid="help-quick">
-          {QUICK.map(([label, q], i) => (
-            <button key={label} type="button" onClick={() => ask(q)} className="hc-card hc-mono group flex h-16 items-center justify-between gap-4 bg-white px-6 text-left text-[13px] font-semibold uppercase tracking-[0.06em] max-sm:h-14 max-sm:px-5" data-testid={`help-quick-${i}`}>
-              {label}<ChevronRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" aria-hidden />
-            </button>
-          ))}
-        </section>
-
-        <div className="mt-16 max-sm:mt-8"><ChatLine /></div>
+      <div className="mx-auto max-w-[1200px]" data-testid="help-home">
+        <h1 className="hc-display text-[clamp(34px,4.2vw,56px)] leading-none" data-testid="help-title">Help Center</h1>
+        <p className="mt-3 text-[17px] text-black/65">Find answers about orders, returns, sizing and more.</p>
+        <SearchField className="mt-8 max-w-[640px] max-sm:mt-6" />
+        <div className="mt-12 max-sm:mt-8"><FolderGrid /></div>
+        <ChatLine />
       </div>
     </HelpShell>
   )
