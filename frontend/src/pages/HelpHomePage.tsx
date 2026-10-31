@@ -4,7 +4,7 @@ import { helpApi } from '@/api'
 import type { KbIcon } from '@/api/help'
 import { useApi } from '@/hooks/useApi'
 import { HelpShell } from '@/components/help/HelpShell'
-import { ChatLine, SearchField } from '@/components/help/kb'
+import { ChatLine, HeroSearch } from '@/components/help/kb'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export const FOLDER_ICON: Record<KbIcon, LucideIcon> = { package: Package, rotate: RotateCcw, ruler: Ruler, brush: Brush, card: CreditCard, zap: Zap, store: Store, info: Info }
@@ -32,9 +32,13 @@ export default function HelpHomePage() {
   return (
     <HelpShell>
       <div className="mx-auto max-w-[1200px]" data-testid="help-home">
-        <h1 className="hc-display text-[clamp(34px,4.2vw,56px)] leading-none" data-testid="help-title">Help Center</h1>
-        <p className="mt-3 text-[17px] text-black/65">Find answers about orders, returns, sizing and more.</p>
-        <SearchField className="mt-8 max-w-[640px] max-sm:mt-6" />
+        <section className="hc-halftone flex h-[320px] items-center justify-center px-6 max-sm:h-[240px] max-sm:px-4" data-testid="help-hero">
+          <img src="/images/help/hero-desert.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="relative z-10 w-full max-w-[680px] text-center">
+            <h1 className="hc-display text-[clamp(28px,3.4vw,48px)] leading-none text-white [text-shadow:0_2px_24px_rgb(0_0_0/.45)] max-sm:text-[28px]" data-testid="help-title">How can we help?</h1>
+            <div className="mt-6 max-sm:mt-5"><HeroSearch /></div>
+          </div>
+        </section>
         <div className="mt-12 max-sm:mt-8"><FolderGrid /></div>
         <ChatLine />
       </div>

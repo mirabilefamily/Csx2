@@ -11,7 +11,10 @@ const backX = (p) => p.evaluate(() => { const r = document.querySelector('[data-
 
 const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage()
 await go(p, '/help', '[data-testid="help-folder-orders-shipping"]'); await shot(p, 'home-1440'); await shot(p, 'home-1440-full', true)
-console.log('folders:', await p.locator('[data-testid^="help-folder-"]').count())
+console.log('folders:', await p.locator('[data-testid^="help-folder-"]').count(), 'hero h:', await p.evaluate(() => document.querySelector('[data-testid="help-hero"]').getBoundingClientRect().height))
+await p.click('[data-testid="help-search-input"]'); await p.keyboard.type('refund', { delay: 20 }); await p.waitForTimeout(250); await p.keyboard.press('ArrowDown'); await p.waitForTimeout(250); await shot(p, 'home-typeahead-1440'); console.log('active bg:', await p.evaluate(() => getComputedStyle(document.querySelector('[data-testid="help-suggestion-0"]')).backgroundColor))
+console.log('suggestions:', await p.locator('[data-testid^="help-suggestion-"]').count()); await p.keyboard.press('Enter'); await p.waitForSelector('[data-testid="help-article-body"]'); console.log('suggestion →', p.url())
+await go(p, '/help', '[data-testid="help-folder-orders-shipping"]')
 await p.click('[data-testid="help-folder-orders-shipping"]'); await p.waitForSelector('[data-testid="help-folder-page"] h1'); await p.waitForTimeout(400); await shot(p, 'folder-1440', true)
 console.log('folder back:', await backX(p), 'see all:', await p.locator('[data-testid^="help-see-all-"]').count())
 await p.click('[data-testid="help-sub-link-tracking"]'); await p.waitForSelector('[data-testid="help-subfolder-page"] h1'); await p.waitForTimeout(400); await shot(p, 'subfolder-1440')

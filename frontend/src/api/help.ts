@@ -40,12 +40,17 @@ export const getArticle = (folder: string, sub: string, article: string) => requ
 
 const words = (q: string) => q.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2).map((w) => (w.length > 4 ? w.replace(/(es|s)$/, '') : w))
 // GET /api/help/search?q=  Quick answer is MOCKED (keyword-matched, no AI).
-export const search = (q: string) => request((): HelpSearch => {
+const rank = (q: string) => {
   const ws = words(q)
-  const scored = all().flatMap((f) => f.subs.flatMap((s) => s.articles)).map((a) => {
+  return all().flatMap((f) => f.subs.flatMap((s) => s.articles)).map((a) => {
     const t = a.title.toLowerCase(); const hay = `${a.title} ${a.excerpt} ${a.body} ${a.sub.title}`.toLowerCase()
     return { a, n: ws.reduce((n, w) => n + (t.includes(w) ? 3 : hay.includes(w) ? 1 : 0), 0) }
   }).filter((x) => x.n > 0).sort((x, y) => y.n - x.n)
+}
+// Typeahead: article titles (sync so it keeps up with typing).
+export const suggest = (q: string) => (q.trim().length < 2 ? [] : rank(q).slice(0, 6).map((x) => x.a))
+export const search = (q: string) => request((): HelpSearch => {
+  const scored = rank(q)
   const weight = (slug: string) => scored.filter((x) => x.a.folder.slug === slug).reduce((n, x) => n + x.n, 0)
   const groups = KB.map((f) => ({ folder: { slug: f.slug, title: f.title }, results: scored.filter((x) => x.a.folder.slug === f.slug).map((x) => x.a) })).filter((g) => g.results.length)
     .sort((x, y) => weight(y.folder.slug) - weight(x.folder.slug))

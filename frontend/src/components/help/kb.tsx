@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, ChevronRight, Search } from 'lucide-react'
+import { helpApi } from '@/api'
 import type { HelpArticle } from '@/api/help'
 import { openChat } from './HelpShell'
 import { cn } from '@/lib/utils'
@@ -41,6 +42,45 @@ export function SearchField({ initial = '', className }: { initial?: string; cla
         className="min-w-0 flex-1 bg-transparent text-[16px] text-[#141414] placeholder:text-black/45 focus:outline-none" data-testid="help-search-input" />
       <kbd className="shrink-0 border border-black/15 px-1.5 py-0.5 text-[12px] text-black/50 max-sm:hidden" aria-hidden>Enter ↵</kbd>
     </form>
+  )
+}
+
+export function HeroSearch() {
+  const [q, setQ] = useState('')
+  const [open, setOpen] = useState(false)
+  const [idx, setIdx] = useState(-1)
+  const navigate = useNavigate()
+  const items = useMemo(() => helpApi.suggest(q), [q])
+  const show = open && items.length > 0
+  const go = () => { const t = q.trim(); if (t) navigate(`/help/search?q=${encodeURIComponent(t)}`) }
+  return (
+    <div className="relative w-full text-left" data-testid="help-hero-search">
+      <form role="search" onSubmit={(e) => { e.preventDefault(); if (idx >= 0 && items[idx]) navigate(items[idx].path); else go() }} className="flex h-14 items-center gap-3 bg-white pl-4 pr-1.5 focus-within:outline focus-within:outline-2 focus-within:outline-white max-sm:h-12">
+        <Search className="h-5 w-5 shrink-0 text-black/45" aria-hidden />
+        <input value={q} onChange={(e) => { setQ(e.target.value); setOpen(true); setIdx(-1) }} onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 120)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowDown' && items.length) { e.preventDefault(); setOpen(true); setIdx((i) => (i + 1) % items.length) }
+            else if (e.key === 'ArrowUp' && items.length) { e.preventDefault(); setIdx((i) => (i <= 0 ? items.length - 1 : i - 1)) }
+            else if (e.key === 'Escape') setOpen(false)
+          }}
+          placeholder="Search the help center" aria-label="Search the help center" role="combobox" aria-expanded={show} aria-controls="help-hero-suggestions" aria-autocomplete="list"
+          className="min-w-0 flex-1 bg-transparent text-[16px] text-[#141414] placeholder:text-black/45 focus:outline-none" data-testid="help-search-input" />
+        <kbd className="shrink-0 border border-black/15 px-1.5 py-0.5 text-[12px] text-black/50 max-sm:hidden" aria-hidden>Enter ↵</kbd>
+        <button type="submit" className="h-11 shrink-0 bg-[#141414] px-5 text-[14px] font-medium text-white transition-colors hover:bg-black max-sm:h-9 max-sm:px-3.5" data-testid="help-search-submit">Search</button>
+      </form>
+      {show && (
+        <ul id="help-hero-suggestions" role="listbox" className="hc-box absolute inset-x-0 top-full z-30 mt-1 bg-white py-1" data-testid="help-suggestions">
+          {items.map((a, i) => (
+            <li key={a.path} role="option" aria-selected={i === idx}>
+              <Link to={a.path} data-active={i === idx || undefined} onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setIdx(i)} className="hc-option block px-4 py-2.5 transition-colors" data-testid={`help-suggestion-${i}`}>
+                <span className="block truncate text-[15px] font-medium text-[#141414]">{a.title}</span>
+                <span className="block truncate text-[12px] text-black/50">{a.folder.title} › {a.sub.title}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 

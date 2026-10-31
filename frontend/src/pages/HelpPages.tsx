@@ -106,7 +106,7 @@ export function HelpSearchPage() {
           <>
             <p className="mt-8 text-[20px] font-semibold" data-testid="help-results-count">{data.total} result{data.total === 1 ? '' : 's'} for ‘{q}’</p>
             {data.quick && (
-              <section className="hc-box mt-5 border-l-[3px] border-l-[#141414] bg-white px-6 py-5" data-testid="help-quick-answer">
+              <section className="hc-box hc-accent-l mt-5 bg-white px-6 py-5" data-testid="help-quick-answer">
                 <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-black/55">Quick answer</p>
                 <p className="mt-2 text-[16px] leading-relaxed">{data.quick.text}</p>
                 <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[14px]">

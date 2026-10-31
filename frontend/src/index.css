@@ -169,5 +169,11 @@
 .help-root, .help-root * { border-radius: 0 !important; --tw-shadow: 0 0 #0000 !important; --tw-shadow-colored: 0 0 #0000 !important; }
 .help-root :focus-visible { outline: 2px solid #141414; outline-offset: 2px; }
 .hc-box, .hc-card { border: 1px solid rgb(20 20 20 / .12); }
+.help-root .hc-accent-l { border-left: 3px solid #141414; }
+.help-root .hc-option:hover, .help-root .hc-option[data-active] { background: #EFEBE2; color: #141414; box-shadow: inset 2px 0 0 #141414; }
+.hc-halftone { position: relative; background: #141414; isolation: isolate; z-index: 1; }
+.hc-halftone > img { filter: grayscale(1) contrast(1.4) brightness(.85); }
+.hc-halftone::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: radial-gradient(circle, rgb(20 20 20 / .7) 0 1.15px, transparent 1.6px); background-size: 5px 5px; mix-blend-mode: multiply; }
+.hc-halftone::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at center, rgb(0 0 0 / .1), rgb(0 0 0 / .5)); }
 .hc-card { transition: border-color 150ms ease-out; }
 .help-root .hc-card:hover { border-color: rgb(20 20 20 / .55); }
